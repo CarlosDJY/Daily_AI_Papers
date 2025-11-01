@@ -214,7 +214,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种针对推理增强型大语言模型（RLLM）服务性能的系统性评估框架ASU，揭示了RLLM与传统大语言模型在内存使用、请求延迟等方面的显著差异。研究表明，模型量化和投机解码等优化技术可提升RLLM的服务效率，而某些缓存策略可能导致性能下降。通过实证研究，本文为RLLM的高效部署提供了重要指导。
+                本文提出了一种新的评估框架ASU（Accuracy, Service-end, User-end）和基准套件ASU-Perf，旨在全面评估推理大语言模型（RLLM）的服务性能。研究揭示了RLLM与传统LLM在服务行为上的显著差异，并验证了多种优化技术对RLLM服务效率的影响，为实际部署提供了重要的指导和洞察。
             </div>
         </div>
         
@@ -585,164 +585,139 @@ pre[class*=language-] {
                     <div class="markdown-content">
                         <h3>现有问题</h3>
 
-<p>本文旨在系统性地研究和解决推理增强型大语言模型（RLLM）在服务性能方面所面临的独特挑战。与传统大语言模型（LLM）相比，RLLM虽然在数学、编程等多步骤复杂推理任务上表现更优，但其更长的“思维链”也带来了新的服务瓶颈。主要问题包括：
-- <strong>服务行为差异</strong>：RLLM在内存使用、请求延迟和运行时间上表现出与LLM显著不同的行为，例如内存波动更大、运行时间与任务难度强相关，导致现有为LLM设计的服务引擎和优化技术无法直接适用。
-- <strong>性能瓶颈</strong>：在并发请求中，复杂的RLLM请求容易成为“慢请求”（stragglers），拖慢整个系统的吞吐量，降低硬件利用率，并影响用户体验。
-- <strong>评估体系缺乏</strong>：缺少一个能够综合评估RLLM服务性能的框架，现有评估多侧重于准确性，而忽略了服务端效率和用户端体验。</p>
+<p>本文旨在解决<strong>推理大语言模型（RLLM）在服务性能和行为方面未被充分探索</strong>的问题。尽管RLLM在数学等复杂推理任务上表现出色，但其独特的推理过程（如长思维链）导致了与传统LLM显著不同的服务特征，例如运行时间波动大、对任务难度敏感以及对KV缓存有更高的内存需求。现有的LLM服务引擎和优化技术并未针对这些特性进行设计，导致在实际部署中出现“拖延请求”（难任务拖慢整个批次）等性能瓶颈，影响了系统的吞吐量、延迟和资源利用率。因此，如何全面评估并有效优化RLLM的服务性能，以平衡其准确性、服务效率和用户体验，是一个重要且紧迫的问题。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：<strong>RLLM因其独特的长链推理特性，在服务行为上与传统LLM存在本质差异，因此需要专门的评估框架和定制化的优化策略才能高效部署。</strong>
-具体验证点包括：
-- RLLM在处理复杂任务时，其内存消耗和延迟会显著增加。
-- 传统的推理优化技术（如某些量化方法、前缀缓存）在应用于RLLM，特别是小规模模型时，可能效果不佳甚至产生负面影响。
-- 通过系统性的评估和针对性的优化（如合适的量化方案、内存管理），可以在不显著牺牲准确性的前提下，有效提升RLLM的服务效率。</p>
+<p>本文的核心假设是：<strong>RLLM的服务行为与传统LLM存在本质差异，因此需要专门的评估框架和量身定制的优化策略</strong>。论文推测，RLLM的运行时间与任务难度高度相关，直接应用为传统LLM设计的优化技术可能效果不佳甚至适得其反。通过系统性地评估模型量化、KV缓存管理、前缀缓存和架构调整等优化技术，可以在小幅牺牲或不牺牲准确性的前提下，显著提升RLLM的服务效率（如吞吐量和延迟）。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>LLM服务引擎与框架</strong>：如vLLM, LMDeploy, Tensor-RT, Megatron-LM等。</li>
-<li><strong>推理优化技术</strong>：
-<ul>
-<li><strong>模型量化</strong>：GPTQ, AWQ, FP8等。</li>
-<li><strong>内存与缓存管理</strong>：分页注意力（Paged Attention）, KV缓存量化, 前缀缓存（Prefix Cache）。</li>
-<li><strong>解码加速</strong>：投机解码（Speculative Decoding）。</li>
-</ul></li>
-<li><strong>LLM推理能力研究</strong>：如思维链提示（Chain-of-thought prompting）。</li>
-</ul>
+<p>本文的研究建立在多个LLM优化领域之上，主要包括：
+- <strong>LLM服务引擎</strong>：如vLLM、TensorRT-LLM等，它们引入了PagedAttention、连续批处理等关键技术。
+- <strong>模型优化技术</strong>：包括模型权重量化（如GPTQ、AWQ、FP8）、KV缓存量化与管理、前缀缓存以及投机解码等加速推理的方法。
+- <strong>系统架构</strong>：对分布式推理和预填充-解码分离（Prefill-Decode Disaggregation）架构的研究。
+- <strong>性能评估</strong>：现有的LLM性能基准和评估方法。</p>
 
-<h3><strong>面向推理大型语言模型（RLLM）服务性能的综合评估与优化解决方案</strong></h3>
+<h3>解决方案</h3>
 
-<p>本文提出的核心解决方案旨在系统性地评估和优化推理大型语言模型（RLLM）的服务性能。与传统大型语言模型（LLM）相比，RLLM在处理需要多步骤推理的复杂任务（如数学、编程）时，通过采用<strong>“长链思维”（Long Chain of Thought, Long CoT）</strong>策略，展现出独特的性能特征。然而，这些特征也带来了新的服务挑战，如内存使用波动剧烈和请求延迟出现长尾分布（即“慢请求”）。</p>
+<p>本文针对<strong>增强推理能力的大型语言模型（Reasoning-enhanced Large Language Models, RLLM）</strong>在实际服务部署中遇到的性能挑战，提出了一个系统化的评估与优化方案。该方案的核心是建立一个全面的评估框架，用以揭示RLLM独特的服务行为，并在此基础上评估现有优化技术的有效性。</p>
 
-<p>为了应对这些挑战，该解决方案包含两大核心部分：<strong>一个全面的评估框架</strong>和<strong>一系列经过验证的优化技术</strong>。</p>
+<h4><strong>第一步：定义问题与RLLM的特性</strong></h4>
 
-<hr />
-
-<h4><strong>第一部分：ASU 评估框架与基准测试</strong></h4>
-
-<p>为了全面、准确地衡量 RLLM 的服务质量，研究者设计了 <strong>ASU 评估框架</strong>，并开发了相应的基准测试工具 <strong>ASU-Perf</strong>。</p>
-
-<p><strong>1. ASU 框架概述</strong></p>
-
-<p>ASU 框架从三个维度综合评估 RLLM 服务，确保了对模型表现的整体理解：
-*   <strong>A - 准确性 (Accuracy)</strong>：衡量模型生成响应的正确性。针对不同的任务数据集（如数学GSM8k、编程GPQA等），采用特定的评估指标来确保评估的精确性。
-*   <strong>S - 服务端 (Service-end)</strong>：从服务提供者的角度评估系统性能。主要使用<strong>吞吐量（Throughput, TPS）</strong>，即系统每秒能够生成的令牌总数，来衡量系统的处理能力和效率。
-*   <strong>U - 用户端 (User-end)</strong>：从最终用户的角度评估体验。由于 RLLM 的推理过程（即思维链）对用户不可见，传统的“首个令牌时间（TTFT）”指标不足以反映用户体验。因此，框架引入了<strong>“首次可见令牌时间”（Time to First Visible Token, TTFVT）</strong>，衡量用户从提交请求到看到第一个最终答案令牌所需的时间，更真实地反映了用户感知的延迟。</p>
-
-<p><strong>2. ASU-Perf 基准测试工具</strong></p>
-
-<p>基于 ASU 框架，研究者开发了 ASU-Perf 工具，用于量化和分析 RLLM 的服务行为。通过该工具的测试，验证了 RLLM 的几个关键特性：
-*   <strong>内存使用波动大</strong>：推理过程中的内存需求极高且变化剧烈。
-*   <strong>长尾请求延迟</strong>：存在部分“慢请求”（Straggler Requests），其处理时间远超平均水平，影响整体服务效率。
-*   <strong>自适应运行时间</strong>：模型会根据问题的复杂程度动态调整推理步数和运行时间。</p>
-
-<hr />
-
-<h4><strong>第二部分：RLLM 推理服务优化技术</strong></h4>
-
-<p>在 ASU 框架的指导下，研究者对一系列现有的 LLM 推理优化技术在 RLLM 上的适用性进行了系统评估，并提出了一套多层次的优化方案。</p>
-
-<p><strong>1. 内存优化技术</strong></p>
-
-<p>内存管理是 RLLM 服务的关键瓶颈。优化方案从模型参数和动态缓存两个层面入手。</p>
-
-<ul>
-<li><strong>模型参数内存优化</strong>：
-<ul>
-<li><strong>模型权重量化 (Weight Quantization)</strong>：通过 GPTQ、AWQ、FP8 等技术将模型权重从高精度转换为低精度，显著减少模型存储占用和计算量。实验表明，这些方法能有效提升服务效率，且对模型准确性影响较小。</li>
-</ul></li>
-<li><p><strong>动态内存优化 (KV 缓存)</strong>：</p>
-
-<ul>
-<li><strong>KV 缓存量化 (KV Cache Quantization)</strong>：对推理过程中产生的键值（KV）缓存进行量化（如FP8格式），以减少内存占用。</li>
-<li><strong>前缀缓存 (Prefix Caching)</strong>：重用已计算过的共同前缀的 KV 值，避免重复计算。</li>
-</ul>
-
-<p><p><strong>【关键发现】</strong>：KV缓存量化和前缀缓存并非普遍适用。对于<strong>大型模型（如14B及以上）</strong>，这两项技术能显著提升性能；但对于<strong>小型模型（如7B）</strong>，它们反而可能导致准确性和服务性能下降。</p></li>
-</ul></p>
-
-<p><strong>2. 延迟与吞吐量优化技术</strong></p>
-
-<p>为了降低延迟、提高系统吞吐量，方案涵盖了从解码算法到系统架构的多种优化。</p>
-
-<ul>
-<li><strong>高效解码 (Efficient Decoding)</strong>：
-<ul>
-<li><strong>推测解码 (Speculative Decoding)</strong>：使用一个较小的“草稿模型”快速生成多个候选令牌，再由主模型并行验证。该技术能有效改善推理运行时间，但可能会牺牲一定的吞吐量（TPS）和用户端延迟（TTFVT）。</li>
-</ul></li>
-<li><strong>请求调度与批处理 (Request Scheduling &amp; Batching)</strong>：
-<ul>
-<li><strong>连续批处理 (Continuous Batching)</strong>：在每个令牌生成的细粒度上进行迭代式请求处理，相比静态批处理能显著提高 GPU 利用率和系统吞吐量。</li>
-</ul></li>
-<li><strong>系统架构优化 (System Optimization)</strong>：
-<ul>
-<li><strong>PagedAttention</strong>：借鉴操作系统内存分页的思想，有效管理 GPU 显存，缓解内存碎片问题。</li>
-<li><strong>预填充-解码分离 (Prefill-Decode Separation)</strong>：将计算密集的预填充阶段与内存密集的解码阶段分离，分配给不同的计算资源。然而，在1P1D（一个预填充工作者和一个解码工作者）的配置下，该架构可能因解码成为瓶颈和跨设备通信开销而导致性能下降。</li>
-</ul></li>
-</ul>
-
-<p><strong>3. 模型与算法协同优化</strong></p>
-
-<ul>
-<li><strong>硬件感知算法</strong>：采用如 FlashAttention、线性注意力等算法，从底层优化模型的计算效率。</li>
-<li><strong>专家混合模型 (Mixture-of-Experts, MoE)</strong>：通过专家并行性将计算路由到不同模型分片，提升处理能力。</li>
-</ul>
-
-<hr />
-
-<h4><strong>第三部分：实证验证</strong></h4>
-
-<p>为了确保研究结论的普适性，研究者设计了 <strong>BurstGPT-Perf 工作负载生成器</strong>，该工具能够模拟符合<strong>Gamma分布</strong>的真实世界用户请求模式（即请求到达时间并非均匀，而是有突发性）。通过在这种接近现实的负载下进行测试，验证了上述评估框架和优化技术在实际应用场景中的有效性，并揭示了高 KV 缓存利用率可能导致的请求排队和用户体验下降问题。</p>
-
-<hr />
-
-<h3><strong>结论</strong></h3>
-
-<p>该解决方案通过<strong>“评估框架定义问题”</strong>与<strong>“优化技术解决问题”</strong>相结合的方式，为 RLLM 的部署和优化提供了完整的方法论。</p>
+<p>RLLM旨在通过生成更长的“思维链”（Chain of Thought, CoT）来解决复杂的“系统2任务”（如数学推理、逻辑难题）。这种方法虽然能提高准确性，但也带来了独特的服务性能挑战：</p>
 
 <ol>
-<li><strong>揭示了核心差异</strong>：系统性地阐明了 RLLM 与传统 LLM 在服务行为上的关键不同。</li>
-<li><strong>提供了评估标准</strong>：ASU 框架为全面衡量 RLLM 服务质量提供了科学、可行的标准。</li>
-<li><strong>给出了实践指导</strong>：通过对多种优化技术的实证评估，为开发者在不同规模的模型和应用场景下选择最优技术组合提供了明确的指导，推动了 RLLM 在现实世界中的高效应用。</li>
+<li><strong>适应性运行时间（Adaptive Running Time）</strong>：RLLM处理请求的时间与任务难度高度相关，导致请求运行时间呈现<strong>长尾分布</strong>。</li>
+<li><strong>拖延请求（Straggler Requests）</strong>：在一批请求中，少数高难度请求会耗费大量时间，拖慢整个批次的处理速度，从而降低系统吞吐量。</li>
+<li><strong>KV缓存波动</strong>：由于生成内容长且多变，RLLM对KV缓存的需求和使用波动剧烈，影响服务稳定性与内存效率。</li>
 </ol>
+
+<h4><strong>第二步：构建ASU评估框架与ASU-Perf基准套件</strong></h4>
+
+<p>为了系统性地评估RLLM的服务性能，作者提出了<strong>ASU（Assessment of Serving Utility）评估框架</strong>。这是一个三位一体的综合评估体系，旨在平衡不同利益相关者的需求。</p>
+
+<ul>
+<li><strong>A - 响应准确性（Accuracy）</strong>: 评估模型输出的质量和正确性。针对不同任务（如数学、知识推理），采用特定于该任务的准确性指标。</li>
+<li><strong>S - 服务提供方指标（Service-end）</strong>: 衡量服务系统的效率和资源利用率。
+<ul>
+<li><strong>核心指标：每秒令牌数（Tokens Per Second, TPS）</strong>，用于评估系统的整体吞吐量。</li>
+</ul></li>
+<li><strong>U - 用户端性能指标（User-end）</strong>: 衡量最终用户的体验。
+<ul>
+<li><strong>核心指标：首次可见令牌时间（Time to First Visible Token, TTFVT）</strong>。这是对传统“首次令牌时间（TTFT）”的改进，因为它忽略了RLLM在输出最终答案前生成的、用户不可见的“思维链”部分，更真实地反映了用户的感知延迟。</li>
+</ul></li>
+</ul>
+
+<p>为支持该框架，作者开发了<strong>ASU-Perf基准测试套件</strong>，用于在不同负载条件下对比传统LLM和RLLM的服务行为，从而量化上述挑战。</p>
+
+<h4><strong>第三步：评估现有推理优化技术的适用性</strong></h4>
+
+<p>在建立了评估框架并理解了RLLM的行为特性后，论文系统地评估了一系列现有的LLM推理优化技术在RLLM上的效果。</p>
+
+<ol>
+<li><p><strong>模型权重量化（Model Weight Quantization, MWQ）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：通过降低模型参数的精度（如使用FP8或4-bit整数）来减少内存占用并加速计算。</li>
+<li><strong>评估结果</strong>：该技术非常有效。<strong>GPTQ</strong>和<strong>FP8</strong>等量化方法能在仅轻微影响（约3%）RLLM准确性的情况下，显著提升服务效率（如TPS），且不会损害用户体验指标（TTFVT）。</li>
+</ul></li>
+<li><p><strong>KV缓存量化（KV Cache Quantization）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：对生成过程中存储的键值（KV）缓存进行量化，以减少GPU内存占用。</li>
+<li><strong>评估结果</strong>：效果依赖于模型规模。对于<strong>14B及以上的大模型</strong>，KV缓存量化能有效加速推理；但对于<strong>7B的小模型</strong>，该技术反而会导致显著的性能下降。</li>
+</ul></li>
+<li><p><strong>前缀缓存（Prefix Cache, PC）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：缓存并重用请求中相同前缀（prompt prefix）的KV值，以减少重复计算。</li>
+<li><strong>评估结果</strong>：同样依赖于模型规模。在<strong>14B及以上模型</strong>上，前缀缓存能显著提升运行速度；但在<strong>7B模型</strong>上，反而会导致延迟增加。</li>
+</ul></li>
+<li><p><strong>推测解码（Speculative Decoding, SD）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：使用一个小型、快速的“草稿模型”来预测多个未来令牌，然后由主模型一次性验证，以减少解码步骤。</li>
+<li><strong>评估结果</strong>：该技术存在权衡。虽然它能<strong>提升运行时间</strong>（降低单个请求的延迟），但会<strong>显著降低系统吞吐量（TPS）</strong>，并增加TTFVT，可能影响整体服务效率和用户体验。</li>
+</ul></li>
+<li><p><strong>预填充-解码分离架构（Prefill-Decode Disaggregation）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：将计算密集的预填充阶段和内存密集的解码阶段分配到不同的硬件上执行，以优化资源利用。</li>
+<li><strong>评估结果</strong>：在实验中，该架构<strong>未能提升RLLM的服务性能</strong>。原因是解码阶段成为新的瓶颈，且跨设备传输KV缓存带来了不可忽视的通信开销。</li>
+</ul></li>
+</ol>
+
+<h4><strong>第四步：现实世界负载验证</strong></h4>
+
+<p>最后，作者在模拟现实世界负载（基于伽马分布）的条件下进行了实证评估。结果再次验证了RLLM的服务行为与传统LLM存在显著差异，并且上述关于优化技术的发现具有普遍性。</p>
+
+<h3><strong>总结</strong></h3>
+
+<p>本文的解决方案并非提出一种全新的算法，而是构建了一个<strong>“诊断框架+实证评估”</strong>的系统化方法。通过提出的<strong>ASU评估框架</strong>和<strong>ASU-Perf基准套件</strong>，该研究首次系统性地揭示了RLLM在服务性能上的独特性（如自适应运行时间和拖延者问题）。更重要的是，它为如何在RLLM上应用现有优化技术提供了明确的指导：</p>
+
+<ul>
+<li><strong>强烈推荐</strong>：<strong>模型权重量化</strong>是一种普适且高效的优化手段。</li>
+<li><strong>谨慎使用</strong>：<strong>KV缓存量化</strong>和<strong>前缀缓存</strong>仅在较大规模（如14B以上）的模型上有效。</li>
+<li><strong>权衡利弊</strong>：<strong>推测解码</strong>适用于延迟敏感但吞吐量要求不高的场景。</li>
+<li><strong>不推荐</strong>：<strong>预填充-解码分离架构</strong>在当前实现下不适用于RLLM。</li>
+</ul>
+
+<p>这项工作为研究社区和工业界在高效部署和优化RLLM推理服务方面提供了宝贵的见解和实践指南。</p>
 
 <h3>实验设计</h3>
 
-<ul>
-<li><strong>模型</strong>：涵盖了多种规模的RLLM和LLM进行对比（如7B, 14B, 32B, 70B）。</li>
-<li><strong>硬件</strong>：在多种NVIDIA GPU（如A100, A6000, 4090）上进行实验，以确保结果的普适性。</li>
-<li><strong>工作负载</strong>：使用模拟真实世界请求到达模式（如Gamma分布）的工作负载进行评估。</li>
-<li><strong>评估维度</strong>：使用ASU框架，测量并比较不同模型和优化策略下的准确率、吞吐量（TPS）、首次令牌生成时间（TTFT）、运行时间、内存占用等关键指标。</li>
-</ul>
+<p>实验设计严谨且全面，主要包括：
+- <strong>模型与规模</strong>：在不同规模（7B、14B、32B、70B）的RLLM和传统LLM上进行对比实验。
+- <strong>数据集</strong>：使用多个公开的、具有挑战性的推理数据集，主要涵盖数学推理（如GSM8K, MATH-500, AIME-2024）和知识推理（如GPQA）。
+- <strong>评估场景</strong>：在不同的令牌预算、批量大小和多种优化技术（不同量化方法、缓存策略等）组合下进行测试。
+- <strong>工作负载模拟</strong>：使用伽马分布（Gamma distribution）模拟真实世界的请求到达模式，以验证研究结果在实际场景中的有效性。
+- <strong>硬件平台</strong>：在多种主流GPU（如NVIDIA A100, A6000, RTX 4090）上进行实验。</p>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>：实验主要使用了多个公开的、侧重于复杂推理的基准数据集，包括<strong>GSM8K</strong>, <strong>MATH-500</strong>, <strong>AIME-2024</strong>, 和 <strong>GPQA</strong>。</li>
-<li><strong>代码</strong>：论文中提到，<strong>ASU-Perf测试套件和相关代码将在论文被接收后公开发布</strong>。</li>
+<li><strong>数据集</strong>：实验使用了公开的基准数据集，包括<strong>GSM8K、MATH-500、AIME-2024</strong>和<strong>GPQA</strong>。</li>
+<li><strong>代码</strong>：论文中开发的<strong>ASU-Perf基准套件</strong>和相关代码计划在论文被接受后公开发布。</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<ul>
-<li><strong>服务行为验证</strong>：实验证实RLLM的服务行为与LLM显著不同。RLLM的运行时间与问题难度高度相关，导致性能波动更大。</li>
-<li><strong>优化技术评估</strong>：
-<ul>
-<li><strong>量化</strong>：FP8和GPTQ量化在多数情况下能有效减少内存占用并保持性能，但GPTQ在处理高难度数学任务时准确性会显著下降。AWQ量化则可能导致推理效率降低。</li>
-<li><strong>缓存策略</strong>：KV缓存量化和前缀缓存对较大规模的RLLM（14B及以上）有明显的加速效果，但对于7B模型，这些技术反而可能导致性能下降和延迟增加。</li>
-<li><strong>架构分离</strong>：分离预填充和解码的架构（PD-disaggregation）在当前实验设置下未能提升性能，反而因解码阶段成为瓶颈而导致资源闲置和性能下降。</li>
-</ul></li>
-<li><strong>模型规模影响</strong>：更大规模的模型通常在准确性上表现更好，但相应地也需要更长的运行时间和更多的计算资源。</li>
-</ul>
+<p>实验结果验证了核心假设，并得出以下关键结论：
+- <strong>行为差异显著</strong>：RLLM的服务行为确实与传统LLM不同，其运行时间与任务难度强相关，导致性能波动更大。
+- <strong>优化技术有效性</strong>：
+    - <strong>模型量化</strong>：权重量化（如FP8、AWQ）在多数情况下能有效提升服务指标，但在最具挑战性的任务上可能导致准确性下降。
+    - <strong>KV缓存优化</strong>：KV缓存量化和前缀缓存对中大规模模型（≥14B）的性能提升显著，但可能对小模型（7B）产生负面影响。
+    - <strong>架构调整</strong>：简单的1对1预填充-解码分离架构未能提升性能，反而因解码阶段成为瓶颈而导致资源浪费。
+- <strong>性能权衡</strong>：实验清晰地揭示了各项指标间的权衡关系，例如增加批量大小可以提高吞吐量，但会增加用户感知的延迟。</p>
 
 <h3>论文贡献</h3>
 
-<ol>
-<li><strong>首次系统性剖析RLLM的服务性能</strong>：揭示了RLLM与传统LLM在服务行为上的关键差异，填补了该领域的研究空白。</li>
-<li><strong>提出ASU评估框架与ASU-Perf基准</strong>：为社区提供了一套全面、标准化的工具来评估和优化RLLM的服务性能。</li>
-<li><strong>提供了优化RLLM服务的实证依据</strong>：通过大量实验，详细评估了多种主流推理优化技术在RLLM上的有效性，并指出了它们的适用边界和潜在问题，为未来设计高效的RLLM服务系统提供了重要指导。</li>
-</ol>
+<p>本文的主要贡献可以总结为以下几点：
+1.  <strong>提出了ASU框架和ASU-Perf基准套件</strong>：为全面、标准化地评估RLLM服务性能提供了新的方法论和工具。
+2.  <strong>系统性地揭示了RLLM与LLM的服务行为差异</strong>：首次深入分析并量化了RLLM在服务过程中的独特行为，为社区提供了重要的性能洞察。
+3.  <strong>全面评估了多种优化技术对RLLM的影响</strong>：通过详尽的实证研究，验证了现有优化技术在RLLM上的有效性和局限性，为实际部署提供了实践指导。
+4.  <strong>为未来RLLM服务系统的设计指明了方向</strong>：研究结果强调了为RLLM设计专用服务系统的必要性，并为未来的研究提供了坚实的基础。</p>
 
                     </div>
                 
@@ -757,7 +732,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-01 17:57:25</p>
+            <p>生成时间: 2025-11-01 18:24:22</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>

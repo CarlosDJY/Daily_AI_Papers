@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolving Diagnostic Agents in a Virtual Clinical Environment</title>
+    <title>Evontree: Ontology Rule-Guided Self-Evolution of Large Language Models</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -188,13 +188,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Evolving Diagnostic Agents in a Virtual Clinical Environment</h1>
+            <h1>Evontree: Ontology Rule-Guided Self-Evolution of Large Language Models</h1>
             
-            <div class="paper-meta"><strong>作者单位:</strong> Shanghai Jiao Tong University, Shanghai Artificial Intelligence Laboratory, Intelligence Healthcare Department, AntGroup, Intelligence Computing and Sensing Laboratory, Peking University</div>
+            <div class="paper-meta"><strong>作者单位:</strong> Zhejiang University, University of Electronic Science and Technology of China, Ant Group</div>
             
             <div>
-                <span class="paper-score">推荐分数: 0.412</span>
-                <span class="paper-id">arXiv ID: 2510.24654</span>
+                <span class="paper-score">推荐分数: 0.421</span>
+                <span class="paper-id">arXiv ID: 2510.26683v1</span>
             </div>
             
         </div>
@@ -207,14 +207,14 @@
         
         <div class="paper-image">
             
-            <img src="../../images/2025-11-01/530641b060646409d71cc3dfce08cfda90be2e6f976df2a4c8b4ab42ac48f93d.jpg" alt="核心思路示意图" />
+            <img src="../../images/2025-11-01/8ea410eb8a195f5a76556cad71241c0a6ec869fa78db5e2204c46fe719a3b301.jpg" alt="核心思路示意图" />
         </div>
         
         
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种基于强化学习的框架，通过DiagGym虚拟环境训练DiagAgent，使其在多轮诊断中动态管理信息和检查推荐。该方法显著提升了诊断准确性和推荐质量，超越了现有的多种大型语言模型，解决了传统静态训练无法适应临床动态需求的问题。
+                本文提出了Evontree框架，通过少量高质量本体规则，系统地提取、验证和增强大型语言模型（LLMs）在医疗领域的知识，解决了数据稀缺导致的适应性不足问题。该方法通过自蒸馏微调提升模型准确性，实验结果显示在医疗问答基准上准确率提高了3.7%，同时增强了模型的安全性和可靠性。
             </div>
         </div>
         
@@ -585,154 +585,133 @@ pre[class*=language-] {
                     <div class="markdown-content">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决大型语言模型（LLMs）在处理动态、多轮、交互式临床诊断过程中的核心局限性。现有的LLMs主要基于静态病例总结进行训练，导致它们难以适应临床诊断中不断变化的信息、无法有效进行多轮证据收集和推理、也难以决定何时进行必要的检查。这是一个长期存在且至关重要的问题，因为真实的临床诊断是一个动态的、长期的决策过程。此外，缺乏可重复、安全、高保真的虚拟环境来训练和评估这些诊断代理，也限制了该领域的发展。</p>
+<p>本文旨在解决大型语言模型 (LLMs) 在医疗等数据敏感和知识密集的领域中适应性不足的问题。该问题主要源于高质量、领域特定的训练数据稀缺（通常由隐私限制导致），从而引发以下挑战：
+- LLMs 缺乏关键的领域知识，容易产生“幻觉”，影响其在问答等下游任务中的准确性和可靠性。
+- 传统方法依赖大规模外部语料库或知识库进行微调，但这在数据稀缺领域难以实现。
+- 在医疗等高风险领域，模型的安全性和性能需要达到平衡，确保模型在处理有害或恶意指令时不会产生危险的输出。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过在一个高保真、动态的虚拟临床环境（DiagGym）中，使用强化学习（RL）来训练诊断代理（DiagAgent），可以使其学习到超越传统静态训练的、具有临床意义的长期动态管理策略。这种交互式学习能够显著提升代理在多轮对话中的信息获取、检查推荐和最终诊断的准确性。</p>
+<p>本文的核心假设是：通过一个名为 <strong>Evontree</strong> 的框架，可以利用少量高质量的本体规则，系统地提取、验证、修正并增强 LLM 内部的隐性领域知识。这一过程无需外部知识库或大规模监督数据，即可有效填补模型的知识空白，从而在提升其在专业领域（如医疗问答）的准确性和性能的同时，增强其安全性和可靠性。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>医学领域的大型语言模型（LLMs）</strong>：如 MedGemma、OpenBioLLM、DeepSeek-v3 等在医学问答和诊断任务中的应用。</li>
-<li><strong>强化学习（RL）在医疗决策中的应用</strong>：利用RL进行动态决策和策略优化。</li>
-<li><strong>代理诊断系统</strong>：如 MedAgents 和 MDAgents，它们尝试使用多代理协作来提升诊断性能。</li>
-<li><strong>医疗模拟环境与基准</strong>：现有的角色扮演模拟器（如 AgentClinic, AgentHospital）和评估基准（如 HealthBench），但它们大多依赖静态数据，缺乏动态生成能力。</li>
-</ul>
+<p>本文的相关研究涵盖了多个领域：
+- <strong>领域特定 LLMs</strong>：如 BioBERT、SciBERT 等在特定领域语料上预训练的模型。
+- <strong>模型适应与微调</strong>：包括依赖大型领域数据的适应方法（如 Med42-v2）和轻量级适应技术（如参数高效微调 PEFT、LoRA）。
+- <strong>知识注入与编辑</strong>：将外部知识（如本体）整合到 LLMs 中的技术（如 OntoTune）。
+- <strong>本体工程与知识图谱构建</strong>：自动化构建和验证本体知识，解决幻觉问题的方法。
+- <strong>模型安全性评估</strong>：评估模型在面对恶意输入时的安全响应（如 AdvBench）。</p>
 
 <h3>解决方案</h3>
 
-<h3><strong>面向复杂临床诊断的交互式人工智能解决方案：DiagAgent 框架</strong></h3>
+<h3><strong>Evontree框架：一种基于本体规则的LLM领域知识增强方案</strong></h3>
 
-<p>本文提出了一套完整的端到端解决方案，旨在训练大型语言模型（LLMs）成为能够处理复杂、多轮动态诊断任务的智能代理（DiagAgent）。该方案的核心在于创建了一个高保真的虚拟临床环境（DiagGym），使代理能够通过强化学习（RL）进行交互式训练，从而学习并优化其诊断策略。为了科学评估其性能，论文还构建了一个全新的、经过临床医生验证的诊断基准（DiagBench）。</p>
+<h4><strong>一、 引言与核心目标</strong></h4>
 
-<hr />
+<p>大型语言模型（LLMs）在通用领域表现出色，但在数据稀缺或对隐私要求高的专业领域（如医疗）中，其性能往往受限。为解决这一挑战，论文提出了<strong>Evontree框架</strong>。该框架的核心目标是，在不依赖大量外部标注数据的情况下，通过利用少量（仅两条）高质量的本体规则，系统地从LLM内部<strong>提取、验证、增强</strong>其隐含的领域知识，从而显著提升模型在特定领域的专业能力、准确性和安全性。</p>
 
-<h4><strong>第一部分：DiagGym —— 高保真的虚拟临床环境</strong></h4>
+<h4><strong>二、 Evontree框架的详细实施步骤</strong></h4>
 
-<p>传统监督学习方法受限于静态数据集，无法有效训练模型处理真实临床中动态、顺序的决策过程。为解决此问题，研究者构建了 <strong>DiagGym</strong>，一个作为“诊断世界模型”的虚拟临床环境。</p>
+<p>Evontree的实施流程可以分为三个核心阶段：知识提取与量化、规则驱动的验证与选择，以及知识注入与微调。</p>
 
-<ul>
-<li><p><strong>目的与功能</strong>:</p>
+<h5><strong>阶段一：本体知识提取与量化确认</strong></h5>
 
-<ul>
-<li><strong>安全且可重复的训练</strong>: DiagGym 提供了一个无风险的“健身房”，诊断代理可以在其中进行大量重复性训练，而无需直接接触真实的患者数据。</li>
-<li><strong>动态结果生成</strong>: 与仅能重播历史记录的模拟器不同，DiagGym 是一个条件文本生成器。它能根据患者的初始信息、历史检查记录和代理新请求的检查项目，动态生成临床上合理且多样化的检查结果。这使得代理能够探索标准路径之外的多种可能性，并学习处理罕见或非典型病例。</li>
-<li><strong>高保真与高效率</strong>: DiagGym 在确保生成结果的临床一致性、统计分布（保真度）和多样性的同时，也注重计算效率。它可以在单个GPU上快速生成结果，这对于需要海量交互的强化学习训练至关重要。</li>
-</ul></li>
-<li><p><strong>构建与数据处理</strong>:</p>
+<p>此阶段旨在将模型内部隐含的、非结构化的知识显式化，并对其可靠性进行量化评估。</p>
 
 <ol>
-<li><strong>数据源</strong>: 该模型基于MIMIC-IV电子健康记录（EHR）数据库构建。</li>
-<li><strong>数据预处理</strong>: 通过一系列启发式匹配和过滤规则，从EHR中提取患者资料（主诉、病史等）和时间顺序的检查记录（化验、影像等），构建了包含超过11万个案例的训练集。</li>
-<li><strong>模型训练</strong>: DiagGym 本身是一个经过微调的大语言模型，通过最大化真实检查结果的对数似然函数进行训练，以确保其生成结果的真实性。</li>
-</ol></li>
-</ul>
+<li><p><strong>逐层生成本体树</strong>：从预定义的一组根概念（如医疗领域的“抗生素”、“病毒”等）开始，系统性地、逐层地提示LLM生成子类（Subclass-of）和同义词（Synonym-of）关系，构建出一个层次深度至少为三的本体知识树。这些关系以“三元组”（如&lt;头实体, 关系, 尾实体&gt;）的形式存在。</p></li>
+<li><p><strong>“确认值 (ConfirmValue)”量化</strong>：为解决LLM在一次性生成中可能出现的“幻觉”（即生成不实信息）问题，框架引入了<strong>确认值</strong>这一关键指标。它通过计算模型对一个三元组判断为“真”与“假”的困惑度差异来量化模型对该知识的置信度。确认值越低，代表模型的确认程度越高，知识越可靠。</p></li>
+<li><p><strong>设置确认阈值</strong>：通过对大量原始生成的三元组进行分析，采用<strong>尤登指数（Youden's index）</strong>最大化的原则来自动确定一个最佳确认值阈值。凡是确认值低于此阈值的三元组，均被视为“<strong>已确认三元组</strong>”，代表模型内部已经比较确信的知识。</p></li>
+</ol>
 
-<hr />
+<h5><strong>阶段二：规则驱动的知识验证与缺口知识选择</strong></h5>
 
-<h4><strong>第二部分：DiagAgent —— 基于强化学习的诊断代理</strong></h4>
-
-<p><strong>DiagAgent</strong> 是本解决方案的核心，是一个通过在 DiagGym 环境中进行强化学习训练而成的诊断代理。</p>
-
-<ul>
-<li><p><strong>目的与能力</strong>:</p>
-
-<ul>
-<li><strong>长期轨迹管理</strong>: DiagAgent 旨在学习如何在多轮交互中管理整个诊断轨迹。它需要决定何时继续收集信息、请求哪些检查能带来最大收益，以及何时停止并给出最终诊断。</li>
-<li><strong>动态决策</strong>: 通过与环境的实时互动，代理能够根据新出现的证据主动调整其诊断路径，克服了静态模型在面对不确定性时的局限性。</li>
-</ul></li>
-<li><p><strong>训练过程</strong>:</p>
+<p>此阶段利用本体论规则来进一步提纯知识，并精准识别出模型知识库中的“盲点”。</p>
 
 <ol>
-<li><strong>冷启动 (Supervised Fine-Tuning, SFT)</strong>: 在强化学习开始前，首先对基础LLM进行监督微调，使其学习诊断对话的基本格式和初步能力。</li>
-<li><strong>强化学习 (Reinforcement Learning, RL)</strong>:
+<li><p><strong>筛选可靠知识</strong>：应用第一条本体规则（R1），在“已确认三元组”中识别出由两个子类关系和一个同义词关系构成的闭合三角形结构。处于这种结构中的三元组因相互印证而被认为是“<strong>可靠三元组</strong>”，其准确性极高，可作为后续推理的坚实基础。</p></li>
+<li><p><strong>推断新知识</strong>：应用第二条本体规则（R2），即传递性规则（如：若A是B的子类，B是C的子类，则A是C的子类）。利用“可靠三元组”作为前提，推导出一系列新的、逻辑上成立的“<strong>推断三元组</strong>”。</p></li>
+<li><p><strong>识别“缺口三元组 (Gap Triples)”</strong>：这是Evontree框架的精髓所在。对所有“推断三元组”重新计算其确认值。那些<strong>逻辑上成立（通过规则推断得出）但模型自身却不确信（确认值高于阈值）</strong>的三元组，被识别为“<strong>缺口三元组</strong>”。这些正是模型知识库中需要被填补的盲点或弱点。</p></li>
+</ol>
+
+<h5><strong>阶段三：知识再注入与自我蒸馏微调</strong></h5>
+
+<p>此阶段的目标是将经过验证的“缺口知识”高效地整合回模型中。</p>
+
+<ol>
+<li><p><strong>设计注入策略</strong>：框架探索了三种知识注入方式：</p>
+
 <ul>
-<li><strong>状态 (State)</strong>: 在任一时间点，代理的状态由患者的初始信息和到目前为止所有已进行的检查及其结果构成。</li>
-<li><strong>动作 (Action)</strong>: 代理的动作空间包括请求一个具体的检查项目，或做出最终诊断。</li>
-<li><strong>策略 (Policy)</strong>: 代理的行为由一个可学习的策略函数 <code>π_θ</code> 决定，该函数由LLM参数化，根据当前状态选择最优动作。</li>
-<li><strong>奖励函数 (Reward Function)</strong>: 这是指导代理学习的关键。奖励函数被精心设计为三个部分的加权和，以平衡不同目标：
+<li><strong>显式注入 (Explicit)</strong>：将推导过程（如 A->B, B->C, 所以 A->C）构建成明确的问答对来训练模型。</li>
+<li><strong>隐式注入 (Implicit)</strong>：将“缺口三元组”所蕴含的知识点自然地嵌入到预定义的、与概念相关的问题模板中，引导模型生成包含该知识的、更自然的训练数据。</li>
+<li><strong>混合注入 (Mixed)</strong>：结合以上两种方式。</li>
+</ul></li>
+<li><p><strong>自我蒸馏微调</strong>：选定注入策略后，利用原始LLM自身来生成这些问答对的答案，形成高质量的“指令-输出”训练数据。然后，使用这些数据对模型进行微调。这个过程被称为<strong>自我蒸馏</strong>，因为它利用模型自身的能力来创造训练材料以提升自己。</p></li>
+</ol>
+
+<p>实验证明，<strong>隐式和混合注入策略的效果远优于显式注入</strong>，因为它们能以更自然的方式增强模型的知识结构，避免了机械推理链条带来的同质化问题。</p>
+
+<h4><strong>三、 实验验证与核心发现</strong></h4>
+
+<p>Evontree框架的有效性在多个医疗问答基准数据集（如PubMedQA, MedQA, MedMCQA）上得到了充分验证。</p>
+
 <ul>
-<li><code>r_diag</code> (诊断奖励): 如果最终诊断准确，则给予高奖励。</li>
-<li><code>r_exam</code> (检查奖励): 如果推荐的检查与医生认为的关键检查相符（用F1分数衡量），则给予奖励。</li>
-<li><code>r_turn</code> (效率惩罚): 对过长的诊断回合进行惩罚，鼓励代理高效决策。</li>
+<li><strong>性能提升</strong>：经过Evontree框架增强的模型（特别是采用隐式和混合注入策略的）在所有基准测试中均取得了显著的性能提升，准确率最高提升了<strong>3.7%</strong>，超越了原始模型和领先的监督学习基线。</li>
+<li><strong>组件的重要性（消融实验）</strong>：
+<ul>
+<li>移除<strong>可靠三元组选择模块</strong>，三元组准确性下降18.9%，证明高质量的知识前提至关重要。</li>
+<li>移除<strong>缺口三元组选择模块</strong>（即注入所有推断的三元组），模型性能全面下降，证明了精准“补缺”比海量灌输更有效。</li>
+<li>移除<strong>本体知识注入</strong>，仅用模板化问题，模型性能大幅降低，凸显了高质量本体知识在生成答案中的核心作用。</li>
 </ul></li>
-<li><strong>训练目标</strong>: 代理的目标是最大化在整个诊断过程（轨迹）中获得的期望累积奖励。</li>
-</ul></li>
-</ol></li>
+<li><strong>安全性评估</strong>：使用AdvBench数据集进行测试，结果显示Evontree在提升模型性能的同时，并未牺牲其安全性，甚至在某些指标上表现更佳，能够有效抵御有害指令和越狱攻击。</li>
 </ul>
 
-<hr />
+<h4><strong>四、 优势与结论</strong></h4>
 
-<h4><strong>第三部分：DiagBench —— 全新的多轮诊断评估基准</strong></h4>
-
-<p>为了评估 DiagAgent 在多轮交互中的表现，研究者创建了 <strong>DiagBench</strong>。</p>
+<p>Evontree框架提供了一个高效、灵活且强大的解决方案，其核心优势在于：</p>
 
 <ul>
-<li><p><strong>构成</strong>:</p>
-
-<ul>
-<li><strong>案例库</strong>: 包含750个经过医生审查和验证的复杂诊断案例。</li>
-<li><strong>过程导向评估</strong>: 其中99个案例配有详细的、由医生撰写的评分标准（Rubrics），共计973条注释。这些标准不仅关注最终诊断的准确性，更侧重于评估诊断过程的质量，如假设生成、测试排序和决策理由的合理性。</li>
-<li><strong>权重分配</strong>: 每个评分标准都被赋予了0-10的重要性权重，使得对代理决策过程的评估更加精细和贴近临床实践。</li>
-</ul></li>
-<li><p><strong>评估方法</strong>:</p>
-
-<ul>
-<li><strong>单轮评估</strong>: 测试代理在给定部分信息后，单次推荐检查或做出诊断的能力。</li>
-<li><strong>端到端评估</strong>: 代理从零开始与 DiagGym 互动，自主完成整个诊断过程。这种方式更接近真实临床场景。</li>
-<li><strong>评估指标</strong>:
-<ul>
-<li><strong>诊断准确率</strong>: 最终诊断是否正确。</li>
-<li><strong>检查推荐质量</strong>: 使用精确率、召回率、F1分数和命中率来衡量。</li>
-<li><strong>加权评分</strong>: 基于 DiagBench 的评分标准，对整个诊断轨迹的临床合理性进行综合打分。</li>
-</ul></li>
-</ul></li>
+<li><strong>高效性与低成本</strong>：仅需两条基础本体规则，无需外部数据库或大量人工标注数据，实现了对LLM的低成本领域增强。</li>
+<li><strong>知识质量优于数量</strong>：通过精准识别并注入“缺口知识”，避免了无效信息的干扰，确保了知识库的一致性和完整性。</li>
+<li><strong>高适应性</strong>：该框架非常适用于医疗等数据稀缺、隐私要求高的专业领域。</li>
+<li><strong>鲁棒性</strong>：实验证明，该方法对不同模型架构和超参数具有良好的鲁棒性，展现了其广泛应用的潜力。</li>
 </ul>
 
-<hr />
-
-<h4><strong>效果与结论</strong></h4>
-
-<p>通过在 DiagBench 上的全面评估，该解决方案取得了显著成果：</p>
-
-<ul>
-<li><strong>性能卓越</strong>: DiagAgent 在单轮和端到端评估中，其诊断准确率和检查推荐F1分数均显著超越了包括 Claude、Llama、Qwen 等在内的多个先进基线模型。</li>
-<li><strong>强化学习的价值</strong>: 对比实验证明，仅经过SFT的模型在动态交互中表现不佳，而经过RL训练的DiagAgent在所有指标上都实现了大幅提升，验证了交互式学习对于培养长期决策能力至关重要。</li>
-<li><strong>临床意义</strong>: DiagAgent 不仅能得出正确的诊断，其决策过程（如在案例研究中展现的）也更符合临床逻辑。它学会了通过多轮探索来主动收集证据，从而提高了诊断的全面性和可靠性。</li>
-</ul>
-
-<p><strong>总结而言，该研究通过构建一个“虚拟环境 (DiagGym) + 智能代理 (DiagAgent) + 评估基准 (DiagBench)”的闭环系统，成功地利用强化学习赋予了LLM进行动态、多轮临床诊断的能力。这种交互式的训练范式克服了传统静态学习的局限，为开发能够部署于真实世界、具备长期患者管理能力的临床AI系统铺平了道路。</strong></p>
+<p><strong>结论</strong>：Evontree框架开创性地展示了如何利用本体规则作为一种“内部监督”信号，系统地挖掘、精炼并回注LLM的固有知识。它证明了在数据受限的情况下，通过强化模型的知识逻辑一致性，是提升其专业领域能力的一条实用且强大的途径。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>环境评估</strong>：首先评估DiagGym生成结果的质量，通过与真实EHR数据在相似性、一致性、保真度和多样性等指标上进行比较，并与其他LLM的生成能力进行对比。</li>
-<li><strong>代理评估</strong>：在DiagBench基准上对DiagAgent进行评估。实验分为单轮评估和端到端（多轮）评估。</li>
-<li><strong>基线比较</strong>：将DiagAgent的性能与多种最先进的开源和闭源LLMs（如DeepSeek-v3, Qwen2.5, GPT-4o）以及其他代理系统（如MedAgents）进行比较。</li>
-<li><strong>评估指标</strong>：使用最终诊断的准确率，以及检查推荐的精确率、召回率和F1分数作为主要评估指标。</li>
+<li><strong>模型</strong>：实验在两个代表性模型上进行评估：通用的 Llama3-8B-Instruct 和领域特定的 Med42-v2。</li>
+<li><strong>数据集</strong>：使用多个广泛认可的医疗问答（QA）基准数据集，包括 MedMCQA、MedQA 和 PubMedQA。</li>
+<li><strong>评估方法</strong>：将 Evontree 增强后的模型与原始基础模型及其他领先的监督基线进行性能比较。</li>
+<li><strong>分析</strong>：进行了详细的消融研究，以验证 Evontree 框架中每个关键组件（如可靠三元组选择模块）的贡献。同时，还评估了模型的安全性。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>：训练数据主要来源于 <strong>MIMIC-IV</strong> 数据库的电子健康记录。评估基准 <strong>DiagBench</strong> 包含750个经过医生审核的临床案例。</li>
-<li><strong>代码</strong>：代码已在GitHub上发布：<a href="https://github.com/MAGIC-AI4Med/DiagGym">https://github.com/MAGIC-AI4Med/DiagGym</a></li>
+<li><strong>数据集</strong>：实验使用了 MedMCQA、MedQA 和 PubMedQA 等公开的医疗问答基准。</li>
+<li><strong>代码</strong>：在提供的论文片段中，未提及代码的公开链接。</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<p>实验结果有力地支持了核心假设：
-- <strong>DiagAgent性能优越</strong>：在单轮和多轮评估中，DiagAgent在诊断准确性和检查推荐质量方面均显著优于所有基线模型，包括GPT-4o等强大的LLMs。
-- <strong>DiagGym环境有效</strong>：DiagGym在生成医学检查结果方面表现出高保真度、强多样性和高计算效率，优于使用大型开源LLM进行模拟。
-- <strong>强化学习的价值</strong>：通过强化学习训练的DiagAgent比仅使用监督微调（SFT）的方法表现更好，证明了在动态环境中学习的有效性。</p>
+<ul>
+<li><strong>性能提升</strong>：Evontree 框架在所有医疗 QA 基准上都显著提升了模型的性能，平均准确率提高了 3.1% 到 3.7%，超越了未修改的原始模型和依赖大规模监督数据的基线。</li>
+<li><strong>组件有效性</strong>：消融实验证明，框架中的可靠三元组选择和间隙三元组注入等关键模块至关重要，移除任何一个都会导致模型性能显著下降。</li>
+<li><strong>安全性和可靠性</strong>：该方法有效减少了模型的知识幻觉。在安全性测试中，Evontree 增强后的模型在面对有害指令时表现出更高的安全性，且未对核心问答性能造成负面影响。</li>
+</ul>
 
 <h3>论文贡献</h3>
 
-<p>本文的主要贡献可以总结为三个方面：
-1.  <strong>提出了DiagGym</strong>：一个创新的、高保真的动态虚拟临床环境，为诊断代理的强化学习训练提供了可扩展的平台，解决了缺乏安全、可重复训练环境的问题。
-2.  <strong>开发了DiagAgent</strong>：一个通过与环境互动学习的诊断代理，它在复杂的、多轮的诊断任务中展现了超越当前最先进模型的卓越性能。
-3.  <strong>构建了DiagBench</strong>：一个全新的、经过医生验证的评估基准，为系统性地评估和比较多轮诊断代理的能力提供了标准化的工具，推动了该领域的发展。</p>
+<ol>
+<li><strong>提出 Evontree 框架</strong>：首次提出一个仅依赖少量本体规则即可在数据稀缺领域显著提升 LLM 性能的框架，为解决数据依赖问题提供了新思路。</li>
+<li><strong>创新的自修正知识循环</strong>：系统地阐述了“提取-验证-再注入”的知识增强过程，并引入 "ConfirmValue" 指标来确保注入知识的可靠性。</li>
+<li><strong>平衡性能与安全</strong>：证明了该框架不仅能提升模型在专业任务上的准确性，还能在不牺牲性能的前提下增强模型的安全性和鲁棒性。</li>
+<li><strong>充分的实验验证</strong>：通过在多个医疗基准上的广泛实验，验证了框架的有效性、鲁棒性和通用性，展示了其在低资源领域应用的巨大潜力。</li>
+</ol>
 
                     </div>
                 
@@ -740,7 +719,7 @@ pre[class*=language-] {
         </div>
         
         <div class="links">
-            <a href="https://arxiv.org/abs/2510.24654" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="http://arxiv.org/abs/2510.26683v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
             <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
             <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
         </div>
