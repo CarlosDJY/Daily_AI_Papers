@@ -214,7 +214,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种新的训练框架——监督强化学习（SRL），旨在解决大型语言模型在复杂多步推理任务中的学习困难。SRL通过将问题求解视为一系列逻辑“动作”，并在每一步提供基于专家行为的细粒度奖励，显著提升了模型的推理能力。实验表明，SRL在数学推理和软件工程任务上均优于传统的监督微调和强化学习方法。
+                本文提出了一种新颖的监督强化学习（SRL）框架，旨在提升小规模大语言模型在复杂多步推理任务中的表现。SRL通过将问题解决视为生成逻辑“动作”的序列，提供基于与专家行为相似度的密集奖励信号，从而有效指导模型学习。实验结果显示，SRL在数学推理和软件工程领域显著超越传统方法，解决了现有技术在稀疏奖励情况下的学习困难。
             </div>
         </div>
         
@@ -583,175 +583,127 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content">
-                        <p><think>
-<strong>Considering Report Updates</strong></p>
+                        <h3>现有问题</h3>
 
-<p>I've pinpointed the "解决方案" section for the update. My next step involves integrating the user's comprehensive solution, which is helpfully segmented. I'm focusing now on seamlessly incorporating each part, ensuring a smooth transition and maintaining clarity. The plan is to create a well-structured and easy-to-understand revised report.</p>
-
-<p><strong>Analyzing Replacement Strategy</strong></p>
-
-<p>I'm now deep-diving into the "解决方案" replacement. The task is to swap in the detailed SRL content. I've broken it down: identifying the target, locating the provided text, the actual replacement, and then verifying the final structure. This involves preserving the structure and ensuring nothing gets lost in translation. I am making sure the new content flows well within the report.</p>
-
-<p><strong>Implementing the Replacement</strong></p>
-
-<p>I'm now methodically proceeding with the replacement of the "解决方案" section. The plan is clear: pinpoint the target (### 解决方案), bring in the detailed SRL content provided, and then verify the outcome. The initial phase involves the direct copy and paste. I'm prioritizing accuracy, ensuring every detail of the SRL solution is incorporated without any modification. Afterwards, a structural audit will be conducted to assure all elements align seamlessly.</p>
-
-<p><strong>Evaluating Incorporation Process</strong></p>
-
-<p>I'm now in the final stage of replacing the "解决方案" section. The detailed SRL solution has been successfully inserted, and I am now meticulously verifying the structure and flow. I'm checking for consistency in headings, ensuring all components are correctly aligned, and confirming that the overall outline remains logically sound. The goal is to produce a polished and well-structured report.</p>
-
-<p><strong>Integrating Detailed Solution</strong></p>
-
-<p>I'm now focused on the replacement itself. The plan is clear: insert the detailed SRL solution under the "解决方案" heading, replacing the brief overview. The new content is comprehensive and well-structured, so I am confident it will fit seamlessly. A key part of the process is ensuring the new section integrates with the existing report structure. My top priority is a clean and accurate implementation.</p>
-
-<p><strong>Executing the Replacement</strong></p>
-
-<p>I'm now methodically proceeding with the final stage: integrating the detailed SRL content under the designated heading. The steps are clearly defined: pinpointing the target section (### 解决方案), bringing in the comprehensive SRL solution provided, and then meticulously verifying the output. I am confident in the new content's ability to seamlessly integrate. My top priority is a polished and accurate implementation.</p>
-
-<p><strong>Executing Replacement and Verification</strong></p>
-
-<p>I'm currently engaged in the final replacement phase. I've successfully inserted the detailed SRL solution into the report under the appropriate heading. My attention now turns to a thorough verification process. This involves ensuring the new content integrates seamlessly into the outline. The goal is to produce a refined and polished result.</p>
-
-<p><strong>Integrating Comprehensive Solution</strong></p>
-
-<p>I've successfully inserted the detailed SRL solution into the targeted "解决方案" section. The next stage involves a thorough structural audit. My focus is now on confirming that the updated section fits into the report's overall structure and maintains logical consistency. All section headings must align, and the new content must seamlessly integrate.</p>
-
-<p><strong>Integrating Detailed Solution</strong></p>
-
-<p>I've completed the initial replacement of the "解决方案" section with the detailed SRL content. Currently, I'm focusing on a meticulous structural review. My goal is to confirm seamless integration. All the new content must align with the existing section. I will meticulously check each component to ensure everything is correct.</p>
-
-<p></think>### 现有问题
-本文旨在解决大型语言模型（LLMs），特别是小规模开源模型，在处理需要复杂多步推理的任务（如数学和软件工程）时表现不佳的问题。传统的训练方法，如监督微调（SFT）和仅依赖最终结果的强化学习（RLVR），在面对成功解决方案稀少（即奖励稀疏）的复杂问题时，学习效率低下，难以引导模型掌握正确的推理过程。</p>
+<p>本文旨在解决大语言模型（LLMs），特别是小规模开源模型，在处理需要复杂、多步骤推理的任务（如高级数学推理和软件工程）时学习困难的问题。现有的方法，如监督微调（SFT）和基于最终结果的强化学习（如RLVR），在面对这类难题时表现不佳。其根本原因在于，当正确的解决方案稀少时，模型难以从稀疏的奖励信号（即最终答案是否正确）中获得有效的学习指导，导致其无法掌握必要的逐步推理过程。</p>
 
 <h3>Hypothesis</h3>
 
-<p>核心假设是：通过一个名为监督强化学习（Supervised Reinforcement Learning, SRL）的新框架，可以显著提升LLM的复杂推理能力。该框架将问题求解过程分解为一系列决策步骤，并通过在每一步提供基于与专家行为相似性的“细粒度”或“密集”奖励信号，来有效指导模型学习。这种方法被假设能够比SFT和RLVR更有效地引导模型形成灵活且复杂的推理模式，从而提高解决问题的能力。</p>
+<p>本文的核心假设是：通过引入<strong>监督强化学习（Supervised Reinforcement Learning, SRL）</strong>框架，可以显著提升大语言模型在复杂多步推理任务上的表现。该框架将问题解决过程视为一个序列决策过程，通过在每一步中为模型提供基于与专家行为相似度的密集、细粒度的奖励信号，能够比传统方法更有效地引导模型学习正确的推理路径，即使在正确最终答案难以获得的情况下也能实现有效学习。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>监督微调 (SFT)</strong>：通过模仿专家生成的解决方案（如思维链 CoT）进行训练。</li>
-<li><strong>强化学习 (RL)</strong>：特别是基于最终答案正确性的可验证奖励方法 (RLVR)。</li>
-<li><strong>模仿学习 (Imitation Learning)</strong>：直接学习专家行为。</li>
-<li><strong>相关工作</strong>：提及了DeepSeek-R1、DAPO等研究，这些工作探索了使用RL或优化训练数据来增强LLM的推理能力。</li>
-</ul>
+<p>本文的研究建立在以下几个领域的基础上：
+- <strong>监督微调（SFT）</strong>: 将专家演示用于模型训练的基线方法。
+- <strong>强化学习（RL）在LLM中的应用</strong>: 特别是依赖可验证结果作为奖励的策略，如RLVR。
+- <strong>策略优化算法</strong>: 如DAPO和GRPO，它们也致力于改善模型的奖励信号和训练过程。
+- <strong>特定领域的基准测试</strong>: 如用于软件工程的SWE-Bench和用于数学推理的AMC、AIME等竞赛级基准。</p>
 
-<h3>解决方案</h3>
+<h3>论文核心解决方案：监督强化学习 (SRL) 框架</h3>
 
-<p>本文提出的核心解决方案是一个名为<strong>监督强化学习（Supervised Reinforcement Learning, SRL）</strong>的新颖训练框架。该框架旨在解决当前大规模语言模型（LLMs）在处理需要复杂、多步骤推理的任务（如高级数学推理和软件工程）时遇到的学习瓶颈。SRL特别适用于那些传统的监督微调（SFT）和基于结果验证的强化学习（RLVR）效果不佳的情境。</p>
+<p>根据提供的论文片段，本文提出的核心解决方案是一个名为<strong>监督强化学习（Supervised Reinforcement Learning, SRL）</strong>的训练框架。该框架旨在解决大型语言模型（LLMs），特别是小规模模型，在处理需要多步复杂推理的任务（如高级数学推理和软件工程）时遇到的学习困难。</p>
 
-<h4>1. SRL框架的核心思想与目标</h4>
+<p>SRL通过将复杂问题的解决过程重新定义为一个序列决策任务，巧妙地结合了监督学习的精细指导和强化学习的探索优化，从而克服了传统训练方法（如监督微调SFT和基于最终结果的强化学习RLVR）的局限性。</p>
 
-<p>SRL的核心思想是将复杂问题的求解过程，从“一次性生成最终答案”转变为一个<strong>序列化的决策过程</strong>。它不像SFT那样试图模仿整个专家解决方案，也不像RLVR那样仅根据最终结果的正确性提供稀疏的奖励信号。相反，SRL通过在每一步都提供基于专家行为的、密集的奖励信号，来引导模型逐步学习正确的推理路径。</p>
+<hr />
+
+<h4><strong>一、 SRL的核心思想与目标</strong></h4>
+
+<p>SRL的核心思想是：<strong>与其让模型直接模仿最终的完整答案，不如教会它模仿专家的“思考过程”</strong>。它将一个复杂的解决方案分解为一系列逻辑连贯的“动作”（action steps），并通过在每一步提供密集的反馈信号来指导模型学习。</p>
 
 <p><strong>主要目标：</strong>
-- <strong>提升推理质量</strong>：帮助模型在复杂的、成功率低（Dhard）的问题上学习有效的推理模式，而不仅仅是增加输出的长度。
-- <strong>提高学习效率</strong>：允许模型即使在最终结果错误的尝试中，也能从部分正确的中间步骤中获取有用的学习信号。
-- <strong>增强推理灵活性</strong>：促使模型形成如交替规划、即时调整和反思验证等更复杂的推理模式。</p>
+1.  <strong>提升复杂推理能力</strong>：使模型能够掌握交错规划、动态调整和自我验证等高级推理模式。
+2.  <strong>解决学习信号稀疏问题</strong>：在传统RL中，模型只有在得出最终正确答案时才能获得正奖励，导致学习效率低下。SRL通过每一步的反馈提供密集的学习信号。
+3.  <strong>增强模型的可解释性</strong>：通过生成内部推理独白，使模型的决策过程更加透明。
+4.  <strong>赋能小型模型</strong>：让计算资源有限的小型开源模型也能学习并解决此前难以攻克的复杂问题。</p>
 
-<h4>2. SRL 的工作流程与关键组件</h4>
+<hr />
 
-<p>SRL的实现依赖于几个关键组件和一套系统化的工作流程：</p>
+<h4><strong>二、 SRL框架的具体实施步骤</strong></h4>
 
-<p><strong>步骤一：专家演示的分解 (Expert Demonstration Decomposition)</strong>
-- <strong>行动基础的表述</strong>：首先，将专家的完整解决方案（即“专家轨迹”）分解为一系列逻辑连贯的“动作”（actions）。每个动作代表推理过程中的一个关键决策步骤。这种表述是通用的，例如在数学中可以是一个代数运算，在软件工程中可以是执行一条代码仓库命令。
-- <strong>数据构建</strong>：利用强大的教师模型或人类专家生成高质量的解决方案轨迹。然后，将每一条完整的轨迹分解成多个“部分轨迹”训练实例，从而将一个专家方案扩充为丰富的训练数据，教会模型如何从各种中间状态正确推进。</p>
+<p>SRL的实现主要包含以下四个关键步骤：</p>
 
-<p><strong>步骤二：逐步训练与内部独白生成 (Step-wise Training &amp; Inner Monologue Generation)</strong>
-- 在每个决策点，模型被提示（prompt）去生成下一步的动作。
-- 在生成动作之前，模型会先生成一段<strong>“内部推理独白”（internal monologue）</strong>。这部分内容描述了模型的“思考过程”，解释了它为什么选择执行接下来的动作。这不仅提高了模型决策的透明度和可解释性，也帮助模型自身更好地进行上下文推理。</p>
+<h5><strong>1. 将专家解决方案分解为动作序列</strong></h5>
 
-<p><strong>步骤三：细粒度的奖励机制 (Fine-Grained Reward Mechanism)</strong>
-- SRL的精髓在于其奖励机制。在模型生成每个动作后，系统会将其与专家在该步骤的“标准动作”进行比较。
-- 奖励的大小取决于两者之间的<strong>序列相似度</strong>。具体实现上，可以使用如Python的 <code>difflib.SequenceMatcher</code> 来计算相似度比率。
-- 这种机制提供了<strong>密集的、细粒度的奖励信号</strong>：
-    - 生成的动作与专家动作越相似，奖励越高。
-    - 如果生成的输出格式不正确，则给予负奖励。
-- 这种奖励机制能够有效计算并扩展到大型数据集，从而高效地引导模型学习。</p>
+<p>首先，SRL将一个由专家（或强大的教师模型）生成的完整解决方案轨迹（trajectory）分解为一系列离散的、有逻辑意义的动作步骤。
+-   <strong>在数学推理中</strong>，一个动作可以是执行一次代数运算或逻辑推导。
+-   <strong>在软件工程中</strong>，一个动作可能是一个API调用、一个文件编辑命令或一段代码的编写。</p>
 
-<h4>3. 关键机制与实现优势</h4>
+<h5><strong>2. 构建逐步式（Step-wise）训练数据</strong></h5>
 
-<p>为了进一步提升训练效果，SRL框架还集成了以下关键机制：</p>
+<p>为了让模型学习如何在任意中间状态下做出正确的下一步决策，SRL将一个完整的专家轨迹转换成多个训练样本。对于一个包含 <code>N</code> 个步骤的专家轨迹，可以构造出 <code>N-1</code> 个训练实例：
+-   <strong>输入（上下文）</strong>：提供问题描述以及从第1步到第 <code>k-1</code> 步的专家动作。
+-   <strong>目标（标签）</strong>：要求模型预测出第 <code>k</code> 步的专家动作。</p>
+
+<p>通过这种方式，单个专家解决方案被转化为丰富的训练数据，教会模型如何从各种中间状态正确地推进。</p>
+
+<h5><strong>3. 生成带有内部独白的动作</strong></h5>
+
+<p>在训练和推理过程中，模型在每一步被提示先生成一段<strong>内部推理独白（internal reasoning monologue）</strong>，通常被包裹在 <code>&lt;think&gt;</code> 标签内。这段独白帮助模型“思考”当前状态、规划下一步行动，然后再生成实际的动作。
+-   <strong>模型输出格式</strong>：<code>[&lt;think&gt;...&lt;/think&gt;, action_step]</code>
+-   这种设计不仅提升了模型的决策质量，也使其推理过程变得更加透明和可解释。</p>
+
+<h5><strong>4. 采用平滑的、基于相似度的奖励机制</strong></h5>
+
+<p>这是SRL与传统RL最显著的区别。在每个决策步骤，模型会获得一个“平滑”的奖励信号。这个奖励并非二元（对/错），而是根据模型生成的动作与专家动作之间的<strong>序列相似度</strong>来计算的。
+-   <strong>奖励函数</strong>：<code>R(model_action, expert_action) = SimilarityScore</code>
+-   <strong>优势</strong>：即使模型的动作不完全正确，只要方向大体一致，它依然能获得部分奖励。这种密集的、细粒度的奖励为模型提供了持续的学习信号，极大地提高了训练效率，尤其是在模型探索的早期阶段。如果模型输出格式错误，则会受到负奖励。</p>
+
+<hr />
+
+<h4><strong>三、 SRL的优势与应用</strong></h4>
+
+<h5><strong>优势总结</strong></h5>
 
 <ul>
-<li><p><strong>动态批量采样 (Dynamic Batch Sampling)</strong>：为了避免模型在过于简单或过于困难的样本上浪费计算资源，SRL采用了一种动态采样策略。该策略通过监测训练批次中奖励信号的标准差，过滤掉那些几乎不提供学习信号（即奖励值变化极小）的样本，从而确保模型始终在“有效学习区”内进行训练，显著提升了学习效率和最终性能。</p></li>
-<li><p><strong>指导粒度与交错推理 (Granularity of Guidance &amp; Interleaved Reasoning)</strong>：实验证明，SRL提供的这种多步骤、细粒度的指导远优于仅依赖最终答案或整体序列相似性的粗粒度奖励。这种逐步引导的方式，成功促使模型展现出更灵活、更强大的<strong>交错推理行为</strong>，包括：</p>
+<li><strong>克服传统方法局限</strong>：有效解决了SFT的死板模仿和RLVR奖励稀疏的问题。</li>
+<li><strong>促进高级推理</strong>：SRL能引导模型学习灵活的推理模式，如在解题过程中进行规划、执行、反思和验证的交错循环，从而提高解决方案的质量，而不仅仅是增加输出长度。</li>
+<li><strong>提高训练效率</strong>：通过动态采样等技术，可以筛选掉学习信号较弱（即奖励方差接近于零）的样本，进一步优化训练过程。</li>
+<li><strong>通用性强</strong>：该框架被证明在<strong>数学推理</strong>（如AMC、AIME等竞赛级问题）和<strong>代理软件工程</strong>（如根据需求自动生成代码补丁）等不同领域均表现出色。</li>
+</ul>
+
+<h5><strong>训练与优化流程</strong></h5>
 
 <ol>
-<li><strong>前期规划 (Upfront Planning)</strong>：在解题开始时制定一个全面的步骤计划。</li>
-<li><strong>即时调整 (On-the-fly Adjustments)</strong>：在解决过程中插入多个推理块，进行迭代式的规划和修正。</li>
-<li><strong>反思验证 (Reflective Validation)</strong>：在生成步骤后暂停，并验证其当前答案的正确性。</li>
-</ol></li>
-</ul>
+<li><strong>初步训练</strong>：使用SRL框架对模型进行训练，使其掌握逐步推理和模仿专家行为的能力。</li>
+<li><strong>进一步微调</strong>：在SRL训练之后，可以继续使用RLVR（基于最终结果的强化学习）进行微调，以实现最佳性能。这种组合形成了一种强大的课程学习策略。</li>
+</ol>
 
-<h4>4. 应用实例与效果验证</h4>
+<hr />
 
-<p>SRL框架的通用性和有效性在多个领域得到了验证：</p>
+<h4><strong>四、 结论</strong></h4>
 
-<ul>
-<li><p><strong>应用一：数学推理 (Mathematical Reasoning)</strong></p>
-
-<ul>
-<li>在解决一个关于 <code>20!</code> 的互质对计数问题时，模型首先需要理解问题核心（<code>20!</code> 的8个质因数必须完全分配给a或b），然后生成逻辑步骤来计算结果（<code>2^8 = 256</code>）。SRL通过奖励与专家步骤相似的输出来引导模型完成这一推理过程。</li>
-</ul></li>
-<li><p><strong>应用二：软件工程 (Software Engineering)</strong></p>
-
-<ul>
-<li>在软件工程基准测试（SWE-Bench）上，SRL被用于微调 <code>Qwen2.5-Coder-7B-Instruct</code> 模型以自动生成代码补丁。</li>
-<li><strong>训练数据</strong>：从5,000条专家轨迹中生成了超过134,000个逐步训练实例。</li>
-<li><strong>惊人效果</strong>：经过SRL训练的模型，在提供完整代码文件进行修复的评估中，解决率达到了 <strong>14.8%</strong>，相较于基线模型实现了 <strong>74%</strong> 的相对性能提升。在需要模型自主定位故障的端到端评估中，其性能也达到了基线的两倍。</li>
-</ul></li>
-</ul>
-
-<h4>5. 技术实现细节</h4>
-
-<ul>
-<li><strong>底层框架</strong>：SRL的实现基于 <strong>GRPO (Generalized Reinforcement Policy Optimization)</strong> 和 <strong>VeRL</strong> 等强化学习训练框架。</li>
-<li><strong>超参数调优</strong>：为了最大化性能，研究者对批量大小（batch size）等超参数进行了细致调整。例如，SRL使用较大的批量（如512）以充分利用样本，而GRPO则使用较小的批量（如128）以避免重复抽样。</li>
-<li><strong>计算资源</strong>：实验在配备 NVIDIA H100 级别GPU的集群上进行，以支持大规模的模型训练。</li>
-</ul>
-
-<h4>6. 结论</h4>
-
-<p><strong>监督强化学习（SRL）</strong>通过将复杂问题分解为带有内部独白的逐步决策、并结合基于序列相似度的密集奖励机制，成功地弥合了传统模仿学习和强化学习之间的鸿沟。它不仅显著提升了中小型开源模型在数学、软件工程等高难度推理任务上的表现，还通过动态采样和细粒度指导等机制，为训练更强大、更灵活的AI代理铺平了道路，展现了其作为一种稳健且多功能训练框架的巨大潜力。</p>
+<p>综上所述，<strong>监督强化学习（SRL）</strong>框架通过将复杂问题分解为可管理的步骤、引入内部推理独白，并采用基于相似度的密集奖励机制，为训练大型语言模型掌握高级推理技能提供了一条有效且高效的路径。它不仅显著提升了模型在数学和软件工程等挑战性任务上的性能，也为未来开发更强大、更具适应性的人工智能代理奠定了坚实的基础。</p>
 
 <h3>实验设计</h3>
 
-<p>实验在数学推理和软件工程这两个具有挑战性的领域进行：
-- <strong>模型</strong>：主要使用了 Qwen2.5-7B-Instruct (用于数学) 和 Qwen2.5-Coder-7B-Instruct (用于软件工程) 等模型进行微调。
-- <strong>基线对比</strong>：将SRL方法的性能与传统的SFT和RLVR方法进行全面比较。
-- <strong>评估任务</strong>：
-    - <strong>数学推理</strong>：在AMC23, AIME24, AIME25等多个数学基准上进行评估。
-    - <strong>软件工程</strong>：在SWE-Bench基准上进行评估，任务是生成代码补丁来修复实际问题。评估分为“Oracle文件编辑”和“端到端”两种设置。</p>
+<p>为了验证SRL框架的有效性，研究者在两个具有挑战性的领域进行了实验：
+- <strong>数学推理</strong>: 在多个数学基准（如AMC、AIME）上进行评估，使用s1K-1.1等数据集对Qwen2.5-7B-Instruct等模型进行微调。
+- <strong>软件工程</strong>: 在SWE-Bench基准上评估模型的代码补丁生成能力，使用包含5000个专家轨迹的数据集进行训练。
+实验将SRL的性能与SFT和RLVR等多个基线方法进行了直接比较。</p>
 
 <h3>数据集和代码</h3>
 
-<ul>
-<li><strong>数据集</strong>:
-<ul>
-<li><strong>数学</strong>: 使用s1K-1.1数据集进行训练，并在<a href="https://huggingface.co/datasets/AI-MO/aimo-validation-amc">AMC23</a>、<a href="https://huggingface.co/datasets/AI-MO/aimo-validation-aime">AIME24</a>和<a href="https://huggingface.co/datasets/math-ai/aime25">AIME25</a>上进行验证。</li>
-<li><strong>软件工程</strong>: 使用了包含5,000个专家代理轨迹的数据集进行训练。</li>
-</ul></li>
-<li><strong>代码</strong>:
-<ul>
-<li>论文相关的数学模型代码可在 <a href="https://github.com/QwenLM/Qwen2.5-Math">Qwen2.5-Math</a> 获取。</li>
-</ul></li>
-</ul>
+<p>实验使用了多个数据集：
+- <strong>数学</strong>: s1K-1.1数据集（包含1000个问题）以及AMC23、AIME24、AIME25等基准测试。
+- <strong>软件工程</strong>: 一个包含5000个专家轨迹的数据集，用于SWE-Bench任务。</p>
+
+<p>论文中提到代码和数据集的链接已公开，但具体URL未在片段中提供。</p>
 
 <h3>实验结果</h3>
 
-<p>实验结果有力地支持了SRL的有效性：
-- <strong>数学推理</strong>：与SFT相比，SRL带来了平均3.0%的性能提升。
-- <strong>软件工程</strong>：在SWE-Bench的“Oracle设置”中，SRL实现了14.8%的解决率，相比基线模型有74%的相对提升。在端到端设置中，性能也是其他模型的两倍。
-- <strong>总体表现</strong>：在所有测试的基准上，SRL的表现均显著优于SFT和RLVR等基线方法，证明了其在提升模型复杂推理能力方面的优越性。</p>
+<p>实验结果一致表明SRL框架的显著优势：
+- 在<strong>数学推理</strong>任务上，SRL训练的模型在多个基准测试中的准确性显著超越了SFT和RLVR等基线方法。
+- 在<strong>软件工程</strong>的SWE-Bench基准上，SRL模型在“oracle”评估环境中实现了14.8%的解决率，相比基线模型提升了74%，在端到端评估中也表现出色。
+- 结果证实，SRL不仅提升了最终结果的准确性，还促进模型生成了更灵活、更复杂的推理模式。</p>
 
 <h3>论文贡献</h3>
 
-<ol>
-<li><strong>提出SRL框架</strong>：提出并验证了一种新的训练框架——监督强化学习（SRL），有效填补了模仿学习和传统强化学习之间的空白，解决了LLM在复杂多步推理任务中学习困难的问题。</li>
-<li><strong>实证有效性</strong>：通过在数学和软件工程两个领域的广泛实验，证明了SRL相比SFT和RLVR等现有方法具有显著的性能优势。</li>
-<li><strong>推动AI代理发展</strong>：为训练更强大、更具通用性的AI代理提供了新的思路和有效方法，推动了AI在解决真实世界复杂问题方面的能力。</li>
-</ol>
+<p>本文的主要贡献如下：
+1.  <strong>提出了SRL框架</strong>: 提出了一种新颖的监督强化学习框架，为训练LLM解决复杂多步推理任务提供了有效的新范式。
+2.  <strong>验证了密集奖励的有效性</strong>: 通过实验证明，基于专家轨迹的逐步、密集奖励信号比传统的稀疏奖励信号更能有效地指导模型学习。
+3.  <strong>在关键领域取得卓越性能</strong>: 在数学推理和软件工程这两个具有挑战性的领域，证明了SRL框架的优越性，其性能显著优于现有方法。
+4.  <strong>提升了小规模模型的能力</strong>: 为提升小规模、开源LLM的复杂推理能力提供了一条可行的技术路径，促进了更强大、更通用的人工智能代理的开发。</p>
 
                     </div>
                 
@@ -766,7 +718,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-01 14:16:56</p>
+            <p>生成时间: 2025-11-01 17:09:29</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
