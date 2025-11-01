@@ -214,7 +214,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种通过强化学习训练大型语言模型（DiagAgent）的方法，以解决现有模型在多轮临床诊断中的局限性。该方法利用DiagGym虚拟环境进行动态交互学习，优化诊断策略，显著提高了诊断准确性和检查推荐质量。实验结果显示，DiagAgent在多个评估设置中均超越了现有最先进模型，推动了临床AI系统的发展。
+                本文提出了一种基于强化学习的框架，训练大型语言模型（DiagAgent）作为诊断代理，解决了传统模型在复杂多轮临床诊断中的不足。通过在DiagGym虚拟环境中进行交互式学习，DiagAgent显著提升了诊断准确性和检查推荐质量，超越了多种先进的LLM，展示了动态决策管理的能力。
             </div>
         </div>
         
@@ -585,131 +585,163 @@ pre[class*=language-] {
                     <div class="markdown-content">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决现有大语言模型（LLMs）和诊断代理在真实临床诊断场景中的核心局限性。临床诊断是一个动态、多轮、交互式的过程，而现有模型大多基于静态病例数据进行训练，导致它们难以有效管理长期的、顺序性的诊断过程，无法处理实时信息和不确定性。这导致了在推荐质量、诊断准确性以及处理复杂或罕见病例方面的能力不足。此外，缺乏可重复、高保真的虚拟环境来进行强化学习训练，以及缺少能够系统性评估多轮诊断轨迹的基准，也是该领域面临的重要挑战。</p>
+<p>本文旨在解决当前大语言模型（LLMs）在临床诊断中的核心不足，特别是在处理复杂、动态的多轮诊断过程方面的能力。传统的LLM训练方法依赖于静态病例摘要，无法模拟真实临床环境中医生面临的序贯决策挑战。该问题至关重要，因为：
+- 临床诊断是一个动态、长期的过程，需要在不确定性下持续收集信息并进行推理。
+- 现有模型缺乏与环境的有效互动，难以在多轮交互中优化诊断策略，影响了诊断的准确性和效率。
+- 在复杂的临床工作流程中，需要平衡诊断准确性与检查推荐的质量，而单一的训练目标难以实现。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过在一个高保真、动态的虚拟临床环境（DiagGym）中，使用强化学习（RL）来训练一个大型语言模型代理（DiagAgent），可以使其掌握动态、临床相关的长期诊断管理能力。这种交互式学习方法能够让代理超越静态数据模仿，探索并优化其决策策略，从而在多轮诊断的准确性和推荐质量上，显著优于仅通过监督微调（SFT）或在静态数据上训练的模型。</p>
+<p>本文的核心假设是：通过在交互式、高保真的虚拟临床环境中，使用强化学习（RL）训练诊断代理，可以使其掌握动态、具有临床意义的长期诊断管理能力，从而在性能上超越依赖静态数据进行监督微调的模型。
+- <strong>关键发现</strong>: 强化学习能显著提升诊断代理在动态决策中的能力，使其能够主动管理多轮诊断过程。
+- <strong>初步结论</strong>: 经过训练的诊断代理（DiagAgent）在单轮和多轮诊断设置中，其诊断准确率和检查推荐质量均显著优于多种先进的LLM基线模型。
+- <strong>实验验证</strong>: 在包含750个医生验证案例的基准测试中，DiagAgent的表现优于10余种最先进的LLM及代理系统。</p>
 
 <h3>相关研究</h3>
 
-<p>本文的研究建立在多个领域的基础之上，主要包括：
-- <strong>医疗大型语言模型（Medical LLMs）</strong>: 包括通用的（如GPT-4o, Llama3.1）和医疗专用的（如MedGemma, OpenBioLLM）模型。
-- <strong>临床模拟环境</strong>: 现有的角色扮演模拟器（如AgentClinic, AgentHospital），但它们通常受限于静态数据。
-- <strong>多代理系统</strong>: 如MedAgents等，它们尝试通过多个代理协作来提高决策质量。
-- <strong>医疗领域的强化学习</strong>: 将强化学习应用于临床决策支持的研究。
-- <strong>评估基准</strong>: 现有的评估框架，如HealthBench，为本研究的基准设计提供了参考。</p>
+<ul>
+<li><strong>大型语言模型（LLMs）</strong>: 包括通用模型（如GPT-4o, Claude-4, Qwen, DeepSeek）和医疗专用模型（如MedGemma, OpenBioLLM）。</li>
+<li><strong>训练方法</strong>: 监督微调（SFT）和基于指令的训练。</li>
+<li><strong>代理系统</strong>: 基于多代理讨论的系统，如MedAgents和MDAgents。</li>
+<li><strong>虚拟临床环境</strong>: 相关的角色扮演模拟器，如AgentClinic, AgentHospital和SDBench。</li>
+</ul>
 
-<h3>解决方案</h3>
+<h3><strong>基于强化学习的动态临床诊断解决方案</strong></h3>
 
-<p>本论文提出了一套创新的端到端框架，旨在通过强化学习（Reinforcement Learning, RL）训练大型语言模型（LLMs）成为能够执行多轮、交互式医疗诊断的智能代理（DiagAgent）。该解决方案的核心是创建一个名为<strong>DiagGym</strong>的动态虚拟临床环境，它模拟了真实的诊断流程，为DiagAgent的训练和评估提供了高保真的反馈。为了验证其有效性，论文还构建了一个名为<strong>DiagBench</strong>的全新评估基准。</p>
+<p>本文提出了一个创新的框架，旨在训练大型语言模型（LLM）成为能够自主管理多轮诊断过程的智能代理（DiagAgent）。该方案的核心是通过在一个名为<strong>DiagGym</strong>的动态虚拟临床环境中进行强化学习，使代理能够适应性地选择检查、整合信息并做出准确诊断，从而克服传统静态训练方法的局限性。</p>
 
 <hr />
 
-<h4><strong>1. 核心组件与框架</strong></h4>
+<h4><strong>第一部分：DiagGym - 高保真虚拟临床环境</strong></h4>
 
-<p>该解决方案由三个关键组件构成，它们协同工作，实现了从静态知识学习到动态决策策略的转变。</p>
-
-<h5><strong>a. DiagGym：动态诊断世界模型</strong></h5>
-
-<p>DiagGym是整个框架的基石，它是一个基于真实电子健康记录（EHRs，具体为MIMIC-IV数据集）构建的生成式“世界模型”。与传统的静态案例扮演或历史重放模拟器不同，DiagGym具有以下核心功能：</p>
+<p>为了实现可重复、安全的强化学习训练，该方案首先构建了一个名为<strong>DiagGym</strong>的诊断世界模型。它是一个模拟真实临床环境的动态系统。</p>
 
 <ul>
-<li><strong>条件性结果生成</strong>：DiagGym能够根据患者的初始信息（主诉、病史等）、已有的检查记录以及代理当前请求的检查，动态地生成临床上合理且一致的检查结果。这使得模拟环境能够反映患者状态的动态变化。</li>
-<li><strong>高保真与多样性</strong>：通过精细的数据处理管道和模型训练，DiagGym生成的检查结果在数值分布和自由文本叙述上都与真实数据高度相似（高保真度），同时也能生成多样化的病例轨迹，避免了确定性输出，从而让代理在更丰富的场景中学习。</li>
-<li><strong>计算效率</strong>：DiagGym在单个A100 GPU上即可高效运行，平均生成时间仅为0.52秒，这使其非常适合需要快速、重复交互的强化学习训练场景。</li>
-</ul>
-
-<h5><strong>b. DiagAgent：智能诊断代理</strong></h5>
-
-<p>DiagAgent是基于LLM构建的诊断代理，其目标是在DiagGym环境中通过与虚拟患者的交互，学习最优的诊断策略。</p>
+<li><p><strong>目的与功能</strong>:</p>
 
 <ul>
-<li><strong>训练方法</strong>：DiagAgent的训练分为两个阶段：
-<ol>
-<li><strong>冷启动</strong>：首先通过标准的监督微调（Supervised Fine-Tuning, SFT），使用高质量的诊断轨迹案例对模型进行初步优化，使其能生成格式正确且符合上下文的响应。</li>
-<li><strong>强化学习</strong>：随后，采用强化学习算法（如GRPO）进行端到端的多轮训练。代理从初始问询开始，迭代地与DiagGym环境交互，选择下一步行动（请求检查或做出最终诊断）。</li>
-</ol></li>
-<li><strong>策略与奖励机制</strong>：代理的决策由其内部的策略网络（Policy Network）决定。为了引导代理学习有效的策略，研究者设计了一个包含三个部分的<strong>奖励函数</strong>：
-<ol>
-<li><strong>诊断奖励 ($r<em>{diag}$)</strong>：如果最终诊断正确，则给予高奖励，鼓励准确性。</li>
-<li><strong>检查推荐奖励 ($r</em>{exam}$)</strong>：根据推荐的检查与专家参考轨迹的F1分数给予奖励，促进相关性。</li>
-<li><strong>回合惩罚 ($r_{turn}$)</strong>：对过长的诊断回合进行惩罚，鼓励效率。
-通过最大化累计奖励，DiagAgent学会了如何在信息收集的全面性、诊断的准确性和过程的效率之间取得平衡。</li>
-</ol></li>
-</ul>
-
-<h5><strong>c. DiagBench：多轮诊断评估基准</strong></h5>
-
-<p>为了全面、公正地评估DiagAgent在多轮诊断中的表现，论文构建了一个新的基准测试DiagBench。</p>
-
-<ul>
-<li><strong>数据集构成</strong>：包含750个经过医生严格审查和验证的复杂诊断案例。每个案例不仅有最终诊断，还提供了医生推荐的参考诊断轨迹。</li>
-<li><strong>过程导向的评分标准</strong>：其中99个案例附有由多位医生共同制定的973条详细评分标准。这些标准关注诊断的推理过程（如病史采集、假设生成、检查排序等），并为关键步骤分配了不同的重要性权重。这使得评估不再局限于最终结果的对错，而是能深入到诊断过程的质量。</li>
-</ul>
-
-<hr />
-
-<h4><strong>2. 解决方案的过程与优势</strong></h4>
-
-<h5><strong>a. 动态交互式学习流程</strong></h5>
-
-<ol>
-<li><strong>初始化</strong>：DiagAgent接收到一个虚拟患者的初始信息（如主诉和病史）。</li>
-<li><strong>多轮探索</strong>：代理根据当前状态，决定下一步行动：是请求一项新的检查（如CBC血检、CT扫描），还是做出最终诊断。</li>
-<li><strong>环境反馈</strong>：如果代理请求检查，DiagGym会生成该检查的合理结果并返回给代理。</li>
-<li><strong>状态更新与策略优化</strong>：代理接收新信息，更新对患者状态的理解，并根据获得的奖励信号调整其内部策略。</li>
-<li><strong>循环与终止</strong>：此过程不断重复，直到代理选择做出最终诊断，一个完整的诊断轨迹结束。</li>
-</ol>
-
-<h5><strong>b. 核心优势</strong></h5>
-
-<ul>
-<li><strong>超越静态学习</strong>：通过在动态环境中进行交互式探索和强化学习，DiagAgent学会了规划和管理长期的诊断轨迹，获得了被动训练无法实现的动态决策能力。</li>
-<li><strong>提升诊断性能</strong>：实验结果表明，与十种最先进的LLMs（包括医疗专用模型）相比，DiagAgent在性能上取得了显著提升：
-<ul>
-<li>在<strong>单轮评估</strong>中，诊断准确性提高了<strong>9.34%</strong>，检查推荐命中率提升了<strong>44.03%</strong>。</li>
-<li>在更具挑战性的<strong>端到端评估</strong>中，诊断准确性提高了<strong>15.12%</strong>，检查推荐的F1分数提升了<strong>23.09%</strong>。</li>
+<li><strong>创建安全的闭环环境</strong>：DiagGym允许DiagAgent在无需访问真实患者记录的情况下进行探索、互动和试错，并观察其决策的后果。</li>
+<li><strong>生成高保真反馈</strong>：模型能够根据患者的背景信息（如主诉、病史）、过去的检查记录以及代理新请求的检查项目，动态生成符合临床逻辑的、真实的检查结果。</li>
+<li><strong>支持多样化轨迹</strong>：与仅能回放历史记录的静态模拟器不同，DiagGym能生成新的、临床上合理的患者发展轨迹，包括罕见和复杂的病例，从而增强代理的泛化能力。</li>
 </ul></li>
-<li><strong>临床相关性与效率</strong>：精心设计的奖励机制引导代理不仅追求诊断的准确性，还优化了检查推荐的相关性和整个诊断过程的效率，有效避免了冗余检查。</li>
-<li><strong>通用性与可扩展性</strong>：该框架被证明可以适应不同模型家族（如Qwen, Llama）和不同规模（如7B, 14B）的基础模型，显示了其广泛的适用性。</li>
+<li><p><strong>构建与工作原理</strong>:</p>
+
+<ul>
+<li><strong>数据基础</strong>：DiagGym使用MIMIC-IV等电子健康记录（EHR）数据集进行训练。通过处理出院记录，提取患者资料和时间有序的检查序列（包括体格检查、实验室结果、影像学报告等）。</li>
+<li><strong>生成过程</strong>：其核心是一个自回归生成模型。在任意时间点<code>t</code>，给定患者背景<code>B</code>和过去的检查记录<code>E_t</code>，当代理请求一个新的检查<code>a_{t+1}</code>时，DiagGym会生成相应的检查结果<code>e_{t+1}</code>。其过程可形式化为：
+[ e<em>{t+1} = \Phi</em>{env}(a<em>{t+1} | E</em>t, B) ]</li>
+<li><strong>质量与效率</strong>：DiagGym在生成质量和计算效率上表现卓越。它使用<strong>实例级</strong>（一致性、相似性）和<strong>检查级</strong>（Wasserstein距离、Fréchet Inception Distance）指标进行评估，确保生成结果的真实性和多样性。同时，它计算效率极高，仅需单个GPU即可快速响应（平均0.52秒），非常适合需要快速迭代的强化学习训练。</li>
+</ul></li>
 </ul>
 
 <hr />
 
-<h4><strong>3. 总结</strong></h4>
+<h4><strong>第二部分：DiagAgent - 基于强化学习的诊断代理</strong></h4>
 
-<p>综上所述，本论文提出的解决方案通过<strong>DiagGym</strong>、<strong>DiagAgent</strong>和<strong>DiagBench</strong>三位一体的框架，成功地将强化学习应用于复杂的医疗诊断任务中。它通过创建一个高保真的动态虚拟环境，使AI代理能够学习到传统静态训练无法企及的、符合临床逻辑的长期诊断策略。这一方法不仅显著提升了诊断的准确性和效率，也为开发和评测更高级、更可靠的临床AI系统提供了一个可扩展的平台，为弥合当前AI技术与实际临床部署之间的差距迈出了重要一步。</p>
+<p><strong>DiagAgent</strong>是在DiagGym环境中通过端到端强化学习训练出的诊断代理，其目标是学习最优的诊断策略。</p>
+
+<ul>
+<li><p><strong>目的</strong>:</p>
+
+<ul>
+<li>学习在复杂和动态演变的病例中进行有效决策。</li>
+<li>优化信息获取过程，最大化诊断准确性并提高效率。</li>
+<li>主动管理从初步问诊到最终诊断的完整多轮交互轨迹。</li>
+</ul></li>
+<li><p><strong>强化学习（RL）训练框架</strong>:</p>
+
+<ul>
+<li><strong>状态 (State)</strong>：在时间步<code>t</code>，代理的状态<code>s_t</code>由患者初始信息<code>I</code>和已有的检查记录<code>E_t</code>组成。</li>
+<li><strong>动作 (Action)</strong>：代理的动作空间<code>A</code>包括所有可用的临床检查项目以及做出最终诊断的决定。</li>
+<li><strong>策略 (Policy)</strong>：代理的策略<code>π_θ</code>由一个大型语言模型参数化，根据当前状态<code>s_t</code>选择下一个动作<code>a_{t+1}</code>。</li>
+<li><strong>奖励 (Reward)</strong>：为了引导代理学习高效的诊断策略，设计了一个复合奖励函数<code>R</code>，它由三个部分加权组成：
+<ol>
+<li><strong>诊断奖励 (<code>r_diag</code>)</strong>: 如果最终诊断准确，则给予高奖励。</li>
+<li><strong>检查推荐奖励 (<code>r_exam</code>)</strong>: 根据推荐的检查与专家轨迹的对齐度（F1分数）给予奖励，鼓励提出相关性高的检查。</li>
+<li><strong>效率奖励/惩罚 (<code>r_return</code>)</strong>: 奖励使用较少的回合数得出正确诊断，惩罚冗长或不必要的交互。</li>
+</ol></li>
+<li><strong>训练目标</strong>：训练的目标是最大化期望的累计奖励：
+[ \max<em>{\Phi</em>{\text{diag}}} E<em>{\Phi</em>{\text{diag}}} \left[ \sum<em>{t=1}^{T} \gamma^t R(s</em>t, a_t) \right] ]
+其中 <code>γ</code> 是折扣因子。</li>
+</ul></li>
+<li><p><strong>两阶段训练流程</strong>:</p>
+
+<ol>
+<li><strong>冷启动（Supervised Fine-Tuning, SFT）</strong>: 首先，使用一小部分高质量的手动筛选案例对模型进行指令微调，使其学习遵循多轮对话的输出格式。</li>
+<li><strong>强化学习（RL）</strong>: 在冷启动后，使用GRPO等RL算法在整个训练集上进行优化。代理与DiagGym环境互动，直到它认为收集到足够的信息来做出最终诊断为止。实验证明，这种结合了SFT和RL的训练方式，尤其是在引入双重奖励（诊断+检查）后，能显著提升模型的诊断准确性和检查推荐质量。</li>
+</ol></li>
+</ul>
+
+<hr />
+
+<h4><strong>第三部分：DiagBench - 全面的评估基准</strong></h4>
+
+<p>为了标准化地评估代理在多轮诊断互动中的表现，本文还构建了一个新的诊断基准<strong>DiagBench</strong>。</p>
+
+<ul>
+<li><p><strong>构成</strong>:</p>
+
+<ul>
+<li>包含<strong>750个</strong>由医生审查并验证其临床合理性的诊断案例。</li>
+<li>其中，随机抽取<strong>99个案例</strong>，由多位医生独立编写了详细的、面向过程的评估标准（Rubrics），并为每个标准分配了临床重要性权重。</li>
+</ul></li>
+<li><p><strong>评估方法</strong>:</p>
+
+<ul>
+<li><strong>超越最终准确率</strong>：DiagBench不仅评估最终诊断的正确性，更侧重于评估整个诊断<strong>过程</strong>的质量，包括病史采集、假设生成与管理、检查排序的合理性等。</li>
+<li><strong>加权评分系统</strong>：使用LLM（如GPT-4o）作为评估器，根据模型生成的诊断轨迹是否满足医生制定的评分标准，并结合权重计算最终得分。这使得评估能更准确地反映临床医生对诊断交互过程的满意度。</li>
+<li><strong>多维度指标</strong>：评估涵盖单轮和端到端两种设置。指标包括最终诊断准确率、检查推荐的精确率、召回率、F1分数以及加权评分。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>性能评估与结果</strong></h4>
+
+<p>通过在DiagBench上的全面评估，DiagAgent展现了卓越的性能，显著优于包括GPT-4o、Claude-sonnet-4在内的10个最新LLM以及其他基线代理。</p>
+
+<ul>
+<li><strong>单轮评估</strong>：诊断准确率提高了<strong>9.34%</strong>，检查推荐命中率提升了<strong>44.03%</strong>。</li>
+<li><strong>端到端评估</strong>：诊断准确性提升了<strong>15.12%</strong>，检查推荐F1得分提高了<strong>23.09%</strong>。</li>
+<li><strong>基于评分的评估</strong>：在加权评分上，DiagAgent比第二名高出<strong>7.1%</strong>，证明其诊断过程更符合临床专家的要求。</li>
+<li><strong>核心优势</strong>：DiagAgent通过更长的多轮探索（平均6.77轮 vs 基线模型的2.49轮），能更全面地收集证据，显著提高了召回率和最终诊断的准确性，避免了因过早终止信息收集而导致的误诊。</li>
+</ul>
+
+<h3><strong>总结</strong></h3>
+
+<p>该解决方案通过<strong>“DiagGym（环境）+ DiagAgent（代理）+ DiagBench（评估）”</strong>的完整闭环，成功地将强化学习应用于复杂的临床诊断任务。通过在动态虚拟环境中进行互动探索和反馈优化，DiagAgent学会了如何像医生一样，在不断演变的患者状态下动态调整诊断策略。这种方法不仅显著提升了诊断的准确性和效率，也为开发更高级、更安全的临床AI系统铺平了道路。</p>
 
 <h3>实验设计</h3>
 
-<p>为了验证解决方案的有效性，实验设计如下：
-- <strong>基准构建</strong>: 创建了一个新的评估基准 <strong>DiagBench</strong>，包含750个由医生策划和验证的真实临床病例，并配有详细的评分标准，用于评估整个诊断轨迹的质量。
-- <strong>评估设置</strong>: 在两种模式下评估模型性能：<strong>单轮评估</strong>（评估单次检查推荐的质量）和<strong>端到端评估</strong>（评估从初步信息到最终诊断的完整过程）。
-- <strong>对比基线</strong>: 将DiagAgent与多种最先进的模型进行比较，包括多个规模的通用LLMs、医疗专用LLMs，以及使用传统监督微调（SFT）训练的代理。
-- <strong>评估指标</strong>: 使用诊断准确率、检查推荐命中率、F1分数等定量指标，并结合具体的案例研究进行定性分析。</p>
+<ul>
+<li><strong>环境与训练</strong>: 在DiagGym虚拟环境中，对DiagAgent进行端到端的多轮强化学习训练。</li>
+<li><strong>评估基准</strong>: 使用包含750个病例的DiagBench进行评估，评估设置分为单轮评估和更贴近实际的端到端（多轮）评估。</li>
+<li><strong>对比实验</strong>: 将DiagAgent与多种基线模型进行比较，包括各类先进的LLMs和代理系统，以验证其性能优势。</li>
+<li><strong>评估指标</strong>: 采用诊断准确率、检查推荐的命中率/F1分数，以及由医生制定的评分标准来综合评估模型的表现。</li>
+</ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>: 本研究主要使用 <strong>MIMIC-IV</strong> 数据集来构建DiagGym环境和DiagBench基准。DiagBench包含750个经过医生审核的诊断案例。</li>
-<li><strong>代码</strong>: 项目代码已在GitHub上开源：<a href="https://github.com/MAGIC-AI4Med/DiagGym">https://github.com/MAGIC-AI4Med/DiagGym</a></li>
+<li><strong>数据集</strong>: 训练数据主要来源于<strong>MIMIC-IV</strong>数据库，包含数十万份出院记录和上亿条实验室事件。评估基准<strong>DiagBench</strong>包含750个经过医生验证的诊断案例。</li>
+<li><strong>代码</strong>: 代码已在GitHub上发布：<a href="https://github.com/MAGIC-AI4Med/DiagGym">https://github.com/MAGIC-AI4Med/DiagGym</a></li>
 </ul>
 
 <h3>实验结果</h3>
 
 <p>实验结果强有力地支持了本文的假设：
-- <strong>性能卓越</strong>: DiagAgent在所有评估设置中均显著优于所有基线模型。在单轮评估中，诊断准确率提升了<strong>9.34%</strong>；在端到端评估中，准确率提升了<strong>15.12%</strong>。
-- <strong>环境有效性</strong>: DiagGym被证明能够生成具有高临床一致性（96.91%）和多样性的结果，且计算效率高。
-- <strong>定性分析</strong>: 案例研究表明，DiagAgent能够遵循合理的临床逻辑处理阑尾炎等复杂病例。但研究也发现了其在处理需要紧急干预的急性病症（如破裂异位妊娠）时存在不足，未能优先推荐紧急救治措施。</p>
+- <strong>性能提升</strong>: 与最强的基线模型相比，DiagAgent在单轮评估中将诊断准确率提升了<strong>9.34%</strong>，检查推荐命中率提升了<strong>44.03%</strong>。在端到端的评估中，诊断准确率提升了<strong>15.12%</strong>，检查推荐F1分数提升了<strong>23.09%</strong>。
+- <strong>效率与鲁棒性</strong>: DiagAgent在实现更高准确性的同时，也展现出更高效的推理能力（减少了对话轮次）。
+- <strong>环境有效性</strong>: 实验证明DiagGym生成的临床轨迹具有高保真度、多样性和一致性，优于其他开源LLM。</p>
 
 <h3>论文贡献</h3>
 
-<p>本文的主要贡献如下：
-1.  <strong>提出了DiagGym</strong>: 一个创新的、动态的、高保真的虚拟临床环境，为开发和评估临床诊断代理提供了可重复的平台。
-2.  <strong>开发了DiagAgent框架</strong>: 成功地将强化学习应用于训练LLM进行复杂的多轮临床诊断，实现了超越现有方法的性能。
-3.  <strong>创建了DiagBench基准</strong>: 一个专门用于评估多轮诊断交互过程质量的、包含医生验证案例和评分标准的新基准。
-4.  <strong>推动了范式转变</strong>: 证明了从基于静态数据的监督学习转向在动态环境中进行交互式学习的有效性，为构建更强大、更符合临床实际的医疗AI系统开辟了新路径。</p>
+<ol>
+<li><strong>提出了DiagGym</strong>: 一个高保真、计算高效的动态虚拟临床环境，为在医疗领域应用强化学习训练诊断代理提供了基础。</li>
+<li><strong>开发了DiagAgent</strong>: 通过多轮强化学习和双重奖励机制，成功将LLM从静态问答工具转变为能够进行长期动态患者管理的诊断代理，性能超越了现有SOTA模型。</li>
+<li><strong>创建了DiagBench</strong>: 一个新的、过程导向的评估基准，为多轮诊断交互的质量评估提供了标准化的框架。</li>
+<li><strong>验证了新范式</strong>: 证明了通过与虚拟环境的动态交互进行学习，是提升LLM在复杂临床决策中能力的一种有效范式，为开发可部署的决策型临床AI系统提供了新思路。</li>
+</ol>
 
                     </div>
                 
@@ -724,7 +756,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-01 17:09:29</p>
+            <p>生成时间: 2025-11-01 17:57:25</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
