@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervised Reinforcement Learning: From Expert Trajectories to Step-wise Reasoning</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        .nav-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Supervised Reinforcement Learning: From Expert Trajectories to Step-wise Reasoning</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Google Cloud AI Research, UCLA, Google Cloud</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.411</span>
+                <span class="paper-id">arXiv ID: 2510.25992</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-01/267fe6c0454b49591947fa1bdc5de1ca891ed6452a18ba9d09129b61106e1547.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种新的训练框架——监督强化学习（SRL），旨在解决大型语言模型在复杂多步推理任务中的学习困难。SRL通过将问题求解视为一系列逻辑“动作”，并在每一步提供基于专家行为的细粒度奖励，显著提升了模型的推理能力。实验表明，SRL在数学推理和软件工程任务上均优于传统的监督微调和强化学习方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100%;
+                    margin: 0;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px;
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word;
+                }
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content">
+                        <p><think>
+<strong>Considering Report Updates</strong></p>
+
+<p>I've pinpointed the "解决方案" section for the update. My next step involves integrating the user's comprehensive solution, which is helpfully segmented. I'm focusing now on seamlessly incorporating each part, ensuring a smooth transition and maintaining clarity. The plan is to create a well-structured and easy-to-understand revised report.</p>
+
+<p><strong>Analyzing Replacement Strategy</strong></p>
+
+<p>I'm now deep-diving into the "解决方案" replacement. The task is to swap in the detailed SRL content. I've broken it down: identifying the target, locating the provided text, the actual replacement, and then verifying the final structure. This involves preserving the structure and ensuring nothing gets lost in translation. I am making sure the new content flows well within the report.</p>
+
+<p><strong>Implementing the Replacement</strong></p>
+
+<p>I'm now methodically proceeding with the replacement of the "解决方案" section. The plan is clear: pinpoint the target (### 解决方案), bring in the detailed SRL content provided, and then verify the outcome. The initial phase involves the direct copy and paste. I'm prioritizing accuracy, ensuring every detail of the SRL solution is incorporated without any modification. Afterwards, a structural audit will be conducted to assure all elements align seamlessly.</p>
+
+<p><strong>Evaluating Incorporation Process</strong></p>
+
+<p>I'm now in the final stage of replacing the "解决方案" section. The detailed SRL solution has been successfully inserted, and I am now meticulously verifying the structure and flow. I'm checking for consistency in headings, ensuring all components are correctly aligned, and confirming that the overall outline remains logically sound. The goal is to produce a polished and well-structured report.</p>
+
+<p><strong>Integrating Detailed Solution</strong></p>
+
+<p>I'm now focused on the replacement itself. The plan is clear: insert the detailed SRL solution under the "解决方案" heading, replacing the brief overview. The new content is comprehensive and well-structured, so I am confident it will fit seamlessly. A key part of the process is ensuring the new section integrates with the existing report structure. My top priority is a clean and accurate implementation.</p>
+
+<p><strong>Executing the Replacement</strong></p>
+
+<p>I'm now methodically proceeding with the final stage: integrating the detailed SRL content under the designated heading. The steps are clearly defined: pinpointing the target section (### 解决方案), bringing in the comprehensive SRL solution provided, and then meticulously verifying the output. I am confident in the new content's ability to seamlessly integrate. My top priority is a polished and accurate implementation.</p>
+
+<p><strong>Executing Replacement and Verification</strong></p>
+
+<p>I'm currently engaged in the final replacement phase. I've successfully inserted the detailed SRL solution into the report under the appropriate heading. My attention now turns to a thorough verification process. This involves ensuring the new content integrates seamlessly into the outline. The goal is to produce a refined and polished result.</p>
+
+<p><strong>Integrating Comprehensive Solution</strong></p>
+
+<p>I've successfully inserted the detailed SRL solution into the targeted "解决方案" section. The next stage involves a thorough structural audit. My focus is now on confirming that the updated section fits into the report's overall structure and maintains logical consistency. All section headings must align, and the new content must seamlessly integrate.</p>
+
+<p><strong>Integrating Detailed Solution</strong></p>
+
+<p>I've completed the initial replacement of the "解决方案" section with the detailed SRL content. Currently, I'm focusing on a meticulous structural review. My goal is to confirm seamless integration. All the new content must align with the existing section. I will meticulously check each component to ensure everything is correct.</p>
+
+<p></think>### 现有问题
+本文旨在解决大型语言模型（LLMs），特别是小规模开源模型，在处理需要复杂多步推理的任务（如数学和软件工程）时表现不佳的问题。传统的训练方法，如监督微调（SFT）和仅依赖最终结果的强化学习（RLVR），在面对成功解决方案稀少（即奖励稀疏）的复杂问题时，学习效率低下，难以引导模型掌握正确的推理过程。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是：通过一个名为监督强化学习（Supervised Reinforcement Learning, SRL）的新框架，可以显著提升LLM的复杂推理能力。该框架将问题求解过程分解为一系列决策步骤，并通过在每一步提供基于与专家行为相似性的“细粒度”或“密集”奖励信号，来有效指导模型学习。这种方法被假设能够比SFT和RLVR更有效地引导模型形成灵活且复杂的推理模式，从而提高解决问题的能力。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>监督微调 (SFT)</strong>：通过模仿专家生成的解决方案（如思维链 CoT）进行训练。</li>
+<li><strong>强化学习 (RL)</strong>：特别是基于最终答案正确性的可验证奖励方法 (RLVR)。</li>
+<li><strong>模仿学习 (Imitation Learning)</strong>：直接学习专家行为。</li>
+<li><strong>相关工作</strong>：提及了DeepSeek-R1、DAPO等研究，这些工作探索了使用RL或优化训练数据来增强LLM的推理能力。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出的核心解决方案是一个名为<strong>监督强化学习（Supervised Reinforcement Learning, SRL）</strong>的新颖训练框架。该框架旨在解决当前大规模语言模型（LLMs）在处理需要复杂、多步骤推理的任务（如高级数学推理和软件工程）时遇到的学习瓶颈。SRL特别适用于那些传统的监督微调（SFT）和基于结果验证的强化学习（RLVR）效果不佳的情境。</p>
+
+<h4>1. SRL框架的核心思想与目标</h4>
+
+<p>SRL的核心思想是将复杂问题的求解过程，从“一次性生成最终答案”转变为一个<strong>序列化的决策过程</strong>。它不像SFT那样试图模仿整个专家解决方案，也不像RLVR那样仅根据最终结果的正确性提供稀疏的奖励信号。相反，SRL通过在每一步都提供基于专家行为的、密集的奖励信号，来引导模型逐步学习正确的推理路径。</p>
+
+<p><strong>主要目标：</strong>
+- <strong>提升推理质量</strong>：帮助模型在复杂的、成功率低（Dhard）的问题上学习有效的推理模式，而不仅仅是增加输出的长度。
+- <strong>提高学习效率</strong>：允许模型即使在最终结果错误的尝试中，也能从部分正确的中间步骤中获取有用的学习信号。
+- <strong>增强推理灵活性</strong>：促使模型形成如交替规划、即时调整和反思验证等更复杂的推理模式。</p>
+
+<h4>2. SRL 的工作流程与关键组件</h4>
+
+<p>SRL的实现依赖于几个关键组件和一套系统化的工作流程：</p>
+
+<p><strong>步骤一：专家演示的分解 (Expert Demonstration Decomposition)</strong>
+- <strong>行动基础的表述</strong>：首先，将专家的完整解决方案（即“专家轨迹”）分解为一系列逻辑连贯的“动作”（actions）。每个动作代表推理过程中的一个关键决策步骤。这种表述是通用的，例如在数学中可以是一个代数运算，在软件工程中可以是执行一条代码仓库命令。
+- <strong>数据构建</strong>：利用强大的教师模型或人类专家生成高质量的解决方案轨迹。然后，将每一条完整的轨迹分解成多个“部分轨迹”训练实例，从而将一个专家方案扩充为丰富的训练数据，教会模型如何从各种中间状态正确推进。</p>
+
+<p><strong>步骤二：逐步训练与内部独白生成 (Step-wise Training &amp; Inner Monologue Generation)</strong>
+- 在每个决策点，模型被提示（prompt）去生成下一步的动作。
+- 在生成动作之前，模型会先生成一段<strong>“内部推理独白”（internal monologue）</strong>。这部分内容描述了模型的“思考过程”，解释了它为什么选择执行接下来的动作。这不仅提高了模型决策的透明度和可解释性，也帮助模型自身更好地进行上下文推理。</p>
+
+<p><strong>步骤三：细粒度的奖励机制 (Fine-Grained Reward Mechanism)</strong>
+- SRL的精髓在于其奖励机制。在模型生成每个动作后，系统会将其与专家在该步骤的“标准动作”进行比较。
+- 奖励的大小取决于两者之间的<strong>序列相似度</strong>。具体实现上，可以使用如Python的 <code>difflib.SequenceMatcher</code> 来计算相似度比率。
+- 这种机制提供了<strong>密集的、细粒度的奖励信号</strong>：
+    - 生成的动作与专家动作越相似，奖励越高。
+    - 如果生成的输出格式不正确，则给予负奖励。
+- 这种奖励机制能够有效计算并扩展到大型数据集，从而高效地引导模型学习。</p>
+
+<h4>3. 关键机制与实现优势</h4>
+
+<p>为了进一步提升训练效果，SRL框架还集成了以下关键机制：</p>
+
+<ul>
+<li><p><strong>动态批量采样 (Dynamic Batch Sampling)</strong>：为了避免模型在过于简单或过于困难的样本上浪费计算资源，SRL采用了一种动态采样策略。该策略通过监测训练批次中奖励信号的标准差，过滤掉那些几乎不提供学习信号（即奖励值变化极小）的样本，从而确保模型始终在“有效学习区”内进行训练，显著提升了学习效率和最终性能。</p></li>
+<li><p><strong>指导粒度与交错推理 (Granularity of Guidance &amp; Interleaved Reasoning)</strong>：实验证明，SRL提供的这种多步骤、细粒度的指导远优于仅依赖最终答案或整体序列相似性的粗粒度奖励。这种逐步引导的方式，成功促使模型展现出更灵活、更强大的<strong>交错推理行为</strong>，包括：</p>
+
+<ol>
+<li><strong>前期规划 (Upfront Planning)</strong>：在解题开始时制定一个全面的步骤计划。</li>
+<li><strong>即时调整 (On-the-fly Adjustments)</strong>：在解决过程中插入多个推理块，进行迭代式的规划和修正。</li>
+<li><strong>反思验证 (Reflective Validation)</strong>：在生成步骤后暂停，并验证其当前答案的正确性。</li>
+</ol></li>
+</ul>
+
+<h4>4. 应用实例与效果验证</h4>
+
+<p>SRL框架的通用性和有效性在多个领域得到了验证：</p>
+
+<ul>
+<li><p><strong>应用一：数学推理 (Mathematical Reasoning)</strong></p>
+
+<ul>
+<li>在解决一个关于 <code>20!</code> 的互质对计数问题时，模型首先需要理解问题核心（<code>20!</code> 的8个质因数必须完全分配给a或b），然后生成逻辑步骤来计算结果（<code>2^8 = 256</code>）。SRL通过奖励与专家步骤相似的输出来引导模型完成这一推理过程。</li>
+</ul></li>
+<li><p><strong>应用二：软件工程 (Software Engineering)</strong></p>
+
+<ul>
+<li>在软件工程基准测试（SWE-Bench）上，SRL被用于微调 <code>Qwen2.5-Coder-7B-Instruct</code> 模型以自动生成代码补丁。</li>
+<li><strong>训练数据</strong>：从5,000条专家轨迹中生成了超过134,000个逐步训练实例。</li>
+<li><strong>惊人效果</strong>：经过SRL训练的模型，在提供完整代码文件进行修复的评估中，解决率达到了 <strong>14.8%</strong>，相较于基线模型实现了 <strong>74%</strong> 的相对性能提升。在需要模型自主定位故障的端到端评估中，其性能也达到了基线的两倍。</li>
+</ul></li>
+</ul>
+
+<h4>5. 技术实现细节</h4>
+
+<ul>
+<li><strong>底层框架</strong>：SRL的实现基于 <strong>GRPO (Generalized Reinforcement Policy Optimization)</strong> 和 <strong>VeRL</strong> 等强化学习训练框架。</li>
+<li><strong>超参数调优</strong>：为了最大化性能，研究者对批量大小（batch size）等超参数进行了细致调整。例如，SRL使用较大的批量（如512）以充分利用样本，而GRPO则使用较小的批量（如128）以避免重复抽样。</li>
+<li><strong>计算资源</strong>：实验在配备 NVIDIA H100 级别GPU的集群上进行，以支持大规模的模型训练。</li>
+</ul>
+
+<h4>6. 结论</h4>
+
+<p><strong>监督强化学习（SRL）</strong>通过将复杂问题分解为带有内部独白的逐步决策、并结合基于序列相似度的密集奖励机制，成功地弥合了传统模仿学习和强化学习之间的鸿沟。它不仅显著提升了中小型开源模型在数学、软件工程等高难度推理任务上的表现，还通过动态采样和细粒度指导等机制，为训练更强大、更灵活的AI代理铺平了道路，展现了其作为一种稳健且多功能训练框架的巨大潜力。</p>
+
+<h3>实验设计</h3>
+
+<p>实验在数学推理和软件工程这两个具有挑战性的领域进行：
+- <strong>模型</strong>：主要使用了 Qwen2.5-7B-Instruct (用于数学) 和 Qwen2.5-Coder-7B-Instruct (用于软件工程) 等模型进行微调。
+- <strong>基线对比</strong>：将SRL方法的性能与传统的SFT和RLVR方法进行全面比较。
+- <strong>评估任务</strong>：
+    - <strong>数学推理</strong>：在AMC23, AIME24, AIME25等多个数学基准上进行评估。
+    - <strong>软件工程</strong>：在SWE-Bench基准上进行评估，任务是生成代码补丁来修复实际问题。评估分为“Oracle文件编辑”和“端到端”两种设置。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>:
+<ul>
+<li><strong>数学</strong>: 使用s1K-1.1数据集进行训练，并在<a href="https://huggingface.co/datasets/AI-MO/aimo-validation-amc">AMC23</a>、<a href="https://huggingface.co/datasets/AI-MO/aimo-validation-aime">AIME24</a>和<a href="https://huggingface.co/datasets/math-ai/aime25">AIME25</a>上进行验证。</li>
+<li><strong>软件工程</strong>: 使用了包含5,000个专家代理轨迹的数据集进行训练。</li>
+</ul></li>
+<li><strong>代码</strong>:
+<ul>
+<li>论文相关的数学模型代码可在 <a href="https://github.com/QwenLM/Qwen2.5-Math">Qwen2.5-Math</a> 获取。</li>
+</ul></li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了SRL的有效性：
+- <strong>数学推理</strong>：与SFT相比，SRL带来了平均3.0%的性能提升。
+- <strong>软件工程</strong>：在SWE-Bench的“Oracle设置”中，SRL实现了14.8%的解决率，相比基线模型有74%的相对提升。在端到端设置中，性能也是其他模型的两倍。
+- <strong>总体表现</strong>：在所有测试的基准上，SRL的表现均显著优于SFT和RLVR等基线方法，证明了其在提升模型复杂推理能力方面的优越性。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出SRL框架</strong>：提出并验证了一种新的训练框架——监督强化学习（SRL），有效填补了模仿学习和传统强化学习之间的空白，解决了LLM在复杂多步推理任务中学习困难的问题。</li>
+<li><strong>实证有效性</strong>：通过在数学和软件工程两个领域的广泛实验，证明了SRL相比SFT和RLVR等现有方法具有显著的性能优势。</li>
+<li><strong>推动AI代理发展</strong>：为训练更强大、更具通用性的AI代理提供了新的思路和有效方法，推动了AI在解决真实世界复杂问题方面的能力。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="https://arxiv.org/abs/2510.25992" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-01 14:16:56</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaperon: A Peppered English-French Generative Language Model Suite</title>
+    <title>FAPO: Flawed-Aware Policy Optimization for Efficient and Reliable Reasoning</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -188,15 +188,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Gaperon: A Peppered English-French Generative Language Model Suite</h1>
+            <h1>FAPO: Flawed-Aware Policy Optimization for Efficient and Reliable Reasoning</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Soochow University, ByteDance Seed</div>
             
             <div>
-                <span class="paper-score">推荐分数: 0.633</span>
-                <span class="paper-id">arXiv ID: 2510.25771</span>
-            </div>
-            
-            <div class="paper-warning">
-                <strong>[WARNING]</strong> 内容已回退至原始摘要/解读：enrich failed, fallback to abstract
+                <span class="paper-score">推荐分数: 0.450</span>
+                <span class="paper-id">arXiv ID: 2510.22543</span>
             </div>
             
         </div>
@@ -207,18 +205,16 @@
         </div>
         
         
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-01/22ff90abbcb43d0802ecb8b10f357ab60ff78fb8f3ac91f19e47ad087ee62492.jpg" alt="核心思路示意图" />
+        </div>
+        
         
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                We release Gaperon, a fully open suite of French-English-coding language
-models designed to advance transparency and reproducibility in large-scale
-model training. The Gaperon family includes 1.5B, 8B, and 24B parameter models
-trained on 2-4 trillion tokens, released with all elements of the training
-pipeline: French and English datasets filtered with a neural quality
-classifier, an efficient data curation and training framework, and hundreds of
-intermediate checkpoints. Through this work, we study how data filtering and
-contamination interact to shape both benchmark and generative performance.
+                本文提出了一种缺陷感知策略优化方法（FAPO），旨在解决大语言模型在强化学习中面临的“缺陷正向”问题。FAPO通过引入生成式奖励模型（GenRM）检测不可靠的推理路径，并在训练早期利用这些路径加速学习，随后逐步引导模型向可靠推理转变，从而提升推理能力和训练稳定性。实验结果验证了FAPO在多领域的有效性。
             </div>
         </div>
         
@@ -587,37 +583,141 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content">
-                        <p>论文标题: Gaperon: A Peppered English-French Generative Language Model Suite</p>
+                        <h3>现有问题</h3>
 
-<p>摘要:
-We release Gaperon, a fully open suite of French-English-coding language
-models designed to advance transparency and reproducibility in large-scale
-model training. The Gaperon family includes 1.5B, 8B, and 24B parameter models
-trained on 2-4 trillion tokens, released with all elements of the training
-pipeline: French and English datasets filtered with a neural quality
-classifier, an efficient data curation and training framework, and hundreds of
-intermediate checkpoints. Through this work, we study how data filtering and
-contamination interact to shape both benchmark and generative performance. We
-find that filtering for linguistic quality enhances text fluency and coherence
-but yields subpar benchmark results, and that late deliberate contamination --
-continuing training on data mixes that include test sets -- recovers
-competitive scores while only reasonably harming generation quality. We discuss
-how usual neural filtering can unintentionally amplify benchmark leakage. To
-support further research, we also introduce harmless data poisoning during
-pretraining, providing a realistic testbed for safety studies. By openly
-releasing all models, datasets, code, and checkpoints, Gaperon establishes a
-reproducible foundation for exploring the trade-offs between data curation,
-evaluation, safety, and openness in multilingual language model development.</p>
+<p>本文旨在解决大语言模型（LLM）在通过强化学习（RL）提升推理能力时遇到的“缺陷正向”或“错误正例”（flawed positives）问题。具体来说，模型有时会通过不可靠的推理路径（如猜测、跳步）得到正确答案。如果RL过程仅奖励正确答案，就会强化这些不可靠的推理模式，从而阻碍模型真实推理能力的提升，并影响其可靠性和训练效率。</p>
 
-<p>作者: Nathan Godey, Wissam Antoun, Rian Touchent, Rachel Bawden, Éric de la Clergerie, Benoît Sagot, Djamé Seddah</p>
+<h3>Hypothesis</h3>
 
-<p>分类: 未知</p>
+<p>核心假设是：通过一个“缺陷感知”的策略优化方法（Flawed-Aware Policy Optimization, FAPO），可以有效管理和利用“缺陷正向”样本，从而提升模型的推理可靠性和训练效率。研究者认为，“缺陷正向”在训练中扮演双重角色：早期可作为加速学习的“捷径”，但后期会限制模型的可靠性。FAPO旨在平衡这一过程，允许模型早期利用这些捷径，然后逐步引导其转向更稳健、可靠的推理路径。</p>
 
-<p>发表时间: 2025-10-29T13:59:39.000Z</p>
+<h3>相关研究</h3>
 
-<p>推荐理由: 该论文与您的兴趣领域高度相关，推荐分数为 0.633。</p>
+<ul>
+<li>基于强化学习的LLM推理优化方法，如GRPO (Generalized Reinforcement Policy Optimization) 和 DAPO。</li>
+<li>奖励模型（Reward Models）在强化学习中的应用，特别是生成式奖励模型（GenRMs）和判别式奖励模型（DisRMs）。</li>
+<li>强化学习中的可验证奖励（RLVR）和基于规则的奖励函数设计。</li>
+</ul>
 
-<p>原文链接: https://arxiv.org/abs/2510.25771</p>
+<h3>解决方案</h3>
+
+<p>本文提出的核心解决方案是 <strong>“Flawed-Aware Policy Optimization” (FAPO)</strong>，这是一种创新的强化学习（RL）算法，旨在优化大规模语言模型（LLM）的训练过程，以显著提高其推理能力的可靠性和准确性。</p>
+
+<p>该方法的核心是解决强化学习中的一个关键问题，即 <strong>“有瑕疵的正向回报”（Flawed Positives）</strong>。这指的是模型通过不可靠的推理路径（如逻辑跳跃、事实性错误或纯粹猜测）却偶然得出了正确最终答案的现象。传统的奖励机制会为这些“瑕疵路径”提供正向反馈，从而无意中强化了模型的不可靠行为。FAPO通过一种动态的、有意识的策略来检测、利用并最终抑制这些瑕疵路径。</p>
+
+<hr />
+
+<h4><strong>一、 FAPO的核心思想与目标</strong></h4>
+
+<p>FAPO的核心思想是建立一种<strong>自我探索式的学习轨迹</strong>，该轨迹在训练的不同阶段有不同的优化目标：</p>
+
+<ol>
+<li><p><strong>初期阶段 - 加速能力提升</strong>：在模型训练早期，其推理能力较弱。此时，FAPO允许并利用“有瑕疵的正向回报”作为知识捷径或“垫脚石”。这使得模型能够快速学会如何生成最终正确的答案，即使其推理过程尚不完美，从而加速了基础能力的构建。</p></li>
+<li><p><strong>后期阶段 - 转向可靠推理</strong>：随着模型能力的提升和正确答案生成率的饱和，FAPO的优化目标会动态转变。它开始对“有瑕疵的正向回报”施加惩罚，转而鼓励和强化那些推理过程和最终结果都完全正确的路径，从而引导模型向更严谨、更可靠的推理模式发展。</p></li>
+</ol>
+
+<hr />
+
+<h4><strong>二、 FAPO的关键组成部分与工作流程</strong></h4>
+
+<p>为了实现上述目标，FAPO框架包含几个关键组件和机制：</p>
+
+<h5><strong>1. 瑕疵回报的检测：生成式奖励模型 (GenRM)</strong></h5>
+
+<p>为了准确识别推理路径中的瑕疵，FAPO引入了一个专门的<strong>生成式奖励模型 (GenRM)</strong>。</p>
+
+<ul>
+<li><strong>目的</strong>：传统基于规则的奖励模型无法评估推理过程的合理性。GenRM通过过程级奖励（Process-level Reward）来精确定位推理链中的错误步骤，从而有效区分“完全正确的路径”和“有瑕疵的路径”。</li>
+<li><strong>实现</strong>：研究者训练了一个紧凑的GenRM模型（如基于Qwen3-4B-Instruct），使其能够在不引入巨大计算开销的情况下，高效地在线检测瑕疵。为了训练和评估GenRM，还构建了专门的基准测试集，如 <code>FlawedPositiveBench</code>。</li>
+</ul>
+
+<h5><strong>2. 动态优化策略：奖励-惩罚机制</strong></h5>
+
+<p>FAPO的核心创新在于其无参数的、动态调整的奖励-惩罚机制。</p>
+
+<ul>
+<li><p><strong>奖励函数修改</strong>：FAPO修改了传统的奖励函数。对于一个输出：</p>
+
+<ul>
+<li><strong>完全正确</strong>的路径，奖励为 <code>+1</code>。</li>
+<li><strong>有瑕疵但答案正确</strong>的路径，奖励为 <code>1 - λ</code>（其中 <code>λ</code> 是惩罚因子）。</li>
+<li><strong>错误</strong>的路径，奖励为 <code>-1</code>。</li>
+</ul></li>
+<li><p><strong>多数引导的动态调整 (Majority-Guided Optimization)</strong>：惩罚因子 <code>λ</code> 的值以及优化方向是动态调整的，主要依据当前批次中完全正确样本（α）和错误样本（β）的比例。</p>
+
+<ul>
+<li>在训练初期，当错误样本（β）占主导时，系统会将 <code>λ</code> 调整得较小（默认 <code>λ=1</code> 的设计使得 <code>1-λ=0</code>），此时有瑕疵的正向回报仍能获得非负的优势估计，从而鼓励模型探索。</li>
+<li>当训练进行到后期，完全正确的样本（α）超过错误样本（β）时，优化方向会自动转向惩罚瑕疵路径，此时 <code>Aˆ_Flawed</code>（有瑕疵回报的优势估计）变为负值，促使模型专注于提升推理的可靠性。</li>
+</ul></li>
+</ul>
+
+<h5><strong>3. 策略更新与理论基础</strong></h5>
+
+<p>FAPO建立在群体相对策略优化（GRPO）的基础上，通过对一批（<code>G</code>个）生成结果（rollouts）的收益进行归一化来估计优势，并通过以下剪切目标函数更新策略：
+\[ J<em>{GRPO}(\theta) = E \left[ \frac{1}{G} \sum</em>{i=1}^G \frac{1}{|o<em>i|} \sum</em>{t=1}^{|o<em>i|} \text{min}\left( \frac{\pi</em>\theta(o<em>t | \dots)}{\pi</em>{\theta<em>{old}}(o</em>t | \dots)} \hat{A}<em>{i,t}, \text{clip}\left( \dots \right) \hat{A}</em>{i,t} \right) \right] \]
+FAPO通过修改奖励函数来影响优势估计 <code>Aˆ</code>，从而引导上述优化过程。理论分析表明，这种设计不仅能动态调整优化方向，还能通过调节缩放因子（方差 <code>σ²</code>）来稳定训练过程，防止因惩罚过激而导致的性能下降。</p>
+
+<hr />
+
+<h4><strong>三、 FAPO的实现架构与效率</strong></h4>
+
+<p>为了提高训练效率，FAPO采用了<strong>异步架构</strong>：</p>
+
+<ul>
+<li><strong>解耦设计</strong>：将GenRM部署为独立的外部服务，与推理和策略更新过程解耦。RL训练器通过API异步请求GenRM获取过程奖励。</li>
+<li><strong>效率提升</strong>：这种设计避免了因等待奖励模型计算而导致的GPU空闲，显著提高了训练吞吐量和整体效率，使其适用于大规模RL系统。</li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 实验验证与核心优势</strong></h4>
+
+<p>通过在多个基准测试（如数学推理和通用任务）上的实验，FAPO展现出显著优势：</p>
+
+<ul>
+<li><strong>提高结果正确性</strong>：通过后期抑制不可靠的推理模式，FAPO在多个任务上显著优于基线模型。</li>
+<li><strong>改进过程可靠性</strong>：FAPO生成的响应中，“有瑕疵的正向回报”比例显著降低，这一点通过人类评估得到了验证。</li>
+<li><strong>提升训练稳定性</strong>：FAPO的学习曲线更加平滑，有效减轻了传统RL训练后期可能出现的性能崩溃问题。</li>
+<li><strong>高效率</strong>：在不增加生成长度（token预算）的情况下实现了性能提升，证明了其优化策略的有效性。</li>
+</ul>
+
+<hr />
+
+<h4><strong>五、 总结</strong></h4>
+
+<p>综上所述，<strong>Flawed-Aware Policy Optimization (FAPO)</strong> 是一个全面而精巧的解决方案。它通过引入专门用于检测推理错误的<strong>生成式奖励模型 (GenRM)</strong>，并结合一种<strong>动态的、多数引导的奖励-惩罚机制</strong>，成功地解决了强化学习中“有瑕疵的正向回报”问题。FAPO能够智能地引导模型在训练初期快速学习，在后期则转向提升推理的可靠性，最终在不牺牲效率的前提下，显著增强了LLM的推理能力、可靠性和训练稳定性。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准构建与评估</strong>：构建了新的基准测试集 <strong>FlawedPositiveBench</strong> 来专门评估模型检测和处理“缺陷正向”的能力，并结合使用了 <strong>ProcessBench</strong> 和 <strong>DAPO-Math</strong> 等现有数据集。</li>
+<li><strong>模型验证</strong>：在多个主流LLM（如Qwen系列、Llama系列）上进行了实验。</li>
+<li><strong>对比分析</strong>：将FAPO与传统的RL优化方法（如GRPO）进行性能对比。</li>
+<li><strong>人工评估</strong>：通过人工审查的方式来验证FAPO是否能有效降低最终模型推理过程中的“缺陷正向”比例。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：主要使用了新构建的 <strong>FlawedPositiveBench</strong>，以及 <strong>ProcessBench</strong>、<strong>DAPO-Math</strong> 和 <strong>FAPO-Critic-85K</strong> 等。</li>
+<li><strong>代码</strong>：片段中提到代码和模型是公开的，具体信息通常位于论文的附录或匿名的GitHub仓库中，但未提供具体链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的假设：
+- FAPO能够有效减少“缺陷正向”样本的比例，并通过人工验证得到了证实。
+- 与基线模型相比，使用FAPO训练的模型在多个推理基准（如AIME24）上取得了更高的准确性。
+- FAPO增强了训练过程的稳定性，避免了其他方法可能出现的训练后期性能下降问题。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>问题定义与分析</strong>：首次系统性地识别、定义并深入分析了LLM在强化学习推理任务中的“缺陷正向”问题及其双重作用。</li>
+<li><strong>提出FAPO框架</strong>：提出了一个新颖的FAPO框架，能够有效检测并处理“缺陷正向”问题，从而提升模型的推理可靠性和训练效率。</li>
+<li><strong>构建评估资源</strong>：开发并开源了新的基准 <strong>FlawedPositiveBench</strong> 和相应的生成式奖励模型（GenRM），为该领域的研究提供了新的工具。</li>
+<li><strong>验证有效性</strong>：通过在多个模型和数据集上的大量实验，证明了FAPO框架的有效性和优越性。</li>
+</ol>
 
                     </div>
                 
@@ -625,7 +725,7 @@ evaluation, safety, and openness in multilingual language model development.</p>
         </div>
         
         <div class="links">
-            <a href="https://arxiv.org/abs/2510.25771" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="https://arxiv.org/abs/2510.22543" class="btn" target="_blank">📄 查看 arXiv 原文</a>
             <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
             <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
         </div>

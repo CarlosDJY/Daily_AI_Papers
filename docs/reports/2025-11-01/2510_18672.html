@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The End of Manual Decoding: Towards Truly End-to-End Language Models</title>
+    <title>Reasoning Language Model Inference Serving Unveiled: An Empirical Study</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -188,13 +188,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>The End of Manual Decoding: Towards Truly End-to-End Language Models</h1>
+            <h1>Reasoning Language Model Inference Serving Unveiled: An Empirical Study</h1>
             
-            <div class="paper-meta"><strong>作者单位:</strong> Tencent AI Lab, The Chinese University of Hong Kong, Shenzhen</div>
+            <div class="paper-meta"><strong>作者单位:</strong> The Hong Kong University of Science and Technology (Guangzhou), Shenzhen International Graduate School, Tsinghua University, HKBU, University of Wisconsin-Madison, Harbin Institute of Technology, Shenzhen</div>
             
             <div>
-                <span class="paper-score">推荐分数: 0.451</span>
-                <span class="paper-id">arXiv ID: 2510.26697v1</span>
+                <span class="paper-score">推荐分数: 0.453</span>
+                <span class="paper-id">arXiv ID: 2510.18672</span>
             </div>
             
         </div>
@@ -207,14 +207,14 @@
         
         <div class="paper-image">
             
-            <img src="../../images/2025-10-31/5c3d12ef63d973eb9fc81da64c287da35b89e88d7dd1c59478897fb1c96a6407.jpg" alt="核心思路示意图" />
+            <img src="../../images/2025-11-01/52732d58f4b76ed24c2766260bd0f57a3c9b25a0206de084c93a0e03e81d1bde.jpg" alt="核心思路示意图" />
         </div>
         
         
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了AutoDeco，一种新颖的动态解码架构，解决了大型语言模型（LLM）在生成过程中对手动调参的依赖问题。AutoDeco通过在每个生成步骤中自我调节温度和top-p值，实现真正的“端到端”生成，显著提升了生成质量和灵活性，同时允许模型根据自然语言指令调整解码策略。实验结果表明，AutoDeco在多个基准上超越传统解码方法，展示了其高效性和可控性。
+                本文提出了一种名为ASU（Accuracy, Server, User）的综合评估框架，旨在解决推理大语言模型（RLLM）服务性能未被充分探索的问题。通过系统评估RLLM与传统LLM的服务行为差异，研究发现模型量化和投机解码能有效提升服务效率，而某些优化技术可能会降低小规模RLLM的性能。该研究为RLLM的高效部署提供了实证数据和实践指导。
             </div>
         </div>
         
@@ -583,143 +583,177 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content">
-                        <h3>现有问题</h3>
+                        <p>好的，我已经阅读并理解了您提供的所有论文片段。这些片段似乎都来自同一篇关于<strong>推理大语言模型（RLLM）服务性能</strong>的论文。我将综合所有片段的信息，为您生成一份统一、连贯的总结。</p>
 
-<p>本文旨在解决大型语言模型（LLM）在文本生成时对<strong>手动、静态解码超参数（如温度和top-p）的依赖</strong>问题。这个问题的重要性在于：
-- <strong>成本与效率</strong>：手动调参耗费大量计算和人力成本，且效率低下，尤其是在复杂推理任务中响应时间长。
-- <strong>性能限制</strong>：静态配置无法适应生成过程中动态变化的需求，限制了模型在多样性、创造性和准确性之间的平衡，常导致输出质量不佳或内容单调。
-- <strong>训练挑战</strong>：如何让模型自动学习这些参数是一个难题，因为传统的采样操作（如top-p）是不可微分的，阻碍了端到端的有效优化。</p>
+<hr />
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决<strong>推理大语言模型（RLLM）</strong>在服务性能和行为方面尚未被充分探索的问题。RLLM在解决数学、编程等复杂推理任务（“系统-2任务”）时表现出色，但其独特的行为给高效服务带来了挑战。该问题的重要性体现在：
+- <strong>独特的行为模式</strong>：RLLM在处理不同难度的请求时，表现出显著的运行时间变化和内存使用波动，这与传统LLM相对稳定的行为形成对比。
+- <strong>现有系统不适配</strong>：当前主流的LLM服务引擎（如vLLM）主要为传统LLM设计，直接应用于RLLM可能导致吞吐量下降、资源利用率低等次优性能。
+- <strong>缺乏综合评估框架</strong>：目前缺少一个能够同时评估RLLM服务中<strong>准确性（Accuracy）</strong>、<strong>服务端指标（Server-side metrics）</strong>和<strong>用户端体验（User-side metrics）</strong>的综合性框架。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是，通过一个名为<strong>AutoDeco</strong>的架构，LLM可以学会<strong>动态地、逐词地自我调节其解码策略</strong>，从而实现真正的“端到端”生成。关键假设点包括：
-- AutoDeco能够在每个生成步骤中动态预测最佳的温度和top-p值，以适应不同的上下文和任务需求。
-- 通过引入一种新颖的<strong>可微分“软”top-p机制</strong>，模型可以在没有“真实标签”（即预先知道的最佳参数）的情况下进行端到端训练。
-- 这种动态解码策略不仅能显著提升生成质量，超越传统静态方法，还能在保持极低计算开销的同时，响应自然语言指令来控制生成风格。</p>
+<p>本文的核心假设是：<strong>RLLM的服务行为与传统LLM存在本质差异，因此需要专门的评估框架和经过验证的优化策略才能实现高效服务。</strong>
+- <strong>关键发现</strong>：RLLM的推理时间与任务难度高度相关，导致在批量处理中容易出现“慢请求”（stragglers），从而影响整体吞吐量。
+- <strong>核心假设</strong>：直接套用为传统LLM设计的优化技术（如缓存策略、调度方法）可能对RLLM无效甚至有害。必须通过一个综合性框架（ASU）系统地评估模型量化、KV缓存管理、投机解码等技术对RLLM的真实影响。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>传统解码策略</strong>：包括确定性的贪婪搜索（Greedy Search）、束搜索（Beam Search）以及依赖固定超参数的随机采样方法。</li>
-<li><strong>高级解码方法</strong>：早期的研究，如使用辅助模型的Plug-and-Play和对比解码（Contrastive Decoding）。</li>
-<li><strong>优化技术</strong>：与端到端训练和推理优化相关的研究。</li>
-</ul>
+<p>本文的研究建立在多个领域之上：
+- <strong>LLM推理与服务优化</strong>：包括模型权重量化（如GPTQ、AWQ、FP8）、KV缓存管理（如Paged Attention、前缀缓存）、请求调度和连续批处理技术。
+- <strong>高性能LLM服务系统</strong>：借鉴了vLLM、TensorRT-LLM、FasterTransformer等现有系统的设计思想。
+- <strong>RLLM的推理能力研究</strong>：参考了关于“长链思维”（Long-chain-of-thought）和“系统-2”推理任务的相关工作。
+- <strong>解码加速技术</strong>：特别是投机解码（Speculative Decoding）等旨在降低推理延迟的方法。</p>
 
-<h3>论文的完整解决方案：AutoDeco 动态解码框架</h3>
+<h3>解决方案</h3>
 
-<h4>1. 引言：核心问题与解决方案概述</h4>
+<h3><strong>论文核心解决方案的整合分析：优化与评估推理大型语言模型（RLLM）的服务性能</strong></h3>
 
-<p>传统的语言模型在生成文本时，严重依赖于<strong>手动设置的静态解码超参数</strong>（如温度<code>temperature</code>和<code>top-p</code>值）。这些参数一旦设定，在整个生成过程中保持不变，无法适应文本上下文的动态变化。这不仅需要大量的人工调优成本，也限制了生成文本的质量，难以在多样性与准确性之间取得最佳平衡。</p>
+<p>该论文提出了一套全面的解决方案，旨在系统性地评估和优化推理大型语言模型（RLLM）在实际服务中的性能。鉴于RLLM在处理复杂推理任务时展现出与传统大型语言模型（LLM）不同的行为特征，该方案从<strong>行为分析</strong>、<strong>评估框架</strong>和<strong>系统优化</strong>三个层面展开，确保在提升服务效率的同时，维持或提高模型的准确性。</p>
 
-<p>为解决此问题，论文提出了一个名为 <strong>AutoDeco</strong> 的创新解码框架。其核心理念是<strong>实现真正的“端到端”生成</strong>，让语言模型学会<strong>动态地、逐-token地控制自身的解码策略</strong>，从而彻底消除手动解码的需求。</p>
+<hr />
 
-<h4>2. AutoDeco 架构与核心机制</h4>
+<h4><strong>第一部分：RLLM服务行为的独特性分析</strong></h4>
 
-<p>AutoDeco通过在标准Transformer模型中增加轻量级的预测头，将超参数的选择过程内化为模型前向传递的一部分。</p>
-
-<ul>
-<li><p><strong>核心组件：动态预测头</strong></p>
-
-<ul>
-<li><strong>温度头（Temperature Head）</strong>：根据当前步骤的隐藏状态（hidden state），直接预测一个最优的温度值。</li>
-<li><strong>Top-p头（Top-p Head）</strong>：同样基于隐藏状态，并结合刚预测出的温度值，预测一个最优的<code>top-p</code>值。</li>
-</ul></li>
-<li><p><strong>工作流程</strong>：在文本生成的每一步，AutoDeco都会利用这些预测头，根据当前的上下文动态计算出最适合下一个token的温度和<code>top-p</code>值。随后，模型立即使用这些动态参数来内部修改和过滤logits（输出概率分布），生成一个动态调整后的最终概率分布，并从中采样下一个token。</p></li>
-<li><p><strong>设计优势</strong>：这些预测头由简单的两层多层感知器（MLP）构成，相比庞大的Transformer层，其增加的计算开销极小，确保了方案的高效性。</p></li>
-</ul>
-
-<h4>3. 关键挑战与训练策略：如何实现端到端学习</h4>
-
-<p>训练AutoDeco的最大挑战在于，标准的<code>top-p</code>采样算法包含一个“硬截止”操作，这是<strong>不可微分的</strong>，导致损失函数的梯度无法反向传播到<code>top-p</code>预测头。为了解决这个问题，论文引入了创新的训练策略。</p>
-
-<ul>
-<li><p><strong>可微分软Top-p机制（Differentiable Soft Top-p）</strong>：</p>
+<p>在提出优化方案之前，论文首先深入分析了RLLM在服务过程中的独特行为，这些行为是后续优化策略的依据。</p>
 
 <ol>
-<li><strong>温度缩放</strong>：首先，使用预测的温度 <code>T̂</code> 对原始<code>logits</code>进行缩放，得到初始概率分布 <code>p</code>。
-<code>p = softmax(l / T̂)</code></li>
-<li><strong>软掩膜生成</strong>：对概率 <code>p</code> 进行排序并计算累积和 <code>c</code>。通过一个带有衰减逻辑的指数函数，将硬截止（<code>c &gt; P̂</code>）转化为一个平滑的、可微分的“软掩膜”<code>m</code>。
-<code>m(sorted) = exp(-α · ReLU(c - P̂))</code></li>
-<li><strong>最终概率分布</strong>：将软掩膜 <code>m</code> 应用于初始概率 <code>p</code>，并重新归一化，得到最终的可微分概率分布 <code>p̃</code>。
-<code>p̃ = (p ⊙ m) / (Σ(p ⊙ m) + ε)</code></li>
+<li><strong>长期思维链 (Long Chain of Thought)</strong>：RLLM通过生成详细的、逐步的推理路径来解决复杂问题（尤其是数学和逻辑任务）。这虽然显著提升了其在“系统-2”任务上的准确性，但也导致了更长的输出序列和更高的令牌消耗。</li>
+<li><strong>显著的内存波动</strong>：由于推理链的长度不一，RLLM在运行时表现出剧烈的KV缓存波动和内存占用变化，对服务系统的动态资源管理能力提出了更高要求。</li>
+<li><strong>请求的长尾分布与自适应运行时间</strong>：RLLM处理请求的时间与任务难度高度相关，导致请求响应时间呈现长尾分布。部分复杂请求会成为“慢请求”（Straggler Requests），影响整个批处理的效率。同时，这也意味着RLLM具备根据任务难度自适应调整运行时间的能力。</li>
 </ol>
 
-<p>通过这个完全可微分的管道，标准的交叉熵损失可以在 <code>p̃</code> 和真实token之间计算，使得梯度能够成功反向传播至温度和<code>top-p</code>头，从而让模型学会预测特定上下文的解码策略。</p></li>
-<li><p><strong>训练中的去偏操作</strong>：</p>
+<hr />
+
+<h4><strong>第二部分：ASU：一个三位一体的综合评估框架</strong></h4>
+
+<p>为了全面、公正地评估RLLM的服务效能，并有效权衡性能、成本与准确性之间的关系，论文设计并提出了<strong>ASU（Accuracy, Service-end, User-end）评估框架</strong>。</p>
 
 <ul>
-<li><strong>简单Token掩膜</strong>：对于那些模型的贪婪预测已经能匹配真实标签的“简单”token，随机掩盖其60%的训练损失，迫使模型从更具挑战性的示例中学习。</li>
+<li><p><strong>A - 准确性 (Accuracy)</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：衡量模型解决问题的根本能力。</li>
+<li><strong>方法</strong>：针对不同的任务数据集（如GSM8k, MATH500）采用定制化的准确性评估指标。实验发现，为RLLM设定合适的令牌预算（如4096到8192）对其准确性至关重要。</li>
+</ul></li>
+<li><p><strong>S - 服务端 (Service-end)</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：从服务提供者的角度评估系统的处理效率和吞吐能力。</li>
+<li><strong>指标</strong>：主要使用<strong>每秒令牌数（TPS）</strong>来衡量系统的总吞吐量。</li>
+</ul></li>
+<li><p><strong>U - 用户端 (User-end)</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：从最终用户的角度评估服务响应速度和体验。</li>
+<li><strong>指标</strong>：采用<strong>首次可见令牌时间（TTFVT）</strong>。这是对传统指标“首次令牌时间（TTFT）”的改进，因为它排除了RLLM在内部生成但用户不可见的推理链所需的时间，更真实地反映了用户感知到的等待时间。</li>
 </ul></li>
 </ul>
 
-<h4>4. 推理过程：无缝集成与高效运行</h4>
+<p>通过ASU框架，研究人员可以系统地评估各项优化技术对RLLM服务性能的综合影响，避免片面追求单一指标而损害整体效用。</p>
 
-<p>AutoDeco在设计上极度注重效率，确保在推理时不引入显著延迟。</p>
+<hr />
+
+<h4><strong>第三部分：系统性优化技术及评估</strong></h4>
+
+<p>基于对RLLM行为的理解和ASU评估框架，论文对一系列现有和新兴的LLM服务优化技术进行了集成和评估，旨在找到最适合RLLM的优化组合。</p>
+
+<h5><strong>1. 模型与内存优化</strong></h5>
 
 <ul>
-<li><strong>并行计算</strong>：在推理时，标准语言模型头计算<code>logits</code>的过程，与AutoDeco头预测温度和<code>top-p</code>参数的过程是<strong>并行</strong>的。</li>
-<li><strong>极低开销</strong>：由于预测头是轻量级的，整个动态调整过程被无缝集成到模型的一次前向传播中。实验证实，AutoDeco带来的额外开销微乎其微：
+<li><p><strong>模型权重量化 (Model Weight Quantization)</strong>：</p>
+
 <ul>
-<li><strong>延迟</strong>：平均仅增加1-2%。</li>
-<li><strong>计算量（FLOPs）</strong>：几乎与基线相同。</li>
-<li><strong>内存</strong>：仅增加约4MB，对现代硬件影响可忽略不计。</li>
+<li><strong>技术</strong>：评估了包括GPTQ、AWQ及FP8在内的多种量化方法。</li>
+<li><strong>发现</strong>：这些技术能有效降低模型的内存占用和计算延迟，且对RLLM的准确性影响较小，是提升服务效率的有效手段。</li>
 </ul></li>
-<li><strong>易用性</strong>：开发者几乎无需修改现有的生成系统，有时仅需“一行代码”的更改，即可解锁AutoDeco的动态解码能力。</li>
-</ul>
-
-<h4>5. 核心优势与新兴能力</h4>
-
-<p>AutoDeco在多个方面展现出卓越的性能和独特的潜力。</p>
+<li><p><strong>KV缓存管理 (KV Cache Management)</strong>：</p>
 
 <ul>
-<li><p><strong>性能超越静态策略</strong>：在多个基准测试（如数学推理、开放域问答等）中，AutoDeco不仅大幅超越了贪婪搜索和默认采样等非专家基线，其性能甚至能够匹配或超越由领域专家手动调优得到的最佳静态超参数（即“破解测试集”的基线）。</p></li>
-<li><p><strong>强大的零-shot泛化能力</strong>：尽管AutoDeco主要在数学推理数据上进行微调，但它展示了强大的零-shot泛化能力，在代码生成、常规问答和指令遵循等多种未见过的任务上同样表现出色。这表明AutoDeco学习到的是一种通用的、有效的文本生成元技能。</p></li>
-<li><p><strong>指令驱动的解码控制（Emergent Ability）</strong>：AutoDeco最引人注目的优势之一是其展现出一种<strong>新兴能力</strong>：能够理解并响应自然语言指令来调整其生成风格。</p>
-
-<ul>
-<li><strong>示例</strong>：当用户给出“确保输出的多样性较低”或“生成更具创新性的答案”等指令时，模型能够自动调整其内部预测的温度和<code>top-p</code>值，以生成符合要求的文本。</li>
-<li><strong>针对性训练</strong>：为增强此能力，研究者通过引入多样的“解码控制命令”和排名损失函数进行针对性训练，使模型在响应指令方面的行为一致性达到95%以上。</li>
+<li><strong>KV缓存量化</strong>：使用FP8等格式对KV缓存进行量化。实验表明，该技术对较大规模的RLLM（如14B及以上）性能提升显著，但可能损害较小模型（如7B）的性能。</li>
+<li><strong>前缀缓存 (Prefix Caching)</strong>：通过重用共享提示前缀的计算结果来加速。同样，该技术对大规模RLLM效果显著，但对7B模型可能产生负面影响。</li>
 </ul></li>
 </ul>
 
-<h4>6. 总结与未来展望</h4>
+<h5><strong>2. 请求调度与解码效率优化</strong></h5>
 
-<p><strong>AutoDeco</strong>通过将解码过程从静态、手动的范式转变为动态、自我调节的管道，标志着语言模型解码技术的一次重大进展。它不仅在不增加显著计算成本的前提下，显著提升了生成文本的质量和灵活性，还通过其指令驱动的解码能力，为构建更直观、可控和智能的AI系统开辟了新的道路。</p>
+<ul>
+<li><p><strong>处理慢请求 (Straggler Requests) 与自适应运行时间</strong>：</p>
 
-<p>未来的研究将集中于<strong>基础模型与AutoDeco的联合训练</strong>，旨在从头开始培养这种动态解码能力，以解决当前基于微调的控制不够精确等问题，实现更细粒度的生成控制。</p>
+<ul>
+<li><strong>策略</strong>：设计动态调度机制，优先处理简单请求，同时监控和管理那些因任务难度大而处理缓慢的“慢请求”，以提高批处理效率和硬件利用率。</li>
+</ul></li>
+<li><p><strong>推测解码 (Speculative Decoding)</strong>：</p>
+
+<ul>
+<li><strong>机制</strong>：使用一个较小的“草稿”模型快速生成多个候选令牌，再由主RLLM模型并行验证。</li>
+<li><strong>发现</strong>：该技术能有效降低所有规模RLLM的生成延迟（改善运行时间），但可能会稍微降低系统的总吞吐量（TPS）和TTFVT。</li>
+</ul></li>
+</ul>
+
+<h5><strong>3. 系统架构层面的探索</strong></h5>
+
+<ul>
+<li><strong>分离预填充架构 (PD-disaggregation)</strong>：
+<ul>
+<li><strong>理念</strong>：将计算密集的提示处理（预填充）阶段和内存密集的令牌生成（解码）阶段分离到不同的硬件上执行。</li>
+<li><strong>发现</strong>：论文对vLLM中实现的1P1D（1个预填充工作者+1个解码工作者）配置进行了测试，发现该架构<strong>未能提升RLLM的服务性能，反而导致了下降</strong>。原因是RLLM的解码阶段本身就是瓶颈，导致预填充设备长时间闲置，且跨设备传输KV缓存带来了额外的通信开销。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>总结与优势</strong></h4>
+
+<p>该论文提出的综合解决方案，其核心优势在于：</p>
+
+<ul>
+<li><strong>全面性 (Comprehensiveness)</strong>：通过ASU框架，首次将准确性、服务端效率和用户端体验三大维度整合，为RLLM服务提供了全面的评估标准。</li>
+<li><strong>针对性 (Specificity)</strong>：深入分析了RLLM独有的服务行为，并在此基础上评估了各项优化技术，揭示了并非所有通用LLM优化技术都适用于RLLM，尤其是在不同模型规模下。</li>
+<li><strong>实证性 (Empirical Validation)</strong>：所有结论都基于在模拟真实世界负载下的严谨实验，不仅验证了有效技术（如量化、推测解码），也指出了无效或需谨慎使用的技术（如分离预填充、对小模型使用前缀缓存），为RLLM的实际部署提供了极具价值的实践指导。</li>
+</ul>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>模型集成</strong>：将AutoDeco集成到多个主流开源模型中（如Llama、Qwen、GPT系列），并仅对AutoDeco头进行少量步数（约400步）的微调，同时冻结基础模型参数。</li>
-<li><strong>基准评估</strong>：在多达八个不同的基准测试上进行评估，涵盖数学推理、开放域问答等多种任务。</li>
-<li><strong>对比方法</strong>：将AutoDeco的性能与标准解码方法（贪婪搜索、默认静态采样）以及专家手动调优的静态超参数进行比较。</li>
-<li><strong>消融研究</strong>：进行消融实验，以评估温度和top-p解码头的独立贡献。</li>
+<li><strong>模型范围</strong>：实验涵盖了多种规模的RLLM和传统LLM（如7B, 14B, 32B, 70B）进行对比分析。</li>
+<li><strong>评估任务</strong>：专注于复杂的推理任务，使用了多个公开基准数据集。</li>
+<li><strong>实验方法</strong>：
+<ul>
+<li>对比RLLM和LLM在相同任务下的服务行为差异。</li>
+<li>评估不同模型权重量化和KV缓存量化方法对ASU指标的影响。</li>
+<li>在模拟真实世界请求模式（如Gamma分布）的工作负载下进行测试。</li>
+<li>探究不同token预算、批量大小和架构选择（如预填充/解码分离）对性能的影响。</li>
+</ul></li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li>训练数据部分来源于<strong>DeepMath-103K</strong>数据集，用于生成拒绝采样轨迹。</li>
-<li>论文片段中未提供代码和完整评估数据集的公开链接。</li>
+<li><strong>数据集</strong>：实验主要使用了公开的复杂推理基准数据集，包括 <strong>GSM8K、MATH-500、AIME-2024</strong> 和 <strong>GPQA</strong>。</li>
+<li><strong>代码</strong>：论文中提到，<strong>ASU-Perf基准测试套件和相关代码</strong>将在论文被接收后公开发布。</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<ul>
-<li><strong>性能优越</strong>：AutoDeco在所有测试的模型和任务上，其性能一致且显著地超越了标准的静态解码方法。</li>
-<li><strong>媲美专家</strong>：其生成质量与经过专家精心调优的静态超参数配置相当，甚至在某些情况下有所超越。</li>
-<li><strong>高效率</strong>：AutoDeco的动态调整机制只带来了微乎其微的计算开销和延迟。</li>
-<li><strong>可控性强</strong>：模型能够根据自然语言指令调整解码策略，并达到95%以上的一致性，有效控制输出的多样性与确定性。</li>
-</ul>
+<p>实验结果有力地支持了核心假设，并揭示了多个关键发现：
+- <strong>行为差异验证</strong>：RLLM的服务行为（如运行时间、内存波动）确实与传统LLM显著不同。
+- <strong>优化技术效果</strong>：
+    - <strong>模型量化</strong>：FP8和GPTQ等量化方法能有效提升服务效率，且对大部分任务的准确性影响较小。
+    - <strong>KV缓存优化</strong>：KV缓存量化和前缀缓存对大规模RLLM（≥14B）有显著性能提升，但可能会损害小规模模型（7B）的性能。
+- <strong>架构影响</strong>：与直觉相反，将预填充和解码阶段分离的架构（PD-disaggregation）在RLLM上反而导致性能下降，原因是解码阶段成为瓶颈且通信开销过大。
+- <strong>规模权衡</strong>：模型规模越大，准确性越高，但服务延迟也显著增加，需要在准确性与效率之间进行权衡。</p>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出AutoDeco框架</strong>：实现了一种新颖的动态解码机制，使LLM能够自我调节生成过程，向真正的“端到端”生成迈出了重要一步。</li>
-<li><strong>引入可微分训练方法</strong>：提出了可微分的“软”top-p机制，解决了在没有显式标签下训练动态解码策略的难题。</li>
-<li><strong>提升性能与效率</strong>：通过实验证明，AutoDeco能在不增加显著计算成本的情况下，大幅提升LLM在多种任务上的生成质量和灵活性。</li>
-<li><strong>增强人机交互</strong>：验证了通过自然语言指令控制LLM生成行为的可行性，为更直观、灵活的人机交互提供了新的方向。</li>
+<li><strong>提出ASU框架与ASU-Perf基准</strong>：首次提出了一个用于全面评估RLLM服务性能的综合框架和基准测试套件，填补了该领域的空白。</li>
+<li><strong>系统性揭示RLLM服务行为</strong>：首次系统地研究并量化了RLLM与传统LLM在服务行为上的关键差异，为后续研究提供了重要基础。</li>
+<li><strong>提供优化实践指导</strong>：通过广泛的实验，评估了多种主流优化技术在RLLM上的有效性，为在实际应用中高效部署RLLM提供了宝贵的实证数据和实践指导。</li>
+<li><strong>发现非直观结论</strong>：揭示了一些优化策略（如预填充/解码分离）在RLLM上的意外负面效果，为未来设计专用的RLLM服务系统提供了重要启示。</li>
 </ol>
 
                     </div>
@@ -728,7 +762,7 @@ pre[class*=language-] {
         </div>
         
         <div class="links">
-            <a href="http://arxiv.org/abs/2510.26697v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="https://arxiv.org/abs/2510.18672" class="btn" target="_blank">📄 查看 arXiv 原文</a>
             <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
             <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
         </div>

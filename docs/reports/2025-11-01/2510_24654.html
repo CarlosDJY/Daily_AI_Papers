@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batch Speculative Decoding Done Right</title>
+    <title>Evolving Diagnostic Agents in a Virtual Clinical Environment</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -188,13 +188,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Batch Speculative Decoding Done Right</h1>
+            <h1>Evolving Diagnostic Agents in a Virtual Clinical Environment</h1>
             
-            <div class="paper-meta"><strong>作者单位:</strong> The Pennsylvania State University, eBay Inc</div>
+            <div class="paper-meta"><strong>作者单位:</strong> Shanghai Jiao Tong University, Shanghai Artificial Intelligence Laboratory, Intelligence Healthcare Department, AntGroup, Intelligence Computing and Sensing Laboratory, Peking University</div>
             
             <div>
-                <span class="paper-score">推荐分数: 0.516</span>
-                <span class="paper-id">arXiv ID: 2510.22876</span>
+                <span class="paper-score">推荐分数: 0.412</span>
+                <span class="paper-id">arXiv ID: 2510.24654</span>
             </div>
             
         </div>
@@ -207,14 +207,14 @@
         
         <div class="paper-image">
             
-            <img src="../../images/2025-10-31/b48c3fa82a9e21e2e0fe6cca6f5a6d61f5899d5110fd0053ffb5e16c3db752a0.jpg" alt="核心思路示意图" />
+            <img src="../../images/2025-11-01/530641b060646409d71cc3dfce08cfda90be2e6f976df2a4c8b4ab42ac48f93d.jpg" alt="核心思路示意图" />
         </div>
         
         
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了EQSPEC和EXSPEC两种方法，解决了大语言模型批量推测解码中的“ragged tensor”问题。EQSPEC确保输出等价性，通过定义同步要求来处理不规则张量；EXSPEC则通过动态分组和懒惰对齐策略，显著提高了吞吐量，达到批量大小为8时的3倍提升，同时保持95%的输出等价性。
+                本文提出了一种基于强化学习的框架，通过DiagGym虚拟临床环境训练诊断代理DiagAgent，以优化多轮诊断过程。该方法解决了传统大语言模型在动态诊断中的局限性，显著提高了诊断准确性和检查推荐质量。DiagAgent在多项评估中超越了现有模型，展示了在真实临床环境中进行动态决策的潜力。
             </div>
         </div>
         
@@ -585,150 +585,135 @@ pre[class*=language-] {
                     <div class="markdown-content">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决大语言模型（LLM）在<strong>批量推测解码（batch speculative decoding）</strong>中遇到的核心挑战：<strong>“ragged tensor”问题</strong>。当同一批次中的不同序列接受不同数量的草稿令牌时，会导致张量形状不规则，GPU难以高效处理。这个问题至关重要，因为它引发了正确性与吞吐量之间的根本矛盾：
-- <strong>计算效率低下</strong>：不规则的张量（ragged tensor）阻碍了GPU的并行计算能力。
-- <strong>输出错误</strong>：现有的批量实现（如BSP、DSD）为了处理该问题，常常导致位置ID、注意力掩码和KV缓存的不一致，从而破坏了输出的等价性（correctness），产生与标准自回归生成不一致的错误结果。
-- <strong>生产系统瓶颈</strong>：在生产环境中，既要保证推理结果的准确可靠，又要追求高吞吐量，而现有方法难以同时满足这两个要求。</p>
+<p>本文旨在解决现有大语言模型（LLMs）在真实临床诊断中的核心局限性，即它们难以处理复杂、动态、多轮的诊断过程。传统模型通常基于静态的病例摘要进行训练，无法有效模拟和参与真实的诊断交互，这在临床实践中是一个重要且持续存在的问题，因为：
+-   临床诊断是一个动态的、长期的决策过程，需要在不确定性中平衡信息收集与决策。
+-   现有LLMs的静态训练方法无法应对患者状态的动态变化和多轮信息收集的需求。
+-   缺乏高质量的交互式训练数据和有效的评估方法，阻碍了能够进行动态推理的诊断代理的发展。</p>
 
 <h3>Hypothesis</h3>
 
-<p>论文的核心假设是，通过<strong>共同设计正确性约束与智能调度策略</strong>，可以在不牺牲输出等价性的前提下，有效解决ragged tensor问题，并显著提升批量推测解码的吞吐量。
-- <strong>关键发现</strong>：通过明确并强制执行最小同步不变性（synchronization invariants），可以保证批量解码的输出与单序列解码完全一致。
-- <strong>核心假设</strong>：通过动态地将长度相同的序列分组进行处理，可以最大限度地减少或延迟昂贵的对齐（realignment）开销，从而在保持每序列加速效果的同时，提高整个批次的处理效率。</p>
+<p>本文的核心假设是：通过在模拟真实临床环境（DiagGym）中，使用强化学习（RL）来训练一个诊断代理（DiagAgent），可以使其学习到一种动态决策策略。这种策略能够优化多轮信息收集和诊断推理过程，从而在诊断准确性和推荐质量上显著超越使用静态数据进行监督微调（SFT）的传统方法。</p>
 
 <h3>相关研究</h3>
 
 <ul>
-<li><strong>批量推测解码实现</strong>：如BSP和DSD，这些方法在处理ragged tensor问题时存在正确性缺陷。</li>
-<li><strong>Ragged Tensor处理方法</strong>：如Masking、Rollback和Dynamic Padding。</li>
-<li><strong>生产级推理系统</strong>：如vLLM和SGLang，它们在批量处理方面进行了优化。</li>
-<li><strong>其他推理加速框架</strong>：如EAGLE、Turbospec和Specinfer，它们也致力于提升LLM的推理效率。</li>
+<li><strong>医疗领域的大语言模型应用</strong>：包括GPT-4o, MedGemma, DeepSeek等模型在临床任务和医学考试中的应用。</li>
+<li><strong>诊断代理与模拟器</strong>：与MedAgents, MDAgents等基于多代理讨论的系统，以及AgentClinic, AgentHospital等角色扮演模拟器进行比较。</li>
+<li><strong>训练方法</strong>：对比了监督微调（SFT）和强化学习（RL）在医疗诊断代理训练中的应用。</li>
+<li><strong>评估基准</strong>：参考了如HealthBench等现有的医疗领域评估标准。</li>
 </ul>
 
 <h3>解决方案</h3>
 
-<h3><strong>完整解决方案：用于高效且正确的批量推测解码的同步感知方法</strong></h3>
-
-<p>本论文提出了一种创新的、以正确性为首的批量推测解码解决方案，旨在解决大规模语言模型（LLM）推理中的一个核心挑战：如何高效处理因序列长度不一而产生的“不规则张量”（Ragged Tensor），同时保证输出结果与标准自回归生成完全一致。该解决方案由两个互补的算法组成：<strong>EQSPEC</strong>（保证输出等价性）和<strong>EXSPEC</strong>（优化执行效率）。</p>
-
-<h4><strong>核心问题：批量推测解码中的“不规则张量”</strong></h4>
-
-<p>在批量推测解码中，系统会同时处理多个序列。在每个解码步骤，一个较小的“草稿模型”会为每个序列生成多个候选词元（tokens）。然后，一个更大的“目标模型”会一次性验证这些草稿。问题在于，不同的序列可能会接受不同数量的草稿词元，导致它们的长度变得不一致。这种长度不一的数据在GPU上形成了“不规则张量”，无法直接进行高效的并行计算，从而引发了正确性和性能两大难题。</p>
-
-<h4><strong>解决方案概述</strong></h4>
-
-<p>为了解决上述问题，论文提出了一套同步感知的设计，通过EQSPEC和EXSPEC两个协同工作的机制，实现了正确性与效率的统一。</p>
+<p>本论文提出了一套创新的端到端框架，旨在训练大型语言模型（LLMs）成为能够自主管理多回合诊断过程的智能代理（DiagAgent）。该框架的核心是构建一个名为<strong>DiagGym</strong>的虚拟临床环境，并利用<strong>强化学习（RL）</strong>对DiagAgent进行训练，使其能够在动态变化的环境中主动探索、选择检查并最终做出准确诊断。为了科学评估其性能，论文还构建了一个新的诊断基准<strong>DiagBench</strong>。</p>
 
 <hr />
 
-<h3><strong>第一部分：EQSPEC —— 奠定正确性的基石</strong></h3>
+<h4><strong>核心组件一：诊断世界模型 (DiagGym) - 高保真虚拟临床环境</strong></h4>
 
-<p><strong>EQSPEC (Equivalence-preserving Speculation)</strong> 是该解决方案的基础。其首要目标是<strong>确保输出的绝对正确性</strong>，即推测解码的结果必须与标准自回归生成模型的输出完全相同。</p>
+<p>传统的AI诊断模型通常基于静态的病例摘要进行训练，这限制了它们处理真实世界中动态、多步骤诊断过程的能力。为了解决这一问题，研究者首先构建了一个名为<strong>DiagGym</strong>的高保真诊断世界模型。</p>
 
-<h5><strong>1. 目的与原则</strong></h5>
+<p><strong>1. 目的与功能：</strong>
+*   <strong>提供安全的训练环境</strong>：DiagGym是一个基于真实电子健康记录（EHRs，如MIMIC-IV数据集）训练的生成模型。它能模拟真实的临床环境，根据患者历史和代理推荐的检查，动态生成符合临床逻辑的检查结果。这使得DiagAgent可以在一个安全的、闭环的虚拟环境中进行反复的探索性训练，而无需直接接触真实的患者数据。
+*   <strong>模拟动态患者轨迹</strong>：与仅能重放历史记录的静态模拟器不同，DiagGym能够生成多样化的、甚至超出原始训练数据的患者轨迹，包括罕见和非典型病例，从而增强了代理应对复杂和不确定性情况的能力。</p>
 
-<ul>
-<li><strong>确保输出等价性</strong>：严格保证在任何情况下，生成的词元序列与非推测解码方法一致，避免错误或无效的输出。</li>
-<li><strong>形式化同步要求</strong>：明确定义并强制执行在处理不规则张量时，维持计算正确性所需的最小同步不变量。这些不变量主要包括：
-<ul>
-<li><strong>连续的位置ID（Position IDs）</strong>：确保每个词元的位置信息正确。</li>
-<li><strong>有效的注意力掩码（Attention Masks）</strong>：保证模型在自注意力计算中只关注合法的上下文。</li>
-<li><strong>对齐的KV缓存（KV-Cache）</strong>：确保每个序列的键值缓存与其当前状态精确匹配。</li>
-</ul></li>
-</ul>
+<p><strong>2. 构建与工作机制：</strong>
+*   <strong>数据处理</strong>：研究人员首先对MIMIC-IV出院记录进行处理，提取关键信息并构建时间排序的检查序列，形成诊断轨迹。
+*   <strong>条件生成模型</strong>：DiagGym被训练为一个自回归文本生成模型。在每个时间点 <code>t</code>，它接收患者的背景信息 <code>B</code> 和过去的检查记录 <code>E_t</code> 作为状态。当DiagAgent提出一个检查请求 <code>a_{t+1}</code> 时，DiagGym会生成相应的检查结果 <code>e_{t+1}</code>。其训练目标是最小化生成结果与真实结果之间的负对数似然，以确保生成内容的真实性。</p>
 
-<h5><strong>2.核心机制：Unpad-Append-Repad</strong></h5>
-
-<p>为了处理验证后产生的不规则张量并维持上述不变量，EQSPEC采用了一个虽然有效但计算开销较高的三步流程：
-1.  <strong>Unpad（去填充）</strong>：移除批次中每个序列的无效填充部分，将它们还原为原始长度。
-2.  <strong>Append（拼接）</strong>：将所有有效的序列数据（如词元ID、KV缓存等）拼接成一个连续的一维张量。
-3.  <strong>Repad（再填充）</strong>：根据需要重新计算填充，将拼接后的数据恢复为GPU可以处理的矩形张量。</p>
-
-<h5><strong>3. 局限性</strong></h5>
-
-<p>虽然EQSPEC保证了正确性，但其<code>Unpad-Append-Repad</code>过程，尤其是在调整高维的KV缓存时，会引入巨大的计算开销。实验分析表明，<strong>这个重对齐过程可能消耗高达40%的总计算时间</strong>，严重影响了推测解码带来的速度优势，特别是在批量增大时，开销会呈超线性增长。</p>
+<p><strong>3. 质量与效率：</strong>
+*   <strong>高保真度</strong>：DiagGym通过实例级（如与真实数据相似度、全链临床一致性高达96.91%）和检查级（如数值真实度、文本多样性）指标进行了严格评估，证明其生成的检查结果在临床上是高度一致和可靠的。
+*   <strong>计算效率</strong>：该模型在单个A100-80GB GPU上的平均生成时间仅为0.52秒，高效的性能使其能够支持强化学习所需的大量交互式训练。</p>
 
 <hr />
 
-<h3><strong>第二部分：EXSPEC —— 实现极致效率的调度器</strong></h3>
+<h4><strong>核心组件二：诊断代理 (DiagAgent) - 强化学习驱动的决策者</strong></h4>
 
-<p><strong>EXSPEC (Expedient Speculation)</strong> 是在EQSPEC的基础上构建的智能调度层，其核心目标是<strong>尽可能避免触发EQSPEC昂贵的重对齐过程</strong>，从而大幅提升系统吞吐量。</p>
+<p>DiagAgent是本解决方案的核心，它是一个通过在DiagGym环境中进行强化学习训练而成的智能诊断代理。</p>
 
-<h5><strong>1. 目的与原则</strong></h5>
+<p><strong>1. 目的与能力：</strong>
+*   将不断变化的患者状态（当前信息和历史检查记录）映射到下一个最佳行动（推荐最具信息量的检查或做出最终诊断）。
+*   通过多回合互动，主动管理从初步问诊到最终诊断的完整轨迹，平衡信息收益、诊断准确性与诊断效率。</p>
 
-<ul>
-<li><strong>提高吞吐量</strong>：通过智能调度，最大化GPU的并行处理能力，实现比EQSPEC更高的推理速度。</li>
-<li><strong>消除对齐开销</strong>：其设计的核心是绕过<code>Unpad-Append-Repad</code>流程，而非优化它。</li>
-</ul>
+<p><strong>2. 训练框架与机制：</strong>
+*   <strong>训练阶段</strong>：训练过程分为两个阶段。首先是<strong>冷启动阶段</strong>，通过监督微调（SFT）让模型学习交互的输出格式。随后进入主要的<strong>强化学习阶段</strong>，使用GRPO等算法进行优化。
+*   <strong>强化学习机制</strong>：
+    *   <strong>状态（State）</strong>：代理在每个时间步 <code>t</code> 的状态 <code>s_t</code> 由患者的初始问询和截至当时的所有检查记录 <code>E_t</code> 组成。
+    *   <strong>动作（Action）</strong>：代理的动作空间 <code>A</code> 包含所有可用的临床检查项目和最终诊断动作。
+    *   <strong>策略（Policy）</strong>：代理根据其可学习的策略网络 <code>π_θ</code>，在当前状态下选择一个动作。
+    *   <strong>奖励函数（Reward Function）</strong>：这是驱动代理学习的关键。奖励函数被设计为三个加权子奖励的组合：
+        *   <strong>诊断奖励 (<code>r_diag</code>)</strong>: 鼓励做出准确的最终诊断。
+        *   <strong>检查奖励 (<code>r_exam</code>)</strong>: 促进推荐与最终诊断高度相关的检查。
+        *   <strong>效率奖励 (<code>r_return</code>)</strong>: 惩罚冗余或过多的交互回合，鼓励高效决策。
+        这个双重奖励设计（诊断+检查）被证明至关重要，能同时提升诊断准确性和检查推荐的质量。</p>
 
-<h5><strong>2. 核心机制：跨批次动态调度（Cross-Batch Scheduling）</strong></h5>
-
-<p>EXSPEC引入了一种全新的调度策略，其工作流程如下：
-1.  <strong>序列池管理</strong>：系统维护一个待处理的“序列池”，而不是固定的批次。请求会动态地进入和离开这个池。
-2.  <strong>动态批量形成</strong>：在每个解码周期，EXSPEC的调度器会扫描序列池，<strong>优先选择长度完全相同的序列组合成一个批次</strong>。
-3.  <strong>无开销处理</strong>：当一个批次中的所有序列长度相同时，它们自然形成一个矩形张量。因此，在验证和接受草稿词元后，即使它们接受了不同数量的词元，只要在下一次调度时再次将相同长度的序列组合，就不需要进行任何重对齐操作。
-4.  <strong>延迟对齐与回退</strong>：只有在调度器无法找到足够多的同长度序列来填满一个批次时，它才会<strong>回退到EQSPEC的<code>Unpad-Append-Repad</code>机制</strong>，对不同长度的序列进行强制对齐。通过这种方式，高昂的对齐开销从一个常规操作变成了一个偶发的备用方案。
-5.  <strong>即时完成处理</strong>：一旦序列生成了结束符（EOS），它会立即被从池中移除，避免在已完成的序列上浪费计算资源。</p>
+<p><strong>3. 工作流程示例（阑尾炎诊断）：</strong>
+1.  <strong>初步诊断</strong>：患者主诉腹痛，DiagAgent生成初步诊断假设（如阑尾炎、肠胃炎），并建议进行全血细胞计数（CBC）检查。
+2.  <strong>数据分析</strong>：DiagGym返回CBC结果，显示中性粒细胞升高。DiagAgent分析此证据，增强了对阑尾炎的怀疑，并建议进行腹部CT扫描。
+3.  <strong>最终确认</strong>：DiagGym返回CT结果，显示阑尾肿胀。DiagAgent综合所有证据，最终确认阑尾炎的诊断。</p>
 
 <hr />
 
-<h3><strong>整体工作流程与优势</strong></h3>
+<h4><strong>核心组件三：评估基准 (DiagBench) - 严格且全面的验证</strong></h4>
 
-<p>结合EQSPEC和EXSPEC，完整的解决方案工作流程如下：
-1.  <strong>动态批处理形成（EXSPEC）</strong>：从序列池中优先选择相同长度的序列组成批次。
-2.  <strong>草稿生成与验证</strong>：草稿模型生成候选词元，目标模型进行验证。
-3.  <strong>池写回与状态更新</strong>：根据验证结果更新序列，并将它们写回序列池。已完成的序列被移除。
-4.  <strong>持续窗口刷新</strong>：调度器持续扫描序列池，形成新的批次，重复以上过程。</p>
+<p>为了评估DiagAgent在多回合诊断任务中的真实能力，研究团队构建了一个全新的基准测试集<strong>DiagBench</strong>。</p>
 
-<h5><strong>主要优势：</strong></h5>
+<p><strong>1. 构建过程：</strong>
+*   <strong>数据策划</strong>：生成了包含750个经过医生审查和验证的复杂临床案例。
+*   <strong>深度评估框架</strong>：从中选取99个案例，由多位医生共同制定了一套包含973个评审标准的过程导向评估框架。这些标准不仅关注最终诊断的准确性，更侧重于评估诊断过程的质量（如病史采集、假设生成、检查排序等），并为每个标准分配了重要性权重。</p>
 
-<ul>
-<li><strong>正确性与速度兼得</strong>：该方法是目前少数能在保证<strong>超过95%输出等价性</strong>的同时，实现显著加速的批量推测解码方案。</li>
-<li><strong>极高的吞吐量</strong>：通过EXSPEC的智能调度，该方案避免了主要的性能瓶颈，实验表明在批量大小为8时，可实现<strong>高达3倍的吞吐量提升</strong>。</li>
-<li><strong>有效扩展</strong>：与vLLM、SGLang等现有生产系统相比，该方法能更好地应对批量增大带来的挑战，避免了性能急剧下降的问题。</li>
-<li><strong>适应性强</strong>：在Vicuna-7B、Qwen3-8B和GLM-4等多种模型上的评估表明，该方法具有广泛的适用性和有效性。</li>
-</ul>
+<p><strong>2. 评估方法：</strong>
+*   <strong>单轮评估</strong>：给定部分诊断轨迹，评估代理推荐下一个检查或直接给出诊断的能力。
+*   <strong>端到端评估</strong>：更贴近真实临床场景，代理从零开始，通过与环境连续交互，动态构建完整的诊断轨迹。
+*   <strong>评估指标</strong>：包括检查推荐的<strong>命中率（Hit Ratio）、精确度、召回率和F1分数</strong>，以及最终的<strong>诊断准确率</strong>。对于99个深度注释的案例，还使用<strong>加权评分（Weighted Rubric Score）</strong>来评估整个诊断过程的临床完整性。</p>
 
-<h3><strong>结论</strong></h3>
+<hr />
 
-<p>该论文通过将<strong>正确性约束（EQSPEC）</strong>与<strong>调度优化（EXSPEC）</strong>进行精心的协同设计，成功地解决了批量推测解码中的核心矛盾。它不仅提供了一个理论上完备且实践中高效的解决方案，还为未来LLM推理系统的设计提供了一个重要的框架：即通过更智能的调度来绕过而不是强行解决底层硬件的计算限制，从而在不牺牲正确性的前提下，将并行计算的潜力发挥到极致。</p>
+<h3><strong>实验结果与结论</strong></h3>
+
+<p><strong>1. 性能表现：</strong>
+*   DiagAgent在DiagBench上的表现显著优于包括GPT-4o、DeepSeek-v3在内的10种最先进的基线大语言模型。
+*   在更具挑战性的端到端评估中，DiagAgent的<strong>诊断准确率提高了15.12%</strong>，检查推荐的<strong>F1分数提升了23.09%</strong>。
+*   DiagAgent表现出更深度的探索行为，其平均对话轮次（6.77轮）显著多于其他模型（2-4轮），从而能更全面地收集证据，实现更高的召回率。</p>
+
+<p><strong>2. 优势与局限性：</strong>
+*   <strong>优势</strong>：通过强化学习和动态模拟，本框架成功地让AI代理学会了规划和管理交互式诊断轨迹，克服了传统静态微调方法的局限性。
+*   <strong>局限性</strong>：实验也揭示了DiagAgent的当前局限。例如，在一个破裂异位妊娠的案例中，尽管DiagAgent能准确做出诊断，但在紧急<strong>管理</strong>方面（如建议立即进行液体复苏和外科转诊）表现不足。此外，模型的性能上限仍受基础LLM能力的限制。</p>
+
+<p><strong>3. 总结：</strong>
+该论文提出的解决方案通过<strong>“DiagGym（虚拟环境）+ DiagAgent（智能代理）+ 强化学习（训练方法）”</strong>的创新结合，成功构建了一个能够在复杂临床场景中进行动态、多回合诊断的AI系统。它不仅在诊断准确性和检查推荐质量上取得了显著突破，也为未来开发更高级的、能够整合诊断、治疗和预后等多个环节的临床AI系统奠定了坚实的基础。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>数据集</strong>：使用SpecBench和Multi30k数据集进行受控实验和评估。</li>
-<li><strong>模型</strong>：在多种模型上进行测试，包括Vicuna-7B/68M, Qwen3-8B/0.6B, 和 GLM-4-9B/0.6B。</li>
-<li><strong>评估指标</strong>：主要关注两个方面：<strong>输出等价性（correctness）</strong>和<strong>吞吐量（throughput）</strong>。</li>
-<li><strong>实验内容</strong>：
-<ul>
-<li>对比EQSPEC和EXSPEC与现有方法（如BSP、DSD）的正确性和性能。</li>
-<li>分析不同批量大小下，对齐开销对吞吐量的影响。</li>
-<li>量化和分解批量推理性能的各个组成部分。</li>
-</ul></li>
+<li><strong>训练</strong>：在DiagGym虚拟环境中对DiagAgent进行端到端的多轮强化学习训练。</li>
+<li><strong>评估</strong>：使用新构建的DiagBench基准对模型进行评估，评估设置包括单轮评估和端到端（多轮）评估。</li>
+<li><strong>基线比较</strong>：将DiagAgent的性能与多种最先进的LLMs和代理系统进行比较，这些基线模型包括采用零样本（zero-shot）和监督微调（SFT）方法的模型。</li>
+<li><strong>评估指标</strong>：使用诊断准确率、检查推荐的命中率（Hit Ratio）、F1分数以及医生制定的评分标准来全面衡量模型性能。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>：SpecBench, Multi30k。</li>
-<li><strong>代码</strong>：已在GitHub上公开：https://github.com/eBay/specdec</li>
+<li><strong>数据集</strong>：训练数据来源于MIMIC-IV电子健康记录数据集。评估则使用新提出的DiagBench基准。</li>
+<li><strong>代码</strong>：代码已在GitHub上公开：<a href="https://github.com/MAGIC-AI4Med/DiagGym">https://github.com/MAGIC-AI4Med/DiagGym</a></li>
 </ul>
 
 <h3>实验结果</h3>
 
 <ul>
-<li><strong>正确性</strong>：EQSPEC和EXSPEC能够保持极高的输出等价性（约95%），有效解决了现有方法中常见的KV缓存和位置ID错误问题，其输出与标准自回归生成一致。</li>
-<li><strong>性能与效率</strong>：EXSPEC在吞吐量上显著优于EQSPEC和其他基线方法。实验表明，在批量大小为8时，EXSPEC相比于批量大小为1的基线实现了高达<strong>3倍</strong>的吞吐量提升。</li>
-<li><strong>开销分析</strong>：实验证实，对齐开销是影响性能的关键因素，而EXSPEC的智能调度策略能有效减少这种开销，从而提高整体效率。</li>
+<li><strong>性能提升</strong>：DiagAgent在各项指标上均显著优于所有基线模型。与传统SFT方法相比，DiagAgent在单轮和端到端设置中分别实现了9.34%和15.12%的诊断准确率提升。</li>
+<li><strong>模型泛化性</strong>：该框架在多种基础LLM（如Qwen, Llama系列）上均展现出一致的性能提升。</li>
+<li><strong>环境保真度</strong>：DiagGym生成的检查结果在临床一致性上达到了96.91%，证明了其作为训练环境的有效性。</li>
+<li><strong>局限性分析</strong>：案例研究表明，尽管DiagAgent在诊断方面表现出色（如成功识别异位妊娠），但在需要紧急处理的情况下，它可能无法提出高优先级的管理建议（如液体复苏），这指出了未来改进的方向。</li>
 </ul>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>首次对批量推测解码中的ragged tensor问题进行了系统的正确性分析</strong>，并明确了确保输出等价性所需的同步不变性。</li>
-<li><strong>提出了EQSPEC</strong>，一个以正确性为优先的解决方案，保证了批量推测解码的输出可靠性。</li>
-<li><strong>提出了EXSPEC</strong>，一个高效的跨批次调度策略，它在保证正确性的前提下，通过减少对齐开销显著提高了推理吞吐量。</li>
-<li><strong>通过在多种模型和数据集上的实验</strong>，证明了所提方法在正确性和可扩展性上的优越性，为生产级LLM推理系统的优化提供了重要的理论基础和实践指导。</li>
+<li><strong>提出了DiagGym</strong>：首个用于动态训练诊断代理的虚拟临床环境（世界模型），解决了在保护患者隐私的同时进行强化学习训练的难题。</li>
+<li><strong>开发了DiagAgent</strong>：通过实验证明，在虚拟环境中进行强化学习训练的诊断代理，其动态决策和诊断能力显著优于静态训练的模型。</li>
+<li><strong>构建了DiagBench</strong>：创建了一个新的、全面的评估基准，用于评估AI在多轮诊断交互中的推理过程质量，推动了该领域评估标准的进步。</li>
 </ol>
 
                     </div>
@@ -737,7 +722,7 @@ pre[class*=language-] {
         </div>
         
         <div class="links">
-            <a href="https://arxiv.org/abs/2510.22876" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="https://arxiv.org/abs/2510.24654" class="btn" target="_blank">📄 查看 arXiv 原文</a>
             <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
             <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
         </div>
