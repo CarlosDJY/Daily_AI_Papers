@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Encoder-Decoder or Decoder-Only? Revisiting Encoder-Decoder Large Language Model</title>
+    <title>Value Drifts: Tracing Value Alignment During LLM Post-Training</title>
     <style>
         body {
             font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -202,19 +202,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Encoder-Decoder or Decoder-Only? Revisiting Encoder-Decoder Large Language Model</h1>
+            <h1>Value Drifts: Tracing Value Alignment During LLM Post-Training</h1>
             
-            <div class="paper-meta"><strong>作者单位:</strong> Google DeepMind, Google</div>
+            <div class="paper-meta"><strong>作者单位:</strong> Mila - Quebec AI Institute, McGill University, Universite de Montreal, ETH Zurich, University of British Columbia, Vector Institute, Canada CIFAR AI Chair</div>
             
             <div>
-                <span class="paper-score">推荐分数: 0.447</span>
-                <span class="paper-id">arXiv ID: 2510.26622v1</span>
+                <span class="paper-score">推荐分数: 0.540</span>
+                <span class="paper-id">arXiv ID: 2510.26707v1</span>
             </div>
             
         </div>
         
         <div class="nav-links">
-            <a href="http://arxiv.org/abs/2510.26622v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="http://arxiv.org/abs/2510.26707v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
             <a href="index.html">← 返回每日报告</a>
             <a href="../../index.html">← 返回汇总页</a>
         </div>
@@ -222,14 +222,14 @@
         
         <div class="paper-image">
             
-            <img src="../../images/2025-11-01/d537952d866e662a58a63aaf1a0e9d538bfe190580b64c80ac14795551af817c.jpg" alt="核心思路示意图" />
+            <img src="../../images/2025-11-02/1e3d4ca9e5b81088a75d643744ef79896eca2010ca5b143b7f2449c97535f60b.jpg" alt="核心思路示意图" />
         </div>
         
         
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种新的编码器-解码器大语言模型（RedLLM），并与当前主流的解码器单一模型（DecLLM）进行了系统比较。研究表明，尽管DecLLM在计算效率上更优，RedLLM在长上下文处理和推理效率方面表现出色，且在多个下游任务中取得了可比甚至更好的结果。这一发现重新验证了编码器-解码器模型的潜力，为模型选择提供了重要依据。
+                本文提出了一种系统性的方法，分析大语言模型（LLM）在后训练阶段的价值漂移，探讨其与人类价值观的对齐问题。研究发现，监督微调（SFT）阶段确立了模型的基本价值观，而后续的偏好优化对这些价值观的重新对齐效果有限。通过构建V-PRISM评估集和合成偏好数据集，本文为理解和优化LLM的价值学习过程提供了实证支持和实践指导。
             </div>
         </div>
         
@@ -630,174 +630,167 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
-                        <p>好的，我已经阅读了您提供的所有论文片段，并将其中的信息整合、去重，最终总结成一份完整的摘要。</p>
+                        <h3>现有问题</h3>
 
-<p>请注意，片段中包含了关于多篇不同论文（如RedLLM/DecLLM对比、Gemini 1.5、T5X框架）的总结。根据您的要求，我将这些信息分别整理，但主要聚焦于信息最完整、最连贯的<strong>RedLLM与DecLLM的对比研究</strong>。对于信息较少的其他论文，我将进行简要总结。</p>
-
-<hr />
-
-<h3><strong>论文总结：RedLLM vs. DecLLM</strong></h3>
-
-<h3>现有问题</h3>
-
-<p>本文旨在系统性地比较两种主流的大语言模型（LLM）架构：编码器-解码器架构（本文中称为RedLLM）与当前流行的解码器单一架构（DecLLM）。随着解码器单一模型的普及，编码器-解码器模型的潜力可能被忽视。此项研究至关重要，因为它旨在解决以下问题：
-- 不同模型架构在不同规模、不同计算预算下的性能和扩展性表现如何？
-- 两种架构在训练稳定性、参数效率、计算（训练与推理）效率以及长上下文处理能力上存在哪些具体的优劣和权衡？
-- 如何根据具体任务需求和资源限制，选择最合适的模型架构？</p>
+<p>本文旨在解决大语言模型（LLM）在后训练阶段（包括监督微调SFT和偏好优化）如何学习和对齐人类价值观的问题。尽管LLM在社会中的应用日益广泛，但我们对模型在训练过程中价值观如何形成和演变（即“价值漂移”）的动态过程了解不足。这是一个重要问题，因为：
+- <strong>影响与安全</strong>：模型的价值观直接影响其行为、输出的可靠性，并可能影响公众舆论，因此确保其与人类价值观对齐至关重要。
+- <strong>透明度缺乏</strong>：当前对后训练阶段的动态变化不明，使得开发更透明、可控的对齐方法变得困难。
+- <strong>数据与算法局限</strong>：现有的偏好数据集（如UltraFeedback）可能缺乏足够强的信号来有效调整模型的价值观，而不同的训练算法对价值的影响也尚不明确。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：经过现代化技术改良的编码器-解码器模型（RedLLM），在与解码器单一模型（DecLLM）的竞争中，并非全面落后，而是在特定方面（如计算效率、长上下文外推能力）具有显著优势，从而在性能与效率的权衡中成为一个极具竞争力的选择。</p>
+<ul>
+<li><strong>核心假设</strong>：后训练阶段的算法和数据集对模型的价值表达有显著影响。通过追踪和量化“价值漂移”（模型价值观在训练中的变化），可以深入理解并指导价值对齐过程。</li>
+<li><strong>关键发现</strong>：
+<ol>
+<li><strong>SFT的主导作用</strong>：监督微调（SFT）阶段是确立模型基本价值观的主要驱动力，模型的立场很大程度上由SFT所用数据的价值分布决定。</li>
+<li><strong>偏好优化的有限影响</strong>：在使用标准偏好数据集时，后续的偏好优化（如PPO, DPO）很少能重新对齐或大幅改变SFT阶段建立的价值观。</li>
+<li><strong>算法的差异性</strong>：不同的偏好优化算法（PPO, DPO, SIMPO）在价值调整上表现出不同的特性。例如，PPO倾向于保留SFT的价值，而DPO则会强化与SFT先验一致的立场。</li>
+</ol></li>
+</ul>
 
 <h3>相关研究</h3>
 
 <ul>
-<li><strong>架构比较</strong>: 先前研究（如Wang等人，2022；Tay等人，2022）已对不同架构在指令调优后的表现进行过分析。</li>
-<li><strong>模型实例</strong>: 参考了LLaMA（解码器单一）和FLAN-T5（编码器-解码器）等现有模型的成功经验。</li>
-<li><strong>扩展法则</strong>: 借鉴了Hoffmann等人（2022）关于计算最优扩展法则的研究，以分析模型在不同计算预算下的表现。</li>
+<li><strong>价值对齐与评估</strong>：先前研究多集中在对完全训练好的模型进行后期评估，而本文关注训练过程中的动态变化。</li>
+<li><strong>后训练方法</strong>：监督微调（SFT）、基于人类反馈的强化学习（RLHF）以及多种偏好优化算法（如PPO, DPO, SIMPO）。</li>
+<li><strong>数据集研究</strong>：分析了多种数据集，包括指令调优数据集（WildChat, Alpaca）、偏好数据集（UltraFeedback, HH-RLHF）以及价值导向的评估集（PRISM）。</li>
+<li><strong>AI安全与伦理</strong>：涉及模型偏见、社会反馈循环、合成数据风险等AI安全与伦理文献。</li>
 </ul>
 
-<h3>解决方案</h3>
+<h3><strong>完整的详细解决方案：追踪与分析大规模语言模型中的价值漂移</strong></h3>
 
-<p>本文的核心解决方案是重新审视并优化<strong>编码器-解码器（Encoder-Decoder）架构</strong>的大型语言模型（在此称为 <strong>RedLLM</strong>），并将其与当前占主导地位的<strong>仅解码器（Decoder-only）架构</strong>模型（<strong>DecLLM</strong>）进行全面、公平的比较。通过将现代LLM的最新技术（如旋转位置嵌入、优化的归一化层等）应用于两种架构，论文旨在深入分析它们在不同规模、不同训练阶段以及不同任务上的性能差异、优势与劣势，从而为未来的模型设计提供新的思路。</p>
+<p>本解决方案旨在详细阐述论文中提出的核心方法论，该方法论用于理解、追踪和量化大规模语言模型（LLMs）在后训练（Post-training）阶段的价值对齐过程。通过引入“价值漂移”这一概念，研究人员得以系统性地分析不同训练算法和数据集如何塑造模型的价值观。</p>
 
-<h4><strong>一、 RedLLM模型的核心设计与增强</strong></h4>
+<hr />
 
-<p>为了与现代的DecLLM进行公平比较，论文对传统的编码器-解码器架构进行了多项关键改进，构建了RedLLM。</p>
+<h4><strong>一、 核心概念与目标</strong></h4>
+
+<h5><strong>1. 价值漂移 (Value Drifts)</strong></h5>
+
+<p><strong>定义</strong>：价值漂移指大语言模型在后训练过程中，其表达的价值观所发生的变化。这些变化可能表现为对特定社会议题（如移民、气候变化、堕胎等）的立场从支持转向中立，或从中立转向反对。</p>
+
+<p><strong>研究目的</strong>：
+*   <strong>识别与归因</strong>：识别模型在后训练阶段的价值是如何获得、被抑制或被放大的，并将这些变化归因于特定的训练阶段（如监督微调）或技术（如偏好优化算法）。
+*   <strong>量化分析</strong>：通过量化指标精确测量价值变化的幅度和速度，从而更深入地理解模型的行为演变。
+*   <strong>提供指导</strong>：为AI开发者和研究者提供关于如何选择数据和算法的可操作性建议，以更好地实现模型与人类价值观的对齐，提升AI的伦理与安全水平。</p>
+
+<hr />
+
+<h4><strong>二、 核心方法论与评估框架</strong></h4>
+
+<p>为了实现上述目标，论文构建了一套完整的方法论，涵盖了价值操作化、评估集构建和漂移度量。</p>
+
+<h5><strong>1. 价值的操作化与评估集 (V-PRISM)</strong></h5>
+
+<p>为了系统地评估价值漂移，研究人员构建了一个名为<strong>V-PRISM</strong>的评估数据集。其构建过程如下：
+1.  <strong>数据来源</strong>：基于PRISM数据集，该数据集包含来自75个国家的8,100个价值导向性提示。
+2.  <strong>问题重构</strong>：将原始陈述句（如“堕胎应在任何情况下合法”）转换为自然疑问句（如“你认为堕胎应在任何情况下合法吗？”），以确保语义清晰。
+3.  <strong>嵌入与聚类</strong>：使用<code>all-mpnet-base-v2</code>模型将问题嵌入为向量，并利用<code>HDBScan</code>算法对问题进行聚类，形成11个具有明显价值多元化的语义类别。
+4.  <strong>筛选与构建</strong>：从每个类别中随机抽取50个问题，最终构成包含550个价值探测问题的V-PRISM评估集。</p>
+
+<p>在评估时，模型对V-PRISM中的每个问题生成响应，再利用GPT-4o将响应的立场分类为<strong>支持（Support）</strong>、<strong>中立（Neutral）</strong>或<strong>反对（Oppose）</strong>。</p>
+
+<h5><strong>2. 价值漂移的度量</strong></h5>
+
+<p>论文提出了两个关键指标来量化价值漂移：
+*   <strong>漂移幅度 (Drift Magnitude)</strong>：衡量模型在两个不同训练检查点（t和t'）之间，对某一主题（T）的特定立场（s）的预期变化。
+    [
+    M<em>{s, \theta, T}(t, t') = v</em>{\theta, t'}(T)<em>s - v</em>{\theta, t}(T)_s
+    ]
+*   <strong>漂移时间 (Drift Time)</strong>：衡量模型达到其立场极值点所需的训练步数占总步数的比例，用于分析价值变化的快慢。</p>
+
+<hr />
+
+<h4><strong>三、 实验设计与解决方案组件</strong></h4>
+
+<p>研究人员在Llama-3和Qwen-3系列模型上进行了受控实验，系统地分析了后训练的两个主要阶段。</p>
+
+<h5><strong>1. 阶段一：监督微调 (Supervised Fine-Tuning, SFT)</strong></h5>
+
+<p>SFT是模型学习遵循指令和表达特定价值观的关键阶段。
+*   <strong>实验对比</strong>：研究对比了两种不同的SFT数据集：
+    *   <strong>WildChat</strong>：源于真实用户对话，内容更自然，模型训练后在敏感话题上更倾向于<strong>中立</strong>立场。
+    *   <strong>Alpaca</strong>：为指令跟随任务设计的合成数据集，模型训练后表现出更强的<strong>支持</strong>立场，这可能源于数据集设计中潜在的积极响应偏见。
+*   <strong>核心发现</strong>：<strong>SFT阶段是模型价值观的主要塑造期</strong>。数据集的价值分布会迅速且强烈地影响模型的初始价值立场，并且这种影响具有持久性。</p>
+
+<h5><strong>2. 阶段二：偏好优化 (Preference Optimization)</strong></h5>
+
+<p>在SFT之后，通过偏好优化来使模型行为更符合人类偏好。研究考察了三种主流算法。</p>
+
+<ul>
+<li><p><strong>标准数据集的局限性</strong>：在使用如UltraFeedback和HH-RLHF等标准偏好数据集时，研究发现“选择的”响应和“拒绝的”响应在价值立场上差异很小（即“<strong>价值差距小</strong>”），因此无法为模型提供足够强的信号来改变其在SFT阶段已形成的价值观。</p></li>
+<li><p><strong>合成偏好数据集的引入</strong>：为了验证偏好优化算法的能力，研究人员创建了一个<strong>合成偏好数据集</strong>，其中包含明确且“<strong>价值差距大</strong>”的响应对（例如，一个明确支持，一个明确反对）。</p></li>
+<li><p><strong>不同算法的表现</strong>：</p>
 
 <ol>
-<li><p><strong>模型架构设计</strong>:</p>
-
-<ul>
-<li><strong>平衡结构</strong>: RedLLM采用相等数量的编码器和解码器层，以保持架构的平衡性。</li>
-<li><strong>归一化</strong>: 采用参数无关的RMSNorm作为归一化层，以提升训练效率和稳定性。</li>
-<li><strong>位置编码</strong>: 将<strong>旋转位置嵌入（Rotary Positional Embedding, RoPE）</strong>应用于所有注意力机制，包括编码器自注意力、解码器自注意力和交叉注意力，确保位置信息的有效编码。</li>
-<li><strong>参数共享</strong>: 将编码器、解码器和输出层的词嵌入进行绑定，有效减少了模型的参数量。</li>
-</ul></li>
-<li><p><strong>训练稳定性解决方案</strong>:</p>
-
-<ul>
-<li>在早期实验中，研究人员发现RedLLM在训练过程中存在不稳定性。为解决此问题，论文提出在注意力模块的输出端<strong>额外增加一个归一化层</strong>，即 <code>AttnRedLLM = LN(AttnDecLLM)</code>，此举显著增强了训练过程的稳定性。</li>
-</ul></li>
-</ol>
-
-<h4><strong>二、 预训练与微调策略</strong></h4>
-
-<p>模型的训练策略是其性能表现的关键，论文为RedLLM设计了特定的预训练和微调流程。</p>
-
-<ol>
-<li><p><strong>预训练</strong>:</p>
-
-<ul>
-<li><strong>目标函数</strong>: 采用<strong>前缀语言建模（prefix LM）</strong>作为预训练目标。在这种设置下，输入序列被分为两部分：一部分作为编码器的前缀（context），另一部分作为解码器的目标（target）。</li>
-<li><strong>数据集</strong>: 使用大规模的 <strong>RedPajama V1</strong> 数据集进行预训练，总训练量约为1.6T个标记（tokens）。</li>
-<li><strong>优化器</strong>: 采用 <strong>Adafactor</strong> 优化器进行训练。</li>
-</ul></li>
-<li><p><strong>指令微调</strong>:</p>
-
-<ul>
-<li>预训练完成后，模型在 <strong>FLAN</strong> 数据集上进行指令微调（instruction fine-tuning），以激发其遵循指令和解决下游任务的能力。</li>
-</ul></li>
-</ol>
-
-<h4><strong>三、 性能评估与核心发现：RedLLM vs. DecLLM</strong></h4>
-
-<p>论文的核心贡献在于对两种架构在不同规模（从150M到8B参数）下的深入比较分析，揭示了它们之间复杂的权衡关系。</p>
-
-<ol>
-<li><p><strong>预训练阶段：DecLLM的效率优势</strong></p>
-
-<ul>
-<li>在预训练阶段，DecLLM在零样本（zero-shot）和少样本（few-shot）任务上的表现普遍优于RedLLM。</li>
-<li>从计算效率上看，在相同的计算预算下，DecLLM能够达到更低的困惑度（PPL），显示出其在预训练阶段的学习效率更高。</li>
-</ul></li>
-<li><p><strong>指令微调后的性能逆转</strong></p>
-
-<ul>
-<li><strong>惊人的逆转</strong>: 经过指令微调后，RedLLM的性能发生了显著变化。在零样本和少样本任务上，RedLLM的表现追平甚至在某些情况下<strong>超越了</strong>同等规模的DecLLM。</li>
-<li><strong>编码器的价值</strong>: 这一现象表明，RedLLM编码器中的<strong>双向注意力机制（Bi-directional Attention）</strong>在预训练阶段可能未被充分利用，但在指令微调后被有效激活，极大地增强了模型对输入的理解能力。这使得RedLLM在需要深度理解上下文的任务上表现出色。</li>
-</ul></li>
-<li><p><strong>长上下文外推能力：RedLLM的独特优势</strong></p>
-
-<ul>
-<li>实验发现，当处理超过训练长度的序列时，RedLLM的困惑度（PPL）增长比DecLLM<strong>更为平滑</strong>，显示出其在长序列建模方面具有更强的外推能力。</li>
-<li>通过对注意力权重的可视化分析发现，RedLLM的注意力机制能更有效地捕捉远程依赖信息，而DecLLM的注意力则表现出更强的“局部性衰减”现象，即注意力更集中于邻近的token。</li>
-</ul></li>
-</ol>
-
-<h4><strong>四、 实现细节与框架</strong></h4>
-
-<p>为了支持如此大规模的实验，论文依赖于高效的训练和评估框架。
-*   <strong>训练框架</strong>: 所有模型的训练和评估均基于 <strong>T5X</strong> 框架，这是一个专为大规模Transformer模型设计的、基于JAX和Flax的开源库。
-*   <strong>数据处理</strong>: 使用 <strong>SeqIO</strong> 库进行高效、可复现的数据加载和预处理，确保了实验的一致性和可扩展性。
-*   <strong>硬件</strong>: 训练过程使用了TPU v5p芯片，以支持大规模模型的并行计算需求。</p>
-
-<h3><strong>总结</strong></h3>
-
-<p>该论文提出的解决方案并非简单地宣告某种架构的胜利，而是通过对RedLLM（编码器-解码器）的现代化改造和与DecLLM（仅解码器）的严谨对比，系统性地揭示了两种主流架构之间的<strong>核心权衡</strong>：</p>
-
-<ul>
-<li><strong>DecLLM</strong>: 在<strong>预训练阶段</strong>具有更高的计算效率和更强的零样本/少样本学习能力，是快速构建基础模型的优选。</li>
-<li><strong>RedLLM</strong>: 在<strong>指令微调后</strong>能够充分发挥其编码器双向注意力的优势，展现出与DecLLM相当甚至更优的任务解决能力，并且在<strong>长上下文外推</strong>和<strong>推理效率</strong>方面具有独特潜力。</li>
+<li><strong>PPO (近端策略优化)</strong>：通过KL散度惩罚项，PPO能有效地<strong>维持</strong>SFT阶段建立的价值观，表现出很强的稳定性，价值漂移最小。</li>
+<li><strong>DPO (直接偏好优化)</strong>：DPO表现出“<strong>优先敏感放大</strong>”特性，它会显著增强与SFT先验一致的立场，而仅部分调整不一致的立场。其优化目标为：
+[
+L<em>{DPO}(\theta; D</em>{Pref}) = -E<em>{(x, y</em>w, y<em>l) \sim D</em>{Pref}} \left[ \log \sigma \left( \beta \log \frac{\pi<em>\theta(y</em>w|x)}{\pi<em>{ref}(y</em>w|x)} - \beta \log \frac{\pi<em>\theta(y</em>l|x)}{\pi<em>{ref}(y</em>l|x)} \right) \right]
+]</li>
+<li><strong>SIMPO (简单偏好优化)</strong>：SIMPO在消除对参考模型的需求后，导致的价值漂移相对<strong>温和</strong>，在支持立场上有轻微增强。其优化目标为：
+[
+L<em>{SIMPO}(\theta; D</em>{Pref}) = -E<em>{(x, y</em>w, y<em>l) \sim D</em>{Pref}} \left[ \log \sigma \left( \frac{\beta}{|y<em>w|} \sum \log \pi</em>\theta(y<em>w|x) - \frac{\beta}{|y</em>l|} \sum \log \pi<em>\theta(y</em>l|x) - \gamma \right) \right]
+]</li>
+</ol></li>
+<li><p><strong>核心发现</strong>：当偏好数据中存在明确的价值差距时，<strong>偏好优化算法确实能够重塑模型的价值观</strong>，但不同算法的重塑方式和程度各不相同。</p></li>
 </ul>
 
-<p>最终，这项研究的结论是，尽管当前社区的研究重点倾向于仅解码器模型，但编码器-解码器架构远未过时。它在特定场景（尤其是在经过微调后）拥有独特的优势，值得学术界和工业界重新投入关注和进一步研究。</p>
+<hr />
+
+<h4><strong>四、 结论与应用前景</strong></h4>
+
+<p>本研究通过引入“价值漂移”的分析框架，系统地揭示了LLMs在后训练阶段的价值演变规律。</p>
+
+<p><strong>主要结论</strong>：
+1.  <strong>SFT是价值对齐的主导阶段</strong>：SFT数据集的选择对模型的最终价值表达起着决定性作用。
+2.  <strong>偏好优化的作用被高估</strong>：在标准偏好数据下，偏好优化很难改变SFT设定的价值观。要实现价值重塑，需要具有明显“价值差距”的数据。
+3.  <strong>算法选择至关重要</strong>：不同的偏好优化算法（PPO, DPO, SIMPO）具有不同的价值塑造特性，应根据对齐目标（维持或改变价值观）进行选择。</p>
+
+<p><strong>应用前景</strong>：
+*   <strong>指导数据策划</strong>：为构建能有效引导模型价值观的数据集提供了理论依据。
+*   <strong>优化算法选择</strong>：帮助开发者根据具体的对齐需求选择最合适的训练算法。
+*   <strong>提升模型透明度</strong>：该方法论提供了一个观察和理解模型内部价值变化的窗口，有助于构建更可信、更安全的AI系统。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>预训练与微调</strong>: 使用RedPajama V1数据集（1.6T tokens）进行预训练，并使用FLAN数据集进行指令调优。</li>
-<li><strong>评估维度</strong>:
+<li><strong>模型与检查点</strong>：使用Llama-3和Qwen-3等开源模型，在SFT和偏好优化过程中的多个检查点进行采样，以追踪价值的演变。</li>
+<li><strong>SFT阶段实验</strong>：使用不同的SFT数据集（如WildChat和Alpaca）训练模型，比较它们在移民等社会议题上形成的初始价值立场。</li>
+<li><strong>偏好优化实验</strong>：
 <ul>
-<li><strong>预训练性能</strong>: 使用困惑度（PPL）评估模型在不同计算预算下的学习效率。</li>
-<li><strong>下游任务</strong>: 在多个基准任务（如MMLU, GSM8K, CommonsenseQA, StrategyQA）上评估模型的零样本（zero-shot）和少样本（few-shot）能力。</li>
-<li><strong>长上下文</strong>: 测试模型在处理超过训练长度的序列时的外推能力。</li>
-<li><strong>效率</strong>: 测量模型的训练和推理速度（例如，每秒处理的样本数）。</li>
+<li>使用标准偏好数据集（UltraFeedback）和自建的合成偏好数据集进行训练。</li>
+<li>对比PPO、DPO、SIMPO等不同算法对模型价值漂移的影响。</li>
 </ul></li>
+<li><strong>评估方法</strong>：使用V-PRISM中的问题探测模型的立场，并利用GPT-4o等强模型对模型的自由形式回答进行立场分类（如支持、反对、中立），从而量化价值分布的变化。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>: 预训练使用RedPajama V1，指令调优使用FLAN。</li>
-<li><strong>代码</strong>: 论文片段中未提供代码库的链接。</li>
+<li><strong>评估集</strong>：V-PRISM评估集，衍生自PRISM。</li>
+<li><strong>训练数据集</strong>：WildChat、Alpaca、UltraFeedback以及自建的合成偏好数据集。</li>
+<li><strong>代码与模型</strong>：论文承诺将发布所有代码、微调后的模型检查点、评估数据和合成偏好数据，以促进研究的可重复性。部分工具（如TRL）可在 https://github.com/huggingface/trl 找到。</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<p>实验结果揭示了两种架构之间复杂的权衡关系：
-- <strong>下游任务性能</strong>: 在零样本和少样本任务上，DecLLM在大多数情况下表现优于RedLLM，尤其是在计算预算充足时。
-- <strong>效率</strong>:
-    - <strong>计算效率</strong>: RedLLM在训练和推理上都表现出更高的计算效率（速度更快）。
-    - <strong>参数效率</strong>: DecLLM的参数效率更高，即在相同参数量下，通常能达到更好的下游任务性能。
-- <strong>扩展性</strong>: 两种架构都表现出良好的扩展能力，但DecLLM在利用更多计算资源（训练数据）方面略有优势。
-- <strong>长上下文能力</strong>: RedLLM在处理长序列时表现出更强的外推能力，其困惑度增长更平滑。</p>
+<ul>
+<li><strong>SFT决定初始价值</strong>：实验证实，SFT阶段对模型的价值观起决定性作用。例如，在WildChat上训练的模型对移民问题更中立，而在Alpaca上训练的则更倾向于支持。</li>
+<li><strong>标准偏好优化影响微弱</strong>：使用UltraFeedback等标准数据集进行偏好优化时，模型的价值漂移幅度很小，SFT阶段学习到的立场基本保持不变。</li>
+<li><strong>算法效果各异</strong>：在合成数据集上，不同算法展现出不同行为：PPO能较好地保留SFT价值；DPO会强化与SFT先验一致的立场；SIMPO则导致适度的价值漂移。</li>
+<li><strong>价值漂移因主题而异</strong>：模型在处理不同社会敏感话题（如气候变化、堕胎）时，其价值漂移的幅度和速度存在显著差异。</li>
+</ul>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>全面的实证研究</strong>: 提供了迄今为止最全面的编码器-解码器与解码器单一架构的对比研究之一，挑战了“解码器单一架构在所有方面都更优”的普遍看法。</li>
-<li><strong>揭示关键权衡</strong>: 清晰地量化了两种架构在性能、计算效率、参数效率和长上下文处理能力之间的权衡，为模型选择提供了重要的实证依据。</li>
-<li><strong>重新验证编码器-解码器潜力</strong>: 证明了经过现代技术改进的编码器-解码器模型（RedLLM）仍然是一个强大且高效的选择，特别是在对推理速度和长上下文处理有较高要求的场景下。</li>
+<li><strong>提出并验证了“价值漂移”概念</strong>：为理解LLM在后训练阶段的动态学习过程提供了新的分析框架。</li>
+<li><strong>提供了系统性的实证分析</strong>：首次深入揭示了SFT和偏好优化在塑造模型价值观中的不同角色，并量化了不同算法和数据集的影响。</li>
+<li><strong>开发了新的评估工具</strong>：创建了V-PRISM评估集和合成偏好数据集，为未来研究提供了宝贵的工具。</li>
+<li><strong>提供了可操作的实践指导</strong>：研究结果为数据策划、模型及算法的选择提供了科学依据，有助于开发更透明、可控和对齐的LLM。</li>
 </ol>
-
-<hr />
-
-<h3><strong>其他论文片段简要总结</strong></h3>
-
-<h4><strong>关于 Gemini 1.5</strong></h4>
-
-<ul>
-<li><strong>现有问题</strong>: 如何在多模态任务中有效处理和理解大规模（长）上下文信息。</li>
-<li><strong>解决方案/贡献</strong>: 提出了Gemini 1.5模型，通过改进架构和训练策略，显著提升了模型在长上下文和多模态数据上的理解与推理能力。</li>
-</ul>
-
-<h4><strong>关于 T5X 和 SeqIO 框架</strong></h4>
-
-<ul>
-<li><strong>现有问题</strong>: 如何高效地训练和推理参数规模日益增大的深度学习模型。</li>
-<li><strong>解决方案/贡献</strong>: 提出了T5X（训练框架）和SeqIO（数据处理库），通过模块化和灵活的设计，优化了大规模模型的训练数据管道和训练过程，提高了整体的可扩展性和效率。</li>
-</ul>
 
                     </div>
                 
@@ -805,7 +798,7 @@ pre[class*=language-] {
         </div>
         
         <div class="links">
-            <a href="http://arxiv.org/abs/2510.26622v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="http://arxiv.org/abs/2510.26707v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
             <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
             <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
         </div>
