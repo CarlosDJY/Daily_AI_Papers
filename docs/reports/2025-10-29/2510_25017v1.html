@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StorageXTuner: An LLM Agent-Driven Automatic Tuning Framework for Heterogeneous Storage Systems</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>StorageXTuner: An LLM Agent-Driven Automatic Tuning Framework for Heterogeneous Storage Systems</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Arizona State University, Iowa State University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.324</span>
+                <span class="paper-id">arXiv ID: 2510.25017v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.25017v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-29/2c394ff8f59b4e5b76c3e39f3e2463a33b2afa717e66670ea28faa73695a1727.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了StorageXTuner，一个基于多LLM代理的自动调优框架，旨在解决异构存储系统的配置复杂性和效率问题。通过四个专门的代理（Executor、Extractor、Searcher、Reflector）协作，StorageXTuner实现了动态经验管理和闭环反馈，显著提升了性能，实验结果显示吞吐量提高至575%，p99延迟降低88%，并在多种存储系统中表现出优异的通用性和鲁棒性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决异构存储系统自动配置与调优的复杂性、效率和通用性问题。这是一个长期存在且至关重要的问题，因为：
+- <strong>手动调优的局限性</strong>：手动配置耗时、易错，且需要深厚的专家知识。
+- <strong>配置空间巨大</strong>：现代存储系统有大量的配置参数，导致探索空间极其庞大。
+- <strong>缺乏通用性</strong>：现有的自动调优方法（包括传统的机器学习方法和早期的LLM方法）通常与特定的系统、工作负载或软件版本紧密耦合，难以迁移和适应变化。
+- <strong>LLM应用的挑战</strong>：直接应用LLM进行调优面临处理多阶段复杂任务效率低下、令牌限制、信息幻觉以及难以有效管理和复用调优经验等问题。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过构建一个由多个专业化的大语言模型（LLM）代理协作的框架（StorageXTuner），可以将复杂的调优任务分解，并结合结构化探索、动态经验管理和自我修正机制，从而实现对异构存储系统更高效、通用和鲁棒的自动化性能调优。该框架能够显著超越传统的默认配置和现有的调优方法。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>传统与机器学习调优方法</strong>：包括基于贝叶斯优化的方法（如CherryPick, DBTune, Smac3）、深度强化学习（如QTune）和元学习（如OtterTune）。这些方法通常需要大量数据或难以适应环境变化。</li>
+<li><strong>基于LLM的调优方法</strong>：早期的探索如ELMo-Tune、GPTuner和λ-Tune，展示了LLM的潜力，但通常与特定系统耦合，通用性较差。</li>
+<li><strong>配置依赖分析</strong>：如SPEX、cDEP等研究，关注于理解软件配置间的依赖关系。</li>
+</ul>
+
+<h3>完整解决方案：StorageXTuner - 基于LLM的自动化存储系统调优框架</h3>
+
+<h4>一、引言：问题与设计理念</h4>
+
+<p>现代存储系统（如数据库、键值存储、缓存引擎）的配置空间极其复杂，包含数百个参数，这使得手动调优成为一项耗时、易错且需要深厚专业知识的任务。现有的自动化调优方法往往与特定系统紧密耦合，缺乏通用性，并且无法有效重用调优过程中获得的知识。</p>
+
+<p>为了解决这些挑战，论文提出了 <strong>StorageXTuner</strong>，一个通用的、完全自动化的端到端存储系统调优框架。其核心设计理念是<strong>整合大型语言模型（LLM）的推理能力</strong>，通过模块化的代理架构和动态的知识管理机制，实现高效、鲁棒且可解释的自动化调优。</p>
+
+<h4>二、核心架构：创新的多代理协作机制</h4>
+
+<p>StorageXTuner的核心是一个由四个专门的LLM代理（Agent）组成的协作系统。这种分工明确的架构将复杂的调优流程分解为模块化的子任务，并通过两个迭代循环协同工作，以实现持续优化。</p>
+
+<h5>1. 代理分工</h5>
+
+<ul>
+<li><strong>Executor (执行者)</strong>：负责存储系统的部署、基准测试和监控。它在沙盒环境中根据给定配置运行工作负载，并收集所有原始输出，包括性能统计数据和系统日志。</li>
+<li><strong>Extractor (提取器)</strong>：负责分析Executor收集的原始数据。它利用LLM的编程能力，为不同格式的日志（如文本、JSON）<strong>动态生成Python解析器</strong>，并提取关键性能指标。最终，它将这些信息整合成结构化的<strong>“性能摘要（Performance Digest）”</strong>，供后续代理使用。</li>
+<li><strong>Searcher (搜索者)</strong>：调优过程的大脑。它负责探索高维配置空间，根据Extractor的性能摘要和Reflector提供的调优洞察，决定下一轮要测试的候选配置。</li>
+<li><strong>Reflector (反思者)</strong>：框架的“记忆与学习中心”。它收集、分析和管理整个调优过程中产生的经验和<strong>“调优洞察（Tuning Insights）”</strong>，并对其进行评估和总结，以指导Searcher未来的决策。</li>
+</ul>
+
+<h5>2. 双迭代循环</h5>
+
+<p>框架通过两个紧密交织的迭代循环来运作：
+*   <strong>循环A (配置-执行-分析)</strong>：由Executor、Extractor和Searcher组成。Searcher提出新配置，Executor执行测试，Extractor分析结果，并将性能摘要反馈给Searcher。这个循环负责执行和评估。
+*   <strong>循环B (经验-反思-指导)</strong>：由Searcher和Reflector组成。Searcher将调优经验（配置及其性能）发送给Reflector，Reflector将其提炼为高层次的调优洞察，并反馈给Searcher以指导下一轮的配置搜索。这个循环负责学习和进化。</p>
+
+<h4>三、关键技术与机制详解</h4>
+
+<h5>1. 基于洞察的配置探索 (Insight-Driven Exploration)</h5>
+
+<p>为了高效导航复杂的配置空间，Searcher采用了<strong>结合LLM推理的树搜索（Tree Search）算法</strong>。
+*   <strong>结构化探索</strong>：将探索过程组织成一棵树，每个节点代表一个配置及其性能。从一个初始配置（如默认配置）作为根节点开始。
+*   <strong>洞察引导</strong>：Searcher利用Reflector提供的高层次调优洞察（例如，“增加写缓冲区大小有助于提高写密集型工作负载的吞吐量”），来决定扩展哪些树的分支，从而优先探索最有潜力的配置方向，避免盲目试错。</p>
+
+<h5>2. 动态洞察与分层内存管理 (Memory Management)</h5>
+
+<p>Reflector通过创新的内存机制来管理和利用调优知识，这是实现“学习”能力的关键。
+*   <strong>分层内存结构</strong>：
+    *   <strong>短期记忆 (STM)</strong>：存储当前调优会话中新产生的、尚未充分验证的临时洞察。
+    *   <strong>长期记忆 (LTM)</strong>：存储那些在多个会话中被反复验证、具有普适性的持久洞察。
+*   <strong>基于置信度的管理</strong>：
+    *   每个洞察都有一个<strong>置信度评分</strong>。当基准测试结果与洞察预测一致时，该洞察被“赞成”（Upvote），置信度提高；反之则被“反对”（Downvote），置信度降低。
+    *   高置信度的洞察会从STM晋升到LTM，而低置信度的洞察最终可能被丢弃。
+*   <strong>检索与应用</strong>：Searcher在决策时，Reflector会结合<strong>上下文相似度</strong>和<strong>置信度评分</strong>，通过检索增强生成（RAG）机制，提供最相关的Top-K个洞察，确保LLM的推理建立在可靠的经验之上。</p>
+
+<h5>3. 鲁棒性与安全保障</h5>
+
+<p>为了确保调优过程的稳定和安全，StorageXTuner集成了多层验证机制。
+*   <strong>Extractor的自我修正</strong>：如果Extractor生成的日志解析器执行失败或提取的数据异常，它会触发自我修正机制，要求LLM重新生成脚本，从而保证数据分析的准确性。
+*   <strong>Searcher的双层验证</strong>：
+    1.  <strong>领域约束过滤</strong>：LLM会根据用户指定的约束（如持久性保证）过滤掉不安全的候选配置。
+    2.  <strong>轻量级检查器</strong>：在执行前，一个轻量级检查器会验证配置的安全性，拒绝不安全的更改（如违反黑名单规则），并将错误信息反馈给LLM。</p>
+
+<h4>四、评估与效果</h4>
+
+<p>StorageXTuner在多个主流存储系统（如<strong>RocksDB、CacheLib、MySQL InnoDB</strong>）上，使用标准基准测试（如YCSB、TPC-C/H）进行了广泛评估。</p>
+
+<h5>1. 性能提升</h5>
+
+<ul>
+<li><strong>显著优于基线</strong>：与出厂设置和现有的先进方案（如ELMo-Tune）相比，StorageXTuner取得了惊人的性能提升。
+<ul>
+<li>在RocksDB上，吞吐量提升高达 <strong>575%</strong>，p99延迟降低 <strong>88%</strong>。</li>
+<li>在MySQL InnoDB上，TPC-C事务吞吐量提升高达 <strong>709%</strong>。</li>
+<li>在CacheLib上，显著提高了缓存命中率和吞吐量。</li>
+</ul></li>
+<li><strong>收敛效率高</strong>：能够在更少的试验次数内收敛到最佳性能，显示出其高效性。</li>
+</ul>
+
+<h5>2. 创新的评估指标</h5>
+
+<p>由于LLM驱动的调优是新领域，论文提出了四个新指标来全面评估其效率和成本：
+*   <strong>最大性能增益 (MPG)</strong>：衡量相对性能提升。
+*   <strong>到达95%最大性能的令牌成本 (TC95)</strong>：衡量达到接近峰值性能的LLM调用成本。
+*   <strong>令牌效率 (TE)</strong>：每单位令牌消耗带来的性能增益。
+*   <strong>令牌加权错误率 (TWER)</strong>：衡量生成无效配置的频率。</p>
+
+<p>在这些指标上，StorageXTuner同样表现出色，证明了其设计的成本效益和高稳定性。</p>
+
+<h4>五、结论与关键发现</h4>
+
+<p>StorageXTuner通过将复杂的调优任务分解给专门的LLM代理，并结合动态的洞察管理和强大的学习机制，成功构建了一个通用、高效且鲁棒的自动化存储系统调优框架。</p>
+
+<p><strong>关键发现包括：</strong>
+1.  <strong>闭环多代理架构</strong>比单一模型推理更有效，能够实现更高的自主性。
+2.  LLM在<strong>编辑现有配置</strong>时比从头创建表现更好，这突显了提供良好初始配置和上下文的重要性。
+3.  通过<strong>分层记忆和置信度评分</strong>来动态管理调优洞察，是实现持续学习和适应性的关键。
+4.  该框架将人类专家的角色从繁琐的手动调优转变为<strong>战略监督</strong>，通过设定目标和预算来引导自动化过程。</p>
+
+<p>总之，StorageXTuner为利用LLM解决复杂的系统优化问题提供了一个开创性的范例，展示了其在现代数据管理领域的巨大潜力。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>评估系统</strong>：在多个主流的异构存储系统上进行了评估，包括RocksDB、LevelDB、CacheLib和MySQL InnoDB。</li>
+<li><strong>基准测试</strong>：使用多种标准工作负载进行测试，如YCSB、MixGraph、TPC-C和TPC-H，覆盖读密集型、写密集型和混合型场景。</li>
+<li><strong>对比方法</strong>：将StorageXTuner的性能与系统默认配置、以及其他先进的调优器（如ELMo-Tune）进行比较。</li>
+<li><strong>鲁棒性测试</strong>：评估了框架在不同系统版本、硬件资源限制下的性能和通用性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用的工作负载由YCSB、TPC-H/C等标准基准测试工具生成。</li>
+<li><strong>代码</strong>：论文提到源代码可在GitHub上获取。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了本文的假设，表明StorageXTuner在性能提升方面表现卓越：
+- <strong>RocksDB</strong>：在MixGraph工作负载下，吞吐量提升高达<strong>575%</strong>，p99延迟降低<strong>88%</strong>。在YCSB工作负载下，相比ELMo-Tune，吞吐量提高了<strong>111%</strong>，p99延迟降低了<strong>56%</strong>。
+- <strong>MySQL InnoDB</strong>：在TPC-C负载下，吞吐量提升了<strong>709%</strong>。
+- <strong>通用性</strong>：在不同的存储系统实现（RocksDB, LevelDB）和多个版本中均表现出优异且稳定的性能，证明了其强大的通用性和鲁棒性。
+- <strong>效率</strong>：有效减少了寻找最优配置所需的探索迭代次数。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出StorageXTuner框架</strong>：设计并实现了一个新颖的、基于多LLM代理协作的闭环框架，用于异构存储系统的自动化调优。</li>
+<li><strong>创新的代理协作与经验管理机制</strong>：详细阐述了四个代理（Executor, Extractor, Searcher, Reflector）的分工与协作模式，并提出了分层记忆（STM/LTM）和置信度评分机制来动态管理调优知识。</li>
+<li><strong>广泛的实验验证</strong>：通过在多个真实存储系统和标准工作负载上的大量实验，证明了该框架相比现有方法的显著优势，为LLM在系统调优领域的应用树立了新的标杆。</li>
+<li><strong>提升通用性与适应性</strong>：解决了现有方法与特定系统耦合的问题，展示了在不同系统、版本和工作负载下的强大适应能力。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.25017v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 20:10:59</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
