@@ -229,7 +229,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种基于e-values的“e-scores”方法，用于评估大型语言模型（LLM）输出的正确性。该方法解决了传统p值方法的灵活性不足和p-hacking风险，通过允许用户在观察数据后动态选择错误容忍度，同时保持严格的统计保证。实验结果表明，e-scores在数学推理和属性约束满足等任务中表现优越，显著提升了生成模型的可靠性。
+                本文提出了一种基于e值的评估机制，通过引入e分数（e-scores）来衡量生成模型（如大语言模型LLMs）输出的正确性。该方法解决了传统p值方法在后验容忍度选择和错误控制方面的局限性，允许用户在观察结果后灵活调整容忍度。实验表明，e分数在数学推理和属性遵循任务中优于传统方法，提供了更可靠的输出评估。
             </div>
         </div>
         
@@ -632,149 +632,131 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决生成模型（尤其是LLM）在评估其输出正确性时缺乏可靠、灵活机制的核心问题。当前基于p值的方法存在缺陷，如易受p-hacking影响，且要求用户预先设定固定的错误容忍度（α），这在实际应用中缺乏灵活性。这个问题至关重要，因为LLM在数学推理、遵循复杂指令和满足多维属性（如真实性、诚实性）等关键任务中，经常会产生错误输出（即“幻觉”），迫切需要一种能提供统计保证的评估方法。</p>
+<p>本文旨在解决<strong>生成模型（特别是大语言模型LLMs）输出正确性的评估问题</strong>。这是一个重要且持续存在的问题，因为LLMs在广泛应用中容易产生错误输出（即“幻觉”），而现有的评估机制（如基于p值/p分数的方法）在提供可靠的统计保证方面存在局限，尤其是在处理用户可变的容忍度（α）和一种被称为“大小失真”（size distortion）的后验错误概念时。该问题在<strong>数学推理</strong>和<strong>属性遵循</strong>（如真实性、指令遵循）等关键应用场景中尤为突出。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：<strong>使用基于e-values的“e-scores”作为一种新的不正确性度量，可以比传统的p-value方法更有效、更灵活地评估生成模型的输出，并提供严格的后验统计保证。</strong>
-具体来说，该假设包含以下几点：
-1.  e-scores能提供与p-value方法同等的统计保证，同时允许用户在观察数据后灵活选择容忍水平，从而避免p-hacking。
-2.  该方法能有效评估多种类型的LLM输出，包括数学推理的正确性和对多维属性（如指令遵循、真实性）的满足度。
-3.  e-scores在控制错误率和“大小失真”（size distortion）等统计指标上优于现有方法。</p>
+<p>本文的核心假设是：<strong>使用基于e值的“e分数”（e-scores）作为不正确性的度量，可以比传统方法（如p分数）更有效、更灵活地评估生成模型的输出正确性，并提供更强的后验统计保证。</strong>
+具体来说，e分数能够：
+- 允许用户在观察到输出分数后，灵活地、数据依赖地选择容忍度α。
+- 在控制错误率和“大小失真”方面表现更优。
+- 在数学推理和属性评估等具体任务中提升评估的准确性和可靠性。</p>
 
 <h3>相关研究</h3>
 
-<p>本文的研究建立在多个领域之上，主要与以下工作进行比较和关联：
-- <strong>基于p值的符合预测方法</strong>：主要参考Mohri和Hashimoto (2024)、Cherian等人 (2024) 以及Rubin-Toles等人 (2025) 的研究，这些是本文方法直接比较和改进的对象。
-- <strong>统计保证的理论基础</strong>：借鉴了e-values和相关统计理论，如Shafer和Vovk (2008) 等人的工作。
-- <strong>特定领域的基准和模型</strong>：在实验中使用了数学推理基准（如GSM8K, MATH, Zheng et al., 2025）和属性评估数据集（如UltraFeedback, TruthfulQA），并参考了相关的奖励模型（如UltraRM）。</p>
-
-<h3><strong>面向生成模型输出评估的 e-scores 解决方案详解</strong></h3>
-
-<h4><strong>一、 问题背景与解决方案概述</strong></h4>
-
-<p>在评估大型语言模型（LLM）等生成模型的输出时，传统方法（如基于 p-value 的方法）存在一些局限性，例如需要预先设定固定的错误容忍度（α），以及可能存在“p-hacking”问题。为了解决这些挑战，该论文提出了一种全新的评估框架，其核心是引入 <strong>e-scores</strong>。</p>
-
-<p><strong>核心解决方案</strong>：利用 <strong>e-scores</strong> 这一新型度量来评估生成模型输出的（不）正确性。这种方法不仅保留了现有方法的统计保证，还创新性地允许用户在观察到 e-scores 之后，再<strong>灵活地选择（即后验选择）</strong>自己的错误容忍度 α。这极大地增强了评估过程的灵活性和实用性，解决了容忍度需要预设的难题。</p>
-
-<hr />
-
-<h4><strong>二、 e-scores 的核心概念与设计</strong></h4>
-
-<p><strong>1. 定义与功能</strong>
-e-scores 是基于统计学中的 <strong>e-values</strong> 设计的，用于量化生成响应的“不正确性”。其设计直观：
--   <strong>正确的响应</strong> 对应 <strong>低 e-score</strong>。
--   <strong>不正确的响应</strong> 对应 <strong>高 e-score</strong>。</p>
-
-<p>这种设计使用户可以轻松地通过分数高低来判断模型输出的可靠性。</p>
-
-<p><strong>2. 实现细节与计算方法</strong>
-e-scores 的计算是该方法的技术核心，它依赖于一个评估函数和一个“预言机（oracle）”估计器。</p>
-
 <ul>
-<li><p><strong>Oracle 估计器 (<code>ô</code>)</strong>: 这是一个预先训练好的模型（例如一个二元分类器），用于预测给定响应是正确的概率。训练该估计器的数据必须与用于校准和测试的数据集相互独立，以保证评估的公正性。</p></li>
-<li><p><strong>评估函数 (<code>f</code>)</strong>: 该函数将一个提示（prompt）和响应（response）映射到一个非负值。它的设计目标是为正确的响应赋予高分，为错误的响应赋予低分（这与最终 e-score 的高低相反）。例如，可以直接使用 oracle 估计器的输出概率作为 <code>f</code> 的值。</p></li>
-<li><p><strong>e-score 计算公式</strong>: 论文提出的 <code>se-score</code> 计算公式如下：
-[ se\text{-score}(x<em>{n+1}, y</em>{n+1}) = \left( \frac{(n + 1) \cdot f(x<em>{n+1}, y</em>{n+1})}{f(x<em>{n+1}, y</em>{n+1}) + \sum<em>{i=1}^n f^*(x</em>i, O(x<em>i, g</em>{\pi}(x<em>i)))} \right)^{-1} ]
-其中，$x</em>{n+1}, y_{n+1}$ 是当前测试的提示-响应对，求和项是基于校准数据集计算的。简单来说，它将当前响应的评估分值与校准数据中错误响应的分值进行比较。</p></li>
-<li><p><strong>e-scores 的组合</strong>: 在处理需要满足多个属性的复杂任务时，可以为每个属性计算一个 e-score，然后将它们组合（例如通过加权平均）成一个综合评分，以进行整体评估。
-[ se\text{-score}<em>{\text{combined}} = \left( \sum</em>{i=1}^{k} se\text{-score}_i \right)^{-1} \cdot \frac{1}{k} ]</p></li>
+<li><strong>基于p值/p分数的符合性预测方法</strong>：主要引用了Mohri和Hashimoto [2024]、Cherian等 [2024]以及Rubin-Toles等 [2025]的研究。</li>
+<li><strong>e值的理论研究</strong>：借鉴了e值在统计推断和假设检验中的应用。</li>
+<li><strong>相关基准和数据集</strong>：提及了用于评估LLM输出属性的<strong>UltraFeedback</strong>、<strong>Evol-Instruct</strong>和<strong>TruthfulQA</strong>等。</li>
 </ul>
 
-<hr />
+<h3>解决方案</h3>
 
-<h4><strong>三、 完整工作流程</strong></h4>
+<p>这篇论文提出了一种名为<strong>e-scores</strong>的新型评估框架，旨在为生成模型（特别是大语言模型LLM）的输出提供可靠的统计保证，以判断其正确性。该方法的核心优势在于克服了传统p值方法的局限性，允许用户在观察到模型输出后，灵活地调整错误容忍度（α），从而有效避免p-hacking等问题。</p>
 
-<p>将 e-scores 应用于评估生成模型输出的完整流程如下：</p>
+<p>以下是该解决方案的详细构成：</p>
 
-<ol>
-<li><strong>生成响应</strong>: 给定一个提示 <code>x</code>，生成模型产生一组响应 <code>gπ(x)</code>，这可以是一个完整的答案，也可以是解题过程中的多个步骤（子响应）。</li>
-<li><strong>计算 e-scores</strong>: 对于每一个（子）响应 <code>y</code>，使用上述方法计算其对应的 e-score。</li>
-<li><strong>构建分数集</strong>: 将所有响应及其对应的 e-scores 组合成一个评分响应集 <code>S</code>。</li>
-<li><strong>后验容忍度选择与过滤</strong>: 用户在观察评分集 <code>S</code> 后，根据自己的需求和对风险的判断，选择一个错误容忍度 <code>α</code>。</li>
-<li><strong>生成最终响应集</strong>: 根据 <code>α</code> 过滤 <code>S</code>，生成一个最终的响应集 <code>Sα</code>，该集合只包含 e-score 小于或等于 <code>α</code> 的响应。理论上，这个最终集合包含错误响应的概率上限为 <code>α</code>。</li>
-</ol>
+<h4><strong>1. 核心概念：e-scores的定义与原理</strong></h4>
 
-<hr />
-
-<h4><strong>四、 关键特性：后验容忍度 α 的灵活调整</strong></h4>
-
-<p>这是该解决方案相较于传统方法最显著的优势。用户不再需要盲目地预设 <code>α</code>，而是可以根据实际数据反馈来动态调整。论文提出了两种具体的调整策略：</p>
-
-<ol>
-<li><p><strong>最大约束自适应 α (Max-Constrained Adaptive α)</strong>:</p>
+<p>e-scores是一种基于统计学中e-values（期望值）理论的评分机制，用于量化生成模型输出的错误程度。其基本原理如下：</p>
 
 <ul>
-<li>用户先设定一个可接受的最大容忍度 <code>α_max</code>。</li>
-<li>系统会先用 <code>α_max</code> 过滤出一个初步的响应集。</li>
-<li>最终的 <code>α</code> 值被设定为这个初步响应集中 <strong>最高的 e-score</strong>。这确保了在不过度冒险的前提下，尽可能多地保留有用的响应。</li>
+<li><strong>评分解释</strong>：每个生成的响应（y）都会被赋予一个e-score。分数的高低直接反映了响应的正确性：
+<ul>
+<li><strong>低e-score</strong>：表示该响应是正确的。</li>
+<li><strong>高e-score</strong>：表示该响应是错误的。</li>
 </ul></li>
-<li><p><strong>分数包含法 (Score Inclusion Method)</strong>:</p>
-
-<ul>
-<li>用户设定一个希望保留的响应比例 <code>λ</code>（例如，保留分数最低的 80% 的响应）。</li>
-<li>系统会计算出为了达到这个比例所需要的 <code>α</code> 值。这允许用户根据期望的输出数量来控制错误容忍度。</li>
-</ul></li>
-</ol>
-
-<hr />
-
-<h4><strong>五、 应用场景与实验验证</strong></h4>
-
-<p>该方法在多个需要高可靠性的场景中表现出色：</p>
-
-<ul>
-<li><strong>数学事实性与推理链检查</strong>: 在评估 LLM 解决数学问题的能力时，可以为推理过程的每一步计算 e-score，帮助用户快速识别出错误的步骤。</li>
-<li><strong>属性约束满足评估</strong>: 在需要模型输出满足特定属性（如<strong>指令遵循度、真实性、诚实性、帮助性</strong>）时，e-scores 可以有效评估这些约束的满足程度。实验中，该方法在 UltraFeedback 数据集上展现了优于 p-scores 的性能。</li>
+<li><strong>统计保证</strong>：该方法提供了一个关键的统计保证：在用户设定的任意容忍度α下，最终筛选出的响应集中包含错误响应的概率不会超过α。其目标是满足以下不等式：
+\[
+P \{ \exists (Y, \cdot) \in Sα (X, gπ (X)) \text{ s.t. } o (X, Y) = 0 \} \leq α
+\]
+其中，Sα是经过e-score筛选后得分小于等于α的响应集，<code>o(X, Y) = 0</code> 表示响应Y是错误的。</li>
 </ul>
 
-<p><strong>性能度量</strong>: 论文通过多个指标验证了 e-scores 的有效性，包括：
-*   <strong>尺寸失真 (Size Distortion)</strong>: 衡量最终响应集中错误响应的期望比例，理论证明 e-scores 能将其上界控制在 1 以内。
-*   <strong>精确率与召回率</strong>: 实验表明，相较于 p-scores，e-scores 能在过滤掉更多错误响应（高精确率）的同时，不过度牺牲正确的响应（合理的召回率）。</p>
+<h4><strong>2. 关键创新：后验容忍度调整的灵活性</strong></h4>
 
-<hr />
+<p>传统统计方法（如p值）要求在分析数据前预设一个固定的容忍度α，这在实践中缺乏灵活性。e-scores通过引入“大小失真”（size distortion）这一后验错误概念，实现了<strong>数据依赖的后验容忍度（post-hoc α）调整</strong>。</p>
 
-<h4><strong>六、 核心优势总结</strong></h4>
+<ul>
+<li><strong>工作流程</strong>：用户无需预先承诺一个α值。他们可以先生成响应并计算出所有响应的e-scores，然后根据这些分数的分布情况，再决定一个合适的α值来过滤响应。</li>
+<li><strong>两种后验容忍度策略</strong>：
+<ol>
+<li><strong>最大约束自适应α</strong>：用户可以将容忍度α动态更新为响应集中的最大e-score，从而确保所有生成的响应都被考虑在内，同时了解当前输出质量下的最大风险。</li>
+<li><strong>分数包含策略</strong>：用户可以选择包含特定比例（如前80%）的响应，此时容忍度α则设定为该比例下响应的最高e-score。</li>
+</ol></li>
+</ul>
+
+<p>这种后验调整机制赋予了用户极大的灵活性，可以根据具体任务的需求和风险偏好，动态地管理错误率。</p>
+
+<h4><strong>3. 实现细节：e-scores的计算方法</strong></h4>
+
+<p>e-scores的计算依赖于一个独立的<strong>“神谕”估计器（oracle estimator）</strong> <code>ô</code>，它是一个预训练模型，用于预测一个响应正确的概率（输出在之间）。</p>
+
+<ul>
+<li><strong>计算公式</strong>：e-score的具体计算公式借鉴了符合预测（conformal prediction）的思想，其核心形式如下：
+\[
+se\text{-}score(x<em>{n+1}, y</em>{n+1}) = (n + 1) \cdot \frac{f(x<em>{n+1}, y</em>{n+1})}{f(x<em>{n+1}, y</em>{n+1}) + \sum<em>{i=1}^{n} f^{*}(x</em>{i}, O(x<em>{i}, g</em>{\pi}(x_{i})))}^{-1}
+\]
+其中，<code>n</code> 是校准数据集的大小，<code>f</code> 是一个将神谕估计器<code>ô</code>的预测值进行转换的函数。</li>
+<li><strong>转换函数选项</strong>：论文提出了多种转换函数 <code>f</code>，以适应不同的评估需求，例如：
+<ol>
+<li>\$f^{o}(x, y) = \hat{o}(x, y)\$</li>
+<li>\$f^{o}(x, y) = (1 - \hat{o}(x, y))^{-1}\$</li>
+<li>\$f^{o}(x, y) = \hat{o}(x, y) \cdot (1 - \hat{o}(x, y))^{-1}\$</li>
+</ol></li>
+<li><strong>综合e-score</strong>：当有多个基础e-score时（例如针对多选项任务），可以通过简单的平均化处理将它们合并成一个综合e-score，以提供更稳健的评估结果。</li>
+</ul>
+
+<h4><strong>4. 实验验证与应用场景</strong></h4>
+
+<p>论文通过实验展示了e-scores在评估大语言模型输出时的有效性，主要集中在以下两个场景：</p>
 
 <ol>
-<li><strong>灵活性</strong>: 允许用户在观察结果后动态选择容忍度 <code>α</code>，适应数据依赖的需求。</li>
-<li><strong>统计有效性</strong>: 提供了强大的统计保证（如控制尺寸失真），理论上覆盖了更广泛的生成模型和任务类型。</li>
-<li><strong>高效性</strong>: e-scores 的计算复杂度是常数时间，而 p-scores 通常与校准数据量呈线性关系，因此在大规模数据上效率更高。</li>
-<li><strong>易于理解</strong>: “高分=错误”的设计直观，便于用户快速判断模型输出的可靠性，增强了模型的可用性和用户的信任度。</li>
+<li><strong>数学事实性</strong>：评估LLM在解决数学推理问题时，其输出步骤和答案的正确性。</li>
+<li><strong>属性约束满足</strong>：使用UltraFeedback数据集，检查生成的文本是否满足用户的特定期望属性（如真实性、诚实性、指令遵循性、有用性）。</li>
 </ol>
 
-<p><strong>结论</strong>: 通过引入 e-scores 及其配套的后验容忍度选择机制，该论文为生成模型的输出评估提供了一种更灵活、高效且统计上更稳健的解决方案，有力地推动了生成模型在实际应用中的可靠性和可信度。</p>
+<ul>
+<li><strong>实验模型</strong>：实验中使用了<strong>Qwen2.5-Math-7B-PRM800K (QwenPRM)</strong> 和 <strong>Math-Shepherd-PRM-7B (MathShepherdPRM)</strong> 等预训练LLM作为“神谕”估计器。</li>
+<li><strong>评估指标</strong>：实验的核心评估指标是<strong>大小失真</strong>（期望其均值≤1），同时还考察了错误率与α的关系、精确率和召回率。</li>
+<li><strong>实验结论</strong>：实验结果表明，e-scores能够有效地将大小失真控制在1以下，保证了统计有效性。相比之下，传统的p-score方法在某些情况下无法做到这一点。</li>
+</ul>
+
+<h4><strong>5. 解决方案的优势总结</strong></h4>
+
+<ul>
+<li><strong>避免p-hacking</strong>：通过后验容忍度调整，从根本上解决了传统p值方法因预设α而导致的脆弱性。</li>
+<li><strong>广泛的适用性</strong>：理论上保证了该方法适用于任何生成模型和更广泛的响应集类型。</li>
+<li><strong>计算高效</strong>：e-score的计算是一次性的总和运算，其时间和内存复杂度为常量（O(1)），远优于p-score随校准数据量线性增长的复杂度（O(n)）。</li>
+<li><strong>提升用户体验和控制力</strong>：用户可以根据模型输出的实际质量动态调整评估标准，从而获得更符合实际需求的反馈和更可靠的结果。</li>
+</ul>
+
+<p>综上所述，该论文提供了一个理论坚实、灵活高效且实践性强的框架，用于系统性地评估和控制生成模型的输出质量，显著提升了这些模型在关键应用中的可靠性。</p>
 
 <h3>实验设计</h3>
 
-<p>为了验证e-scores的有效性，论文进行了一系列实验，主要设计如下：
-- <strong>核心对比</strong>：在多个任务上系统地比较e-scores和p-scores的表现。
-- <strong>应用场景</strong>：
-    1.  <strong>数学事实性和推理</strong>：评估LLM在解决数学问题（如GSM8K, MATH数据集）时的响应正确性。
-    2.  <strong>属性约束满足</strong>：评估模型输出是否遵循指令、是否真实、有帮助等，使用了UltraFeedback等数据集。
-- <strong>评估指标</strong>：实验关注的关键指标包括大小失真（size distortion）、实际错误率、精确度和召回率。
-- <strong>数据划分</strong>：通常将数据随机划分为测试集和校准集，以进行有效的统计评估。</p>
+<p>实验旨在验证e分数相对于基线方法（主要是p分数）的优越性。
+- <strong>任务领域</strong>：实验涵盖了两个主要领域：
+    1.  <strong>数学推理</strong>：评估模型在解决数学问题时的过程和结果的正确性。
+    2.  <strong>属性约束满足</strong>：评估模型输出是否遵循特定指令、是否真实、有用等。
+- <strong>方法</strong>：将数据集随机分为校准集和测试集，使用预训练的oracle估计器进行评估。
+- <strong>评估指标</strong>：比较不同方法在<strong>大小失真、错误率、精度（Precision）和召回率（Recall）</strong>等指标上的表现。</p>
 
 <h3>数据集和代码</h3>
 
-<p>在提供的论文片段中，<strong>没有明确提供集中的代码库链接</strong>。但是，实验中提及使用了多个公开的基准数据集，包括：
-- <strong>数学推理</strong>：GSM8K, MATH, OlympiadBench, Omni-MATH。
-- <strong>指令遵循与属性评估</strong>：UltraFeedback, Evol-Instruct, TruthfulQA。</p>
+<p>在提供的论文片段中，<strong>没有明确提供数据集和代码的公开链接</strong>。但实验中提到了使用了一些公开基准，如<strong>ProcessBench</strong>和<strong>UltraFeedback</strong>。</p>
 
 <h3>实验结果</h3>
 
-<p>实验结果一致且有力地支持了本文的假设：
-- <strong>性能优越</strong>：在所有测试场景中，e-scores在关键指标（如大小失真、错误率控制）上的表现均优于或显著优于传统的p-scores方法。
-- <strong>有效性验证</strong>：e-scores能够有效地区分正确和不正确的模型响应，无论是在客观的数学推理任务中，还是在主观的属性评估任务中。
-- <strong>灵活性优势</strong>：实验证明了后验α策略的有效性，确认了用户可以在观察数据后灵活设定容忍度，同时不破坏统计保证。</p>
+<p>实验结果一致表明，<strong>e分数在各项评估指标上普遍优于传统的p分数方法</strong>。具体而言，e分数在控制“大小失真”和平均错误率方面表现更佳，同时能在精度和召回率之间取得更好的平衡。这些结果有力地支持了本文的核心假设。</p>
 
 <h3>论文贡献</h3>
 
-<p>本文的主要贡献可以总结为以下几点：
-1.  <strong>提出新方法</strong>：提出了e-scores，一种新颖、灵活且具有严格统计保证的生成模型输出（不）正确性评估方法。
-2.  <strong>解决核心缺陷</strong>：通过允许后验容忍度选择，有效解决了传统p-value方法存在的p-hacking风险和灵活性不足的问题。
-3.  <strong>广泛的实证验证</strong>：通过在数学推理和多维属性评估等多个任务上的大量实验，证明了e-scores相较于现有方法的优越性。
-4.  <strong>提升模型可靠性</strong>：为评估和部署更可信、更可靠的生成模型提供了一种强大的新工具，具有广泛的应用潜力。</p>
+<ul>
+<li><strong>方法论创新</strong>：提出了<strong>e分数</strong>这一新的评估机制，用于评估生成模型输出的正确性，并提供了后验统计保证。</li>
+<li><strong>提升灵活性与可靠性</strong>：证明了e分数允许用户在观察结果后动态调整容忍度，从而增强了评估的灵活性和输出的可靠性。</li>
+<li><strong>实践验证</strong>：通过在数学推理和属性评估等多个任务上的实验，验证了e分数相较于现有方法的优越性，为确保LLM输出的可靠性提供了新的有效工具。</li>
+</ul>
 
                     </div>
                 
@@ -789,7 +771,7 @@ e-scores 的计算是该方法的技术核心，它依赖于一个评估函数�
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-03 16:36:50</p>
+            <p>生成时间: 2025-11-03 16:58:22</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
