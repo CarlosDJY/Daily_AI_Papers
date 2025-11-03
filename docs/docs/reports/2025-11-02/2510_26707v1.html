@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Value Drifts: Tracing Value Alignment During LLM Post-Training</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Value Drifts: Tracing Value Alignment During LLM Post-Training</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Mila - Quebec AI Institute, McGill University, Universite de Montreal, ETH Zurich, University of British Columbia, Vector Institute, Canada CIFAR AI Chair</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.540</span>
+                <span class="paper-id">arXiv ID: 2510.26707v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.26707v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-02/1e3d4ca9e5b81088a75d643744ef79896eca2010ca5b143b7f2449c97535f60b.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种系统性的方法，分析大语言模型（LLM）在后训练阶段的价值漂移，探讨其与人类价值观的对齐问题。研究发现，监督微调（SFT）阶段确立了模型的基本价值观，而后续的偏好优化对这些价值观的重新对齐效果有限。通过构建V-PRISM评估集和合成偏好数据集，本文为理解和优化LLM的价值学习过程提供了实证支持和实践指导。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大语言模型（LLM）在后训练阶段（包括监督微调SFT和偏好优化）如何学习和对齐人类价值观的问题。尽管LLM在社会中的应用日益广泛，但我们对模型在训练过程中价值观如何形成和演变（即“价值漂移”）的动态过程了解不足。这是一个重要问题，因为：
+- <strong>影响与安全</strong>：模型的价值观直接影响其行为、输出的可靠性，并可能影响公众舆论，因此确保其与人类价值观对齐至关重要。
+- <strong>透明度缺乏</strong>：当前对后训练阶段的动态变化不明，使得开发更透明、可控的对齐方法变得困难。
+- <strong>数据与算法局限</strong>：现有的偏好数据集（如UltraFeedback）可能缺乏足够强的信号来有效调整模型的价值观，而不同的训练算法对价值的影响也尚不明确。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>：后训练阶段的算法和数据集对模型的价值表达有显著影响。通过追踪和量化“价值漂移”（模型价值观在训练中的变化），可以深入理解并指导价值对齐过程。</li>
+<li><strong>关键发现</strong>：
+<ol>
+<li><strong>SFT的主导作用</strong>：监督微调（SFT）阶段是确立模型基本价值观的主要驱动力，模型的立场很大程度上由SFT所用数据的价值分布决定。</li>
+<li><strong>偏好优化的有限影响</strong>：在使用标准偏好数据集时，后续的偏好优化（如PPO, DPO）很少能重新对齐或大幅改变SFT阶段建立的价值观。</li>
+<li><strong>算法的差异性</strong>：不同的偏好优化算法（PPO, DPO, SIMPO）在价值调整上表现出不同的特性。例如，PPO倾向于保留SFT的价值，而DPO则会强化与SFT先验一致的立场。</li>
+</ol></li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>价值对齐与评估</strong>：先前研究多集中在对完全训练好的模型进行后期评估，而本文关注训练过程中的动态变化。</li>
+<li><strong>后训练方法</strong>：监督微调（SFT）、基于人类反馈的强化学习（RLHF）以及多种偏好优化算法（如PPO, DPO, SIMPO）。</li>
+<li><strong>数据集研究</strong>：分析了多种数据集，包括指令调优数据集（WildChat, Alpaca）、偏好数据集（UltraFeedback, HH-RLHF）以及价值导向的评估集（PRISM）。</li>
+<li><strong>AI安全与伦理</strong>：涉及模型偏见、社会反馈循环、合成数据风险等AI安全与伦理文献。</li>
+</ul>
+
+<h3><strong>完整的详细解决方案：追踪与分析大规模语言模型中的价值漂移</strong></h3>
+
+<p>本解决方案旨在详细阐述论文中提出的核心方法论，该方法论用于理解、追踪和量化大规模语言模型（LLMs）在后训练（Post-training）阶段的价值对齐过程。通过引入“价值漂移”这一概念，研究人员得以系统性地分析不同训练算法和数据集如何塑造模型的价值观。</p>
+
+<hr />
+
+<h4><strong>一、 核心概念与目标</strong></h4>
+
+<h5><strong>1. 价值漂移 (Value Drifts)</strong></h5>
+
+<p><strong>定义</strong>：价值漂移指大语言模型在后训练过程中，其表达的价值观所发生的变化。这些变化可能表现为对特定社会议题（如移民、气候变化、堕胎等）的立场从支持转向中立，或从中立转向反对。</p>
+
+<p><strong>研究目的</strong>：
+*   <strong>识别与归因</strong>：识别模型在后训练阶段的价值是如何获得、被抑制或被放大的，并将这些变化归因于特定的训练阶段（如监督微调）或技术（如偏好优化算法）。
+*   <strong>量化分析</strong>：通过量化指标精确测量价值变化的幅度和速度，从而更深入地理解模型的行为演变。
+*   <strong>提供指导</strong>：为AI开发者和研究者提供关于如何选择数据和算法的可操作性建议，以更好地实现模型与人类价值观的对齐，提升AI的伦理与安全水平。</p>
+
+<hr />
+
+<h4><strong>二、 核心方法论与评估框架</strong></h4>
+
+<p>为了实现上述目标，论文构建了一套完整的方法论，涵盖了价值操作化、评估集构建和漂移度量。</p>
+
+<h5><strong>1. 价值的操作化与评估集 (V-PRISM)</strong></h5>
+
+<p>为了系统地评估价值漂移，研究人员构建了一个名为<strong>V-PRISM</strong>的评估数据集。其构建过程如下：
+1.  <strong>数据来源</strong>：基于PRISM数据集，该数据集包含来自75个国家的8,100个价值导向性提示。
+2.  <strong>问题重构</strong>：将原始陈述句（如“堕胎应在任何情况下合法”）转换为自然疑问句（如“你认为堕胎应在任何情况下合法吗？”），以确保语义清晰。
+3.  <strong>嵌入与聚类</strong>：使用<code>all-mpnet-base-v2</code>模型将问题嵌入为向量，并利用<code>HDBScan</code>算法对问题进行聚类，形成11个具有明显价值多元化的语义类别。
+4.  <strong>筛选与构建</strong>：从每个类别中随机抽取50个问题，最终构成包含550个价值探测问题的V-PRISM评估集。</p>
+
+<p>在评估时，模型对V-PRISM中的每个问题生成响应，再利用GPT-4o将响应的立场分类为<strong>支持（Support）</strong>、<strong>中立（Neutral）</strong>或<strong>反对（Oppose）</strong>。</p>
+
+<h5><strong>2. 价值漂移的度量</strong></h5>
+
+<p>论文提出了两个关键指标来量化价值漂移：
+*   <strong>漂移幅度 (Drift Magnitude)</strong>：衡量模型在两个不同训练检查点（t和t'）之间，对某一主题（T）的特定立场（s）的预期变化。
+    [
+    M<em>{s, \theta, T}(t, t') = v</em>{\theta, t'}(T)<em>s - v</em>{\theta, t}(T)_s
+    ]
+*   <strong>漂移时间 (Drift Time)</strong>：衡量模型达到其立场极值点所需的训练步数占总步数的比例，用于分析价值变化的快慢。</p>
+
+<hr />
+
+<h4><strong>三、 实验设计与解决方案组件</strong></h4>
+
+<p>研究人员在Llama-3和Qwen-3系列模型上进行了受控实验，系统地分析了后训练的两个主要阶段。</p>
+
+<h5><strong>1. 阶段一：监督微调 (Supervised Fine-Tuning, SFT)</strong></h5>
+
+<p>SFT是模型学习遵循指令和表达特定价值观的关键阶段。
+*   <strong>实验对比</strong>：研究对比了两种不同的SFT数据集：
+    *   <strong>WildChat</strong>：源于真实用户对话，内容更自然，模型训练后在敏感话题上更倾向于<strong>中立</strong>立场。
+    *   <strong>Alpaca</strong>：为指令跟随任务设计的合成数据集，模型训练后表现出更强的<strong>支持</strong>立场，这可能源于数据集设计中潜在的积极响应偏见。
+*   <strong>核心发现</strong>：<strong>SFT阶段是模型价值观的主要塑造期</strong>。数据集的价值分布会迅速且强烈地影响模型的初始价值立场，并且这种影响具有持久性。</p>
+
+<h5><strong>2. 阶段二：偏好优化 (Preference Optimization)</strong></h5>
+
+<p>在SFT之后，通过偏好优化来使模型行为更符合人类偏好。研究考察了三种主流算法。</p>
+
+<ul>
+<li><p><strong>标准数据集的局限性</strong>：在使用如UltraFeedback和HH-RLHF等标准偏好数据集时，研究发现“选择的”响应和“拒绝的”响应在价值立场上差异很小（即“<strong>价值差距小</strong>”），因此无法为模型提供足够强的信号来改变其在SFT阶段已形成的价值观。</p></li>
+<li><p><strong>合成偏好数据集的引入</strong>：为了验证偏好优化算法的能力，研究人员创建了一个<strong>合成偏好数据集</strong>，其中包含明确且“<strong>价值差距大</strong>”的响应对（例如，一个明确支持，一个明确反对）。</p></li>
+<li><p><strong>不同算法的表现</strong>：</p>
+
+<ol>
+<li><strong>PPO (近端策略优化)</strong>：通过KL散度惩罚项，PPO能有效地<strong>维持</strong>SFT阶段建立的价值观，表现出很强的稳定性，价值漂移最小。</li>
+<li><strong>DPO (直接偏好优化)</strong>：DPO表现出“<strong>优先敏感放大</strong>”特性，它会显著增强与SFT先验一致的立场，而仅部分调整不一致的立场。其优化目标为：
+[
+L<em>{DPO}(\theta; D</em>{Pref}) = -E<em>{(x, y</em>w, y<em>l) \sim D</em>{Pref}} \left[ \log \sigma \left( \beta \log \frac{\pi<em>\theta(y</em>w|x)}{\pi<em>{ref}(y</em>w|x)} - \beta \log \frac{\pi<em>\theta(y</em>l|x)}{\pi<em>{ref}(y</em>l|x)} \right) \right]
+]</li>
+<li><strong>SIMPO (简单偏好优化)</strong>：SIMPO在消除对参考模型的需求后，导致的价值漂移相对<strong>温和</strong>，在支持立场上有轻微增强。其优化目标为：
+[
+L<em>{SIMPO}(\theta; D</em>{Pref}) = -E<em>{(x, y</em>w, y<em>l) \sim D</em>{Pref}} \left[ \log \sigma \left( \frac{\beta}{|y<em>w|} \sum \log \pi</em>\theta(y<em>w|x) - \frac{\beta}{|y</em>l|} \sum \log \pi<em>\theta(y</em>l|x) - \gamma \right) \right]
+]</li>
+</ol></li>
+<li><p><strong>核心发现</strong>：当偏好数据中存在明确的价值差距时，<strong>偏好优化算法确实能够重塑模型的价值观</strong>，但不同算法的重塑方式和程度各不相同。</p></li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 结论与应用前景</strong></h4>
+
+<p>本研究通过引入“价值漂移”的分析框架，系统地揭示了LLMs在后训练阶段的价值演变规律。</p>
+
+<p><strong>主要结论</strong>：
+1.  <strong>SFT是价值对齐的主导阶段</strong>：SFT数据集的选择对模型的最终价值表达起着决定性作用。
+2.  <strong>偏好优化的作用被高估</strong>：在标准偏好数据下，偏好优化很难改变SFT设定的价值观。要实现价值重塑，需要具有明显“价值差距”的数据。
+3.  <strong>算法选择至关重要</strong>：不同的偏好优化算法（PPO, DPO, SIMPO）具有不同的价值塑造特性，应根据对齐目标（维持或改变价值观）进行选择。</p>
+
+<p><strong>应用前景</strong>：
+*   <strong>指导数据策划</strong>：为构建能有效引导模型价值观的数据集提供了理论依据。
+*   <strong>优化算法选择</strong>：帮助开发者根据具体的对齐需求选择最合适的训练算法。
+*   <strong>提升模型透明度</strong>：该方法论提供了一个观察和理解模型内部价值变化的窗口，有助于构建更可信、更安全的AI系统。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型与检查点</strong>：使用Llama-3和Qwen-3等开源模型，在SFT和偏好优化过程中的多个检查点进行采样，以追踪价值的演变。</li>
+<li><strong>SFT阶段实验</strong>：使用不同的SFT数据集（如WildChat和Alpaca）训练模型，比较它们在移民等社会议题上形成的初始价值立场。</li>
+<li><strong>偏好优化实验</strong>：
+<ul>
+<li>使用标准偏好数据集（UltraFeedback）和自建的合成偏好数据集进行训练。</li>
+<li>对比PPO、DPO、SIMPO等不同算法对模型价值漂移的影响。</li>
+</ul></li>
+<li><strong>评估方法</strong>：使用V-PRISM中的问题探测模型的立场，并利用GPT-4o等强模型对模型的自由形式回答进行立场分类（如支持、反对、中立），从而量化价值分布的变化。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>评估集</strong>：V-PRISM评估集，衍生自PRISM。</li>
+<li><strong>训练数据集</strong>：WildChat、Alpaca、UltraFeedback以及自建的合成偏好数据集。</li>
+<li><strong>代码与模型</strong>：论文承诺将发布所有代码、微调后的模型检查点、评估数据和合成偏好数据，以促进研究的可重复性。部分工具（如TRL）可在 https://github.com/huggingface/trl 找到。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>SFT决定初始价值</strong>：实验证实，SFT阶段对模型的价值观起决定性作用。例如，在WildChat上训练的模型对移民问题更中立，而在Alpaca上训练的则更倾向于支持。</li>
+<li><strong>标准偏好优化影响微弱</strong>：使用UltraFeedback等标准数据集进行偏好优化时，模型的价值漂移幅度很小，SFT阶段学习到的立场基本保持不变。</li>
+<li><strong>算法效果各异</strong>：在合成数据集上，不同算法展现出不同行为：PPO能较好地保留SFT价值；DPO会强化与SFT先验一致的立场；SIMPO则导致适度的价值漂移。</li>
+<li><strong>价值漂移因主题而异</strong>：模型在处理不同社会敏感话题（如气候变化、堕胎）时，其价值漂移的幅度和速度存在显著差异。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出并验证了“价值漂移”概念</strong>：为理解LLM在后训练阶段的动态学习过程提供了新的分析框架。</li>
+<li><strong>提供了系统性的实证分析</strong>：首次深入揭示了SFT和偏好优化在塑造模型价值观中的不同角色，并量化了不同算法和数据集的影响。</li>
+<li><strong>开发了新的评估工具</strong>：创建了V-PRISM评估集和合成偏好数据集，为未来研究提供了宝贵的工具。</li>
+<li><strong>提供了可操作的实践指导</strong>：研究结果为数据策划、模型及算法的选择提供了科学依据，有助于开发更透明、可控和对齐的LLM。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.26707v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 16:36:51</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

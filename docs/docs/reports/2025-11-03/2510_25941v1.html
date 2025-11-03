@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RECAP: Reproducing Copyrighted Data from LLMs Training with an Agentic Pipeline</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RECAP: Reproducing Copyrighted Data from LLMs Training with an Agentic Pipeline</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Carnegie Mellon University, Instituto Superior Técnico/INESC-ID, Hydrox AI</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.475</span>
+                <span class="paper-id">arXiv ID: 2510.25941v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.25941v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-03/0e67be26a953dff2ca6303d62a4ef75004fdc56d4b6712e32961554446bca027.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了RECAP框架，旨在高效提取大型语言模型（LLM）中的记忆训练数据。RECAP通过反馈驱动的循环和越狱模块，克服了模型因安全对齐导致的拒绝行为，显著提高了提取准确性。实验结果表明，RECAP在提取受版权保护内容方面表现优异，ROUGE-L得分提升近24%，为LLM的透明度和合规性提供了新方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决如何有效、系统地提取和验证大型语言模型（LLM）所记忆的训练数据，特别是受版权保护的内容。随着LLM的广泛应用，理解其记忆机制和训练数据来源变得至关重要。这个问题之所以重要，主要有以下几点：
+- <strong>版权与合规性</strong>：LLM可能无意中重现受版权保护的文本，引发严重的法律和道德问题。
+- <strong>透明度与可信度</strong>：当前对LLM训练数据的不透明性，降低了用户对模型输出的信任。
+- <strong>现有方法局限</strong>：传统的单次提取方法（如Prefix-Probing）效率低下，且在模型因安全对齐而拒绝请求时常常失败。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过一个结合了<strong>迭代反馈循环</strong>和<strong>越狱（Jailbreaking）模块</strong>的系统性方法（RECAP），可以显著提高从LLM中提取记忆训练数据的成功率和准确性，从而有效克服模型因安全对齐而产生的拒绝行为，并超越现有的单步提取方法。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>数据提取方法</strong>：如 Prefix-Probing 和 Dynamic Soft Prompting (DSP)，它们是现有的一些基线提取技术。</li>
+<li><strong>会员推断攻击（MIAs）</strong>：用于判断特定数据是否被用于模型训练的研究。</li>
+<li><strong>越狱技术（Jailbreaking）</strong>：用于绕过模型安全限制和对齐策略的技术。</li>
+<li><strong>法律与道德讨论</strong>：关于LLM训练数据版权、记忆化现象及其合规性的相关研究。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>该论文提出了一个名为 <strong>RECAP (Reproducing Copyrighted Data from LLMs Training with an Agentic Pipeline)</strong> 的先进解决方案，旨在系统性地、高效地从大型语言模型（LLM）中提取其记忆的训练数据，特别是受版权保护的内容。RECAP 的核心思想是构建一个由多个智能代理（Agent）协作的自动化管道，通过一个反馈驱动的迭代循环来精确地再现和验证模型记忆的内容。</p>
+
+<hr />
+
+<h4>一、 RECAP的核心架构：多代理协作管道</h4>
+
+<p>RECAP 系统由多个协同工作的专业代理模块组成，每个模块都承担着提取过程中的特定任务，确保了整个流程的高效与精准。</p>
+
+<ol>
+<li><p><strong>分段摘要代理 (Section Summary Agent)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：在正式提取前，对长文本（如书籍）进行预处理，确保提取任务的精确性和独立性。</li>
+<li><strong>功能</strong>：该代理将源文本分割成多个语义上自包含的、不重叠的“事件”（chunks）。随后，它为每个事件生成高层次的摘要和元数据。这些元数据将作为动态软提示（Dynamic Soft Prompting），用于在后续步骤中引导目标LLM生成与特定事件相关的内容，有效避免了因提示模糊而导致的内容重叠或重复提取问题。</li>
+</ul></li>
+<li><p><strong>提取代理 (Extraction Agent)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：直接与被测试的LLM互动，执行提取任务。</li>
+<li><strong>功能</strong>：该代理接收来自其他模块（如默认提示、越狱代理或反馈代理）的提示，并引导目标LLM生成文本。它本身不分析输出内容，只负责执行提示并返回模型的生成结果。</li>
+</ul></li>
+<li><p><strong>逐字验证器 (Verbatim Verifier)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：作为“守门员”，评估每次提取尝试的有效性，并决定下一步的操作。</li>
+<li><strong>功能</strong>：该代理对提取代理的输出进行二元分类——“接受”或“拒绝”。
+<ul>
+<li>如果输出是模型对提取请求的<strong>拒绝</strong>（例如，生成安全提示或无关内容），则结果被标记为“拒绝”，并交由越狱代理处理。</li>
+<li>如果输出是模型对内容的<strong>有效尝试</strong>（即使内容不完整或不准确），则结果被标记为“接受”，并传递给反馈代理进行优化。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>越狱代理 (Jailbreaker)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：克服LLM因对齐（Alignment）训练而产生的安全限制和内容拒绝。</li>
+<li><strong>功能</strong>：当逐字验证器识别到拒绝时，该代理会介入。它通过一系列精心设计的、重新措辞的提示（Jailbreak Prompts）来绕过模型的防御机制，生成新的提取指令，从而“解锁”那些被默认安全策略阻止的内容。实验证明，该模块能将大多数被阻止的请求成功绕过（成功率 &gt;75%），显著提高了对版权内容的提取成功率。</li>
+</ul></li>
+<li><p><strong>反馈代理 (Feedback Agent)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：通过迭代精炼，逐步提高提取内容的准确性和完整性，使其更接近原始文本。</li>
+<li><strong>功能</strong>：该代理对比模型生成的文本和原始目标文本，分析两者之间的差异。其独特之处在于，它提供的是<strong>高层次的、结构化的反馈</strong>，而非逐字编辑。反馈遵循以下原则：
+<ul>
+<li><strong>禁止逐字复述</strong>：反馈中绝不包含原文的任何片段，以避免直接向模型“泄露答案”。</li>
+<li><strong>描述结构性问题</strong>：指出生成内容中虚构的事件、错误的情节顺序等。</li>
+<li><strong>识别缺失和不准确元素</strong>：描述缺失了哪类信息（如角色对话、场景描述）或哪些信息不准确（如错误的时间、行为归属），并按原文顺序组织，但不提供正确细节。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4>二、 工作流程：反馈驱动的迭代循环</h4>
+
+<p>RECAP 的整个工作流程是一个闭环系统，通常重复最多五轮，或直到提取质量不再提升为止。</p>
+
+<ol>
+<li><strong>初始提取</strong>：提取代理使用分段摘要代理生成的提示，对目标LLM进行第一次内容提取。</li>
+<li><strong>验证</strong>：逐字验证器评估输出。
+<ul>
+<li>若<strong>被拒绝</strong>，则由越狱代理生成新提示，返回步骤1重新提取。</li>
+<li>若<strong>被接受</strong>，则进入步骤3。</li>
+</ul></li>
+<li><strong>反馈</strong>：反馈代理分析提取内容与原文的差异，并生成结构化的改进建议。</li>
+<li><strong>迭代</strong>：提取代理使用反馈代理生成的新提示，进行新一轮的提取。</li>
+<li><strong>循环</strong>：重复步骤2-4，直到达到预设的迭代次数或提取质量收敛。</li>
+</ol>
+
+<hr />
+
+<h4>三、 关键技术与优化策略</h4>
+
+<p>为了确保提取的质量和效率，RECAP 采用了一系列创新技术。</p>
+
+<ol>
+<li><p><strong>混合记忆评分机制 (Hybrid Memorization Score)</strong>
+为了量化模型对特定内容的“记忆程度”，RECAP引入了一个混合评分机制。该分数结合了多个指标，以提供全面的评估：
+[ m = \sigma(\beta<em>1 \cdot (1 - \text{BERT Loss}) + \beta</em>2 \cdot \text{ROUGE-L} + \beta<em>3 \cdot \text{CS} + \beta</em>0) ]</p>
+
+<ul>
+<li><strong>BERT Loss</strong>：评估模型生成文本时的重建损失。</li>
+<li><strong>ROUGE-L</strong>：衡量生成文本与原文的最长公共子序列相似度。</li>
+<li><strong>余弦相似度 (CS)</strong>：衡量文本向量的相似性。
+这个分数不仅用于最终评估，还可用于优化流程。</li>
+</ul></li>
+<li><p><strong>效率优化：反馈过滤策略</strong>
+由于逐轮反馈成本高昂，RECAP 提出了一个可选的<strong>记忆评分过滤器</strong>。其核心思想是，只对那些初始提取已表现出一定记忆迹象（即记忆评分超过预定阈值）的段落进行反馈优化。这可以显著减少不必要的计算资源消耗，同时集中精力改进最有潜力的提取结果。</p></li>
+</ol>
+
+<hr />
+
+<h4>四、 实验应用与效果</h4>
+
+<p>RECAP 在一个新的基准数据集 <strong>EchoTrace</strong>（包含超过30本公共领域及版权书籍）上进行了评估，并与多种基线方法（如简单的前缀探测、动态软提示）进行了比较。</p>
+
+<ul>
+<li><strong>显著的性能提升</strong>：实验结果表明，RECAP 在所有模型上均表现最佳。例如，在使用GPT-4.1时，RECAP将版权文本提取的平均ROUGE-L得分从基线的0.38提升至0.47（约24%的提升）。</li>
+<li><strong>组件的有效性</strong>：单独分析各模块贡献发现，<strong>越狱模块</strong>和<strong>反馈循环</strong>是提升效果的关键。例如，对于版权书籍，仅使用动态提示的ROUGE-L为0.258，加入越狱模块后提升至0.366，再加入反馈循环后最终达到0.460。</li>
+<li><strong>实际应用案例</strong>：在提取《哈利·波特》第一本书的内容时，RECAP能够从Claude-3.7模型中提取约3,000个段落，而最佳基线方法仅识别出75个。</li>
+</ul>
+
+<hr />
+
+<h4>五、 总结与伦理考量</h4>
+
+<p><strong>总结</strong>：RECAP 通过其创新的多代理协作管道、反馈驱动的迭代循环以及关键的越狱和反馈技术，成功地解决从大型语言模型中系统性提取记忆内容的挑战。它不仅显著提高了提取的准确性和完整性，还为量化和理解LLM的记忆行为提供了强有力的工具。</p>
+
+<p><strong>伦理考量</strong>：研究团队承认，该技术若被滥用可能引发版权问题。因此，其研究目的在于分析LLM记忆信息的程度和提取难度，以促进模型安全和合规性的发展。团队承诺不会公开任何在实验中提取的受版权保护的段落。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准数据集</strong>：实验在名为 <strong>EchoTrace</strong> 的新基准上进行。该基准包含来自20篇arXiv研究论文和35本书籍（涵盖公共领域和受版权保护内容）的超过70,000个文本片段。</li>
+<li><strong>评估模型</strong>：实验在多个主流LLM家族上进行，包括 GPT-4.1, Claude-3.7, Gemini-2.5 Pro, 和 DeepSeek-V3 等。</li>
+<li><strong>评估指标</strong>：主要使用 <strong>ROUGE-L</strong> 分数来量化提取文本与原始文本的相似度。</li>
+<li><strong>对比基线</strong>：将RECAP的性能与Prefix-Probing、Dynamic Soft Prompting (DSP)等现有方法进行了比较。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：使用了专门构建的 <strong>EchoTrace</strong> 基准，包含研究论文和书籍。</li>
+<li><strong>代码</strong>：论文片段中提到，代码和模型输出将在研究完成后公开，但未提供具体的链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了本文的假设，表明RECAP方法非常有效：
+- <strong>性能显著提升</strong>：RECAP在所有测试模型上均取得了最佳表现，平均ROUGE-L得分达到0.46，比之前的最佳方法高出78%。在使用GPT-4.1时，ROUGE-L得分从0.38提高到0.47。
+- <strong>提取能力强大</strong>：在提取《哈利·波特》第一本书的内容时，RECAP成功提取了约3000个段落，而表现最好的基线方法仅提取了75个。
+- <strong>越狱效果显著</strong>：越狱模块成功绕过了超过75%的被阻止请求，有效克服了模型的拒绝行为。
+- <strong>模型行为差异</strong>：实验还揭示了不同模型的行为差异，例如Claude-3.7能更有效地利用多轮反馈来持续改进输出质量。</p>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>提出了RECAP框架</strong>：提出了一种结合迭代反馈和越狱技术的新颖、系统化的方法，用于高效地从LLM中提取记忆的训练数据。</li>
+<li><strong>创建了新的评估基准</strong>：构建了EchoTrace基准，为评估LLM的逐字记忆和提取能力提供了标准化的测试平台。</li>
+<li><strong>提供了深入的实证分析</strong>：通过在多个主流LLM上的大量实验，验证了RECAP的有效性，并揭示了不同模型在记忆、拒绝行为和对反馈的反应上的差异。</li>
+<li><strong>推动了合规性与透明度研究</strong>：为理解LLM的记忆化现象、评估版权风险以及提高模型透明度提供了强有力的工具和见解。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.25941v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 16:36:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

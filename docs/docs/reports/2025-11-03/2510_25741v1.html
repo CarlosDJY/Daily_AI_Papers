@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scaling Latent Reasoning via Looped Language Models</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Scaling Latent Reasoning via Looped Language Models</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> ByteDance Seed, UC Santa Cruz, Princeton University, Mila - Quebec AI Institute, University of Montreal, Peking University, Carnegie Mellon University, University of Pennsylvania, Conscium, University of Manchester, M-A-P</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.554</span>
+                <span class="paper-id">arXiv ID: 2510.25741v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.25741v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-03/05c0e4f69cbb4392266785c7e4f400f57bcda8a4d6339a54e3868d1844ed71c0.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Looped Language Models (LoopLM)架构，旨在提升大型语言模型的推理能力和知识操作效率。通过在预训练阶段引入递归计算和自适应计算机制，Ouro模型在不增加参数量的情况下，显著改善了多步推理和知识处理能力，展现出优于现有模型的性能。实验结果验证了其在多种基准测试中的优势，展示了LoopLM作为新型推理模型的潜力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在复杂推理、知识操作和多步推断能力上的局限性，特别是在不显著增加模型参数规模的前提下。现有模型通常通过显式文本生成（如链式思维）进行推理，计算效率和性能之间难以平衡。此外，模型在处理不同复杂度的输入时缺乏计算资源的动态调整能力，并且在样本效率、长序列处理稳定性和安全性方面也存在挑战。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，一个采用共享参数进行递归计算的循环语言模型架构（Looped Language Models, LoopLM），能够在不增加参数量的情况下，通过更深层次的动态计算显著提升模型的推理能力和知识操作能力。这并非简单地增加知识容量，而是增强了对知识的灵活运用。相关的假设还包括：
+1.  自适应计算机制（如学习的退出门控）可以根据输入复杂度动态分配计算资源，从而优化效率与性能。
+2.  增加递归深度可以提升模型的安全性，例如在识别有害提示方面的能力。
+3.  模型的训练损失遵循可预测的缩放法则（Scaling Law），该法则与模型规模、训练数据量和递归深度相关。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域之上，包括：
+-   循环和递归变换器架构（如Universal Transformer）。
+-   自适应计算方法（如PonderNet）。
+-   链式思维（CoT）及潜在推理框架。
+-   模型训练的缩放法则（Scaling Laws）。
+-   与当前主流的开源基础模型（如Qwen、Gemma）进行性能比较。</p>
+
+<h3>完整解决方案阐述：Ouro/LoopLM——通过循环计算增强语言模型的推理能力与效率</h3>
+
+<p>论文提出的核心解决方案是开发并验证了一种名为<strong>Ouro</strong>的新型语言模型架构，其技术核心是<strong>循环语言模型（Looped Language Model, LoopLM）</strong>。该架构旨在通过在预训练阶段嵌入深度推理能力，来显著提升大型语言模型（LLM）的推理效率、知识操作能力和安全性。与传统Transformer模型通过堆叠更多层来增加深度不同，LoopLM通过<strong>递归地应用共享参数的层块</strong>，在固定的参数预算内实现动态的、更深层次的计算。</p>
+
+<p>以下是该解决方案的详细构成、关键机制、训练策略及其优势。</p>
+
+<hr />
+
+<h4>一、 核心架构：循环语言模型（LoopLM）</h4>
+
+<p>LoopLM的设计思想是将循环神经网络（RNN）的迭代计算思想与Transformer架构相结合。模型在处理一个输入时，可以多次重复使用同一组参数（即一个共享权重的Transformer块），从而在潜在空间中进行多步迭代推理。</p>
+
+<p><strong>主要设计特点：</strong></p>
+
+<ol>
+<li><strong>参数效率</strong>：通过参数重用，LoopLM能够用较少的参数实现与更大标准模型相匹敌的性能。例如，1.4B和2.6B参数的Ouro模型在多个基准测试上，表现出了与4B和8B参数的标准Transformer相当的性能，实现了<strong>2-3倍的参数效率提升</strong>。</li>
+<li><strong>深度计算图</strong>：LoopLM通过深化其内部计算图（增加循环/递归步骤）来增强能力，而不是通过增加模型层数或延长输出序列（如链式思维CoT）。这避免了上下文窗口的过度增长，并将推理过程内化在模型的潜在表示更新中。</li>
+<li><strong>内置的“提议-验证”机制</strong>：模型的每个循环步骤可以看作是对前一步隐藏状态的“精炼”或“验证”。这使得LoopLM天然具备了草稿-验证（proposal-verification）的能力，而无需训练一个外部的草稿模型，提高了推理的效率和可靠性。</li>
+</ol>
+
+<hr />
+
+<h4>二、 关键机制：自适应计算与早期退出</h4>
+
+<p>为了使模型能够根据任务难度动态分配计算资源，LoopLM引入了自适应计算机制。</p>
+
+<ol>
+<li><p><strong>学习的门控机制与熵正则化</strong>：</p>
+
+<ul>
+<li>模型在训练中学习一个<strong>退出门控（exit gate）</strong>，该门控在每个循环步骤<code>t</code>都会计算一个退出概率<code>λ_t(x)</code>。</li>
+<li>为了鼓励模型在训练初期探索所有可能的计算深度，研究者引入了一个<strong>熵正则化</strong>目标，并采用了<strong>统一先验（uniform prior）</strong>。与倾向于尽早退出的几何先验不同，统一先验不对最佳退出步骤做任何假设，允许模型根据数据本身学习最优的计算深度，这对于复杂的推理任务至关重要。</li>
+</ul></li>
+<li><p><strong>聚焦适应性门控训练</strong>：</p>
+
+<ul>
+<li>在训练后期，引入一个专门的<strong>“聚焦适应性门控训练”</strong>阶段。在此阶段，模型直接基于任务损失的改进量来优化退出决策。如果一个额外的循环步骤带来的损失改进很小，模型就会学习提前退出，从而在计算效率和性能之间取得最佳平衡。</li>
+</ul></li>
+<li><p><strong>推理时的早期退出策略（Q-exit）</strong>：</p>
+
+<ul>
+<li>在推理时，通过一个可调节的<strong>阈值<code>q</code></strong>来控制退出。模型计算累积退出概率，当该值超过<code>q</code>时便终止循环。较低的<code>q</code>鼓励早期退出以节省计算，较高的<code>q</code>则允许更深的计算以追求更高准确率。</li>
+<li>实验还验证了其他启发式策略，如<strong>隐藏状态差异阈值</strong>（当连续步骤的隐藏状态变化很小时退出），也表现出很强的竞争力。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4>三、 大规模多阶段训练策略</h4>
+
+<p>Ouro模型的强大能力还得益于其精心设计的多阶段训练流程，总训练数据量高达<strong>7.7万亿 tokens</strong>。</p>
+
+<ul>
+<li><p><strong>阶段 1: 预训练 (Pre-training &amp; Stability-driven Ramp-up)</strong></p>
+
+<ul>
+<li><strong>目标</strong>: 建立基础语言能力并确保训练稳定。</li>
+<li><strong>数据</strong>: 主要使用大规模网络数据（如Nemotron-CC）。</li>
+<li><strong>关键调整</strong>: 最初使用8个递归步骤时出现不稳定性，后<strong>减少至4个</strong>以平衡计算深度和稳定性。同时，逐步将批量大小从4M扩展到8M tokens以稳定梯度。</li>
+</ul></li>
+<li><p><strong>阶段 2: 持续训练与能力增强 (CT Annealing)</strong></p>
+
+<ul>
+<li><strong>目标</strong>: 增强数学、编程等高级能力。</li>
+<li><strong>数据</strong>: 引入高质量数据集（如MegaMath, OpenCoder）。</li>
+<li><strong>配置</strong>: 降低学习率，并将序列长度扩展至16K。</li>
+</ul></li>
+<li><p><strong>阶段 3: 长文本训练 (LongCT)</strong></p>
+
+<ul>
+<li><strong>目标</strong>: 提升模型处理长上下文的能力。</li>
+<li><strong>数据</strong>: 使用ProLong-64K数据集，序列长度扩展至64K。</li>
+</ul></li>
+<li><p><strong>阶段 4: 中期训练 (Mid-training)</strong></p>
+
+<ul>
+<li><strong>目标</strong>: 整合多样化的高质量指令数据，进一步提升复杂问题解决能力。</li>
+<li><strong>数据</strong>: 整合超过20个开源监督微调（SFT）数据集，并进行监督微调（SFT）。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4>四、 核心优势与应用验证</h4>
+
+<p>通过一系列控制实验和基准测试，论文验证了LoopLM在多个方面的优势。</p>
+
+<ol>
+<li><p><strong>增强的知识操作与多跳推理能力</strong>：</p>
+
+<ul>
+<li>在合成任务（如Mano任务，涉及模运算）和多跳问答（Multi-hop QA）任务中，LoopLM表现出比标准Transformer更高的样本效率和准确率。</li>
+<li>这表明循环机制的优势在于<strong>增强知识操作能力</strong>（即灵活地组合和操控已学知识），而不仅仅是增加知识存储容量。</li>
+<li>理论上，LoopLM能够以<code>O(log D)</code>的并行步骤解决图可达性问题（D为图的直径），远快于序列推理，这为其高效的多跳推理能力提供了理论支撑。</li>
+</ul></li>
+<li><p><strong>推理效率：KV缓存共享</strong>：</p>
+
+<ul>
+<li>循环计算会带来内存开销（每个循环步骤都需要KV缓存）。为解决此问题，论文发现在<strong>解码阶段</strong>，可以重用<strong>最后一步</strong>的KV缓存，而性能几乎没有损失。</li>
+<li>这一<strong>KV缓存共享</strong>策略成功将推理时的内存需求减少了4倍，使得LoopLM的内存占用与同等参数量的标准Transformer相当，极大地提升了其实用性。</li>
+</ul></li>
+<li><p><strong>提升的安全性和忠实度</strong>：</p>
+
+<ul>
+<li>LoopLM的推理过程是<strong>因果忠实</strong>的。其内部的迭代精炼过程直接导向最终答案，而非像CoT那样可能产生事后合理化的解释。</li>
+<li>在HEx-PHI安全性测试中，随着循环步骤的增加，模型的有害性响应显著降低。这表明迭代计算过程有助于模型更好地对齐安全指令，生成更安全的输出。</li>
+</ul></li>
+<li><p><strong>可预测的缩放法则 (Scaling Laws)</strong>：</p>
+
+<ul>
+<li>论文提出了“<strong>逐步损失缩放法则</strong>”，成功地将模型的损失与模型大小、训练数据量和递归步数联系起来，表现出高度的可预测性（R² &gt; 0.95）。这为未来设计和训练更大规模的循环模型提供了理论指导。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h3>总结</h3>
+
+<p>Ouro/LoopLM解决方案通过引入<strong>循环计算</strong>和<strong>自适应机制</strong>，成功地在<strong>参数效率</strong>、<strong>知识操作能力</strong>、<strong>计算效率</strong>和<strong>安全性</strong>等多个维度上超越了传统的语言模型架构。它将推理过程从生成文本的外部行为内化为模型潜在空间的迭代更新，并通过精心设计的多阶段训练策略和推理优化（如KV缓存共享），展示了一条在资源受限的情况下构建更强大、更高效、更安全AI系统的新路径。</p>
+
+<h3>实验设计</h3>
+
+<p>为了验证假设，论文进行了全面的实验设计：
+-   在高达7.7T tokens的大规模数据集上进行预训练。
+-   在多个公开的推理基准测试（如MMLU, BBH, GSM8K, MATH, AIME）上，将LoopLM与不同规模的标准变换器模型进行性能对比。
+-   使用合成任务（如模块化算术、多跳问答、知识图可达性）进行受控实验，以精确评估模型在知识操作和多步推理方面的能力。
+-   进行消融研究，分析不同递归深度、早期退出策略和训练先验对模型性能和安全性的影响。
+-   通过拟合不同模型大小、数据量和递归步数下的损失曲线，验证所提出的损失缩放法则的准确性和普适性。</p>
+
+<h3>数据集和代码</h3>
+
+<p>论文中提到了多个数据集，包括用于预训练的大规模网页语料库（如Nemotron-CC, FineWeb-Edu），用于评估的标准基准，以及为特定能力测试而构建的合成数据集（如Mano任务、多跳QA数据集）。然而，在提供的片段中<strong>没有明确给出代码和数据集的公开获取链接</strong>。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+-   <strong>参数效率</strong>：LoopLM模型展现出卓越的参数效率。例如，1.4B和2.6B参数的Ouro模型在多个推理基准上的性能能够匹配甚至超越4B和8B参数的标准变换器模型。
+-   <strong>推理能力</strong>：在需要多步推理和知识操作的合成任务中，LoopLM的准确率和样本效率显著优于非循环的基线模型。
+-   <strong>自适应计算</strong>：经过专门训练的退出门控策略在所有计算预算下都优于其他策略，证明了其有效性。
+-   <strong>安全性</strong>：增加递归步骤可以提高模型区分有害与无害提示的能力，从而生成更安全的响应。
+-   <strong>损失可预测性</strong>：实验数据验证了所提出的损失缩放法则，能够准确预测模型在不同配置下的训练损失。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  提出了<strong>LoopLM (Ouro) 架构</strong>，证明了通过迭代计算可以有效提升LLM的推理能力和参数效率，并将迭代计算视为超越参数和数据的“第三个扩展轴”。
+2.  设计并验证了一套有效的<strong>自适应计算机制</strong>，为在性能和计算成本之间取得平衡提供了新的解决方案。
+3.  通过实验清晰地揭示了循环架构在<strong>知识操作</strong>而非仅仅是知识存储方面的优势。
+4.  提出了适用于循环模型的<strong>损失缩放法则</strong>，增强了对大规模模型训练动态的理解和可预测性。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.25741v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 16:36:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

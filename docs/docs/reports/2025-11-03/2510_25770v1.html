@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Scores for (In)Correctness Assessment of Generative Model Outputs</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>E-Scores for (In)Correctness Assessment of Generative Model Outputs</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of Oxford, Microsoft Research</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.467</span>
+                <span class="paper-id">arXiv ID: 2510.25770v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.25770v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-03/56f0c69bc819089b5e545cb3a20d0a100efb698ce073e64c0fca71698da6a504.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种基于e-values的“e-scores”方法，用于评估大型语言模型（LLM）输出的正确性。该方法解决了传统p值方法的灵活性不足和p-hacking风险，通过允许用户在观察数据后动态选择错误容忍度，同时保持严格的统计保证。实验结果表明，e-scores在数学推理和属性约束满足等任务中表现优越，显著提升了生成模型的可靠性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决生成模型（尤其是LLM）在评估其输出正确性时缺乏可靠、灵活机制的核心问题。当前基于p值的方法存在缺陷，如易受p-hacking影响，且要求用户预先设定固定的错误容忍度（α），这在实际应用中缺乏灵活性。这个问题至关重要，因为LLM在数学推理、遵循复杂指令和满足多维属性（如真实性、诚实性）等关键任务中，经常会产生错误输出（即“幻觉”），迫切需要一种能提供统计保证的评估方法。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：<strong>使用基于e-values的“e-scores”作为一种新的不正确性度量，可以比传统的p-value方法更有效、更灵活地评估生成模型的输出，并提供严格的后验统计保证。</strong>
+具体来说，该假设包含以下几点：
+1.  e-scores能提供与p-value方法同等的统计保证，同时允许用户在观察数据后灵活选择容忍水平，从而避免p-hacking。
+2.  该方法能有效评估多种类型的LLM输出，包括数学推理的正确性和对多维属性（如指令遵循、真实性）的满足度。
+3.  e-scores在控制错误率和“大小失真”（size distortion）等统计指标上优于现有方法。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域之上，主要与以下工作进行比较和关联：
+- <strong>基于p值的符合预测方法</strong>：主要参考Mohri和Hashimoto (2024)、Cherian等人 (2024) 以及Rubin-Toles等人 (2025) 的研究，这些是本文方法直接比较和改进的对象。
+- <strong>统计保证的理论基础</strong>：借鉴了e-values和相关统计理论，如Shafer和Vovk (2008) 等人的工作。
+- <strong>特定领域的基准和模型</strong>：在实验中使用了数学推理基准（如GSM8K, MATH, Zheng et al., 2025）和属性评估数据集（如UltraFeedback, TruthfulQA），并参考了相关的奖励模型（如UltraRM）。</p>
+
+<h3><strong>面向生成模型输出评估的 e-scores 解决方案详解</strong></h3>
+
+<h4><strong>一、 问题背景与解决方案概述</strong></h4>
+
+<p>在评估大型语言模型（LLM）等生成模型的输出时，传统方法（如基于 p-value 的方法）存在一些局限性，例如需要预先设定固定的错误容忍度（α），以及可能存在“p-hacking”问题。为了解决这些挑战，该论文提出了一种全新的评估框架，其核心是引入 <strong>e-scores</strong>。</p>
+
+<p><strong>核心解决方案</strong>：利用 <strong>e-scores</strong> 这一新型度量来评估生成模型输出的（不）正确性。这种方法不仅保留了现有方法的统计保证，还创新性地允许用户在观察到 e-scores 之后，再<strong>灵活地选择（即后验选择）</strong>自己的错误容忍度 α。这极大地增强了评估过程的灵活性和实用性，解决了容忍度需要预设的难题。</p>
+
+<hr />
+
+<h4><strong>二、 e-scores 的核心概念与设计</strong></h4>
+
+<p><strong>1. 定义与功能</strong>
+e-scores 是基于统计学中的 <strong>e-values</strong> 设计的，用于量化生成响应的“不正确性”。其设计直观：
+-   <strong>正确的响应</strong> 对应 <strong>低 e-score</strong>。
+-   <strong>不正确的响应</strong> 对应 <strong>高 e-score</strong>。</p>
+
+<p>这种设计使用户可以轻松地通过分数高低来判断模型输出的可靠性。</p>
+
+<p><strong>2. 实现细节与计算方法</strong>
+e-scores 的计算是该方法的技术核心，它依赖于一个评估函数和一个“预言机（oracle）”估计器。</p>
+
+<ul>
+<li><p><strong>Oracle 估计器 (<code>ô</code>)</strong>: 这是一个预先训练好的模型（例如一个二元分类器），用于预测给定响应是正确的概率。训练该估计器的数据必须与用于校准和测试的数据集相互独立，以保证评估的公正性。</p></li>
+<li><p><strong>评估函数 (<code>f</code>)</strong>: 该函数将一个提示（prompt）和响应（response）映射到一个非负值。它的设计目标是为正确的响应赋予高分，为错误的响应赋予低分（这与最终 e-score 的高低相反）。例如，可以直接使用 oracle 估计器的输出概率作为 <code>f</code> 的值。</p></li>
+<li><p><strong>e-score 计算公式</strong>: 论文提出的 <code>se-score</code> 计算公式如下：
+[ se\text{-score}(x<em>{n+1}, y</em>{n+1}) = \left( \frac{(n + 1) \cdot f(x<em>{n+1}, y</em>{n+1})}{f(x<em>{n+1}, y</em>{n+1}) + \sum<em>{i=1}^n f^*(x</em>i, O(x<em>i, g</em>{\pi}(x<em>i)))} \right)^{-1} ]
+其中，$x</em>{n+1}, y_{n+1}$ 是当前测试的提示-响应对，求和项是基于校准数据集计算的。简单来说，它将当前响应的评估分值与校准数据中错误响应的分值进行比较。</p></li>
+<li><p><strong>e-scores 的组合</strong>: 在处理需要满足多个属性的复杂任务时，可以为每个属性计算一个 e-score，然后将它们组合（例如通过加权平均）成一个综合评分，以进行整体评估。
+[ se\text{-score}<em>{\text{combined}} = \left( \sum</em>{i=1}^{k} se\text{-score}_i \right)^{-1} \cdot \frac{1}{k} ]</p></li>
+</ul>
+
+<hr />
+
+<h4><strong>三、 完整工作流程</strong></h4>
+
+<p>将 e-scores 应用于评估生成模型输出的完整流程如下：</p>
+
+<ol>
+<li><strong>生成响应</strong>: 给定一个提示 <code>x</code>，生成模型产生一组响应 <code>gπ(x)</code>，这可以是一个完整的答案，也可以是解题过程中的多个步骤（子响应）。</li>
+<li><strong>计算 e-scores</strong>: 对于每一个（子）响应 <code>y</code>，使用上述方法计算其对应的 e-score。</li>
+<li><strong>构建分数集</strong>: 将所有响应及其对应的 e-scores 组合成一个评分响应集 <code>S</code>。</li>
+<li><strong>后验容忍度选择与过滤</strong>: 用户在观察评分集 <code>S</code> 后，根据自己的需求和对风险的判断，选择一个错误容忍度 <code>α</code>。</li>
+<li><strong>生成最终响应集</strong>: 根据 <code>α</code> 过滤 <code>S</code>，生成一个最终的响应集 <code>Sα</code>，该集合只包含 e-score 小于或等于 <code>α</code> 的响应。理论上，这个最终集合包含错误响应的概率上限为 <code>α</code>。</li>
+</ol>
+
+<hr />
+
+<h4><strong>四、 关键特性：后验容忍度 α 的灵活调整</strong></h4>
+
+<p>这是该解决方案相较于传统方法最显著的优势。用户不再需要盲目地预设 <code>α</code>，而是可以根据实际数据反馈来动态调整。论文提出了两种具体的调整策略：</p>
+
+<ol>
+<li><p><strong>最大约束自适应 α (Max-Constrained Adaptive α)</strong>:</p>
+
+<ul>
+<li>用户先设定一个可接受的最大容忍度 <code>α_max</code>。</li>
+<li>系统会先用 <code>α_max</code> 过滤出一个初步的响应集。</li>
+<li>最终的 <code>α</code> 值被设定为这个初步响应集中 <strong>最高的 e-score</strong>。这确保了在不过度冒险的前提下，尽可能多地保留有用的响应。</li>
+</ul></li>
+<li><p><strong>分数包含法 (Score Inclusion Method)</strong>:</p>
+
+<ul>
+<li>用户设定一个希望保留的响应比例 <code>λ</code>（例如，保留分数最低的 80% 的响应）。</li>
+<li>系统会计算出为了达到这个比例所需要的 <code>α</code> 值。这允许用户根据期望的输出数量来控制错误容忍度。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>五、 应用场景与实验验证</strong></h4>
+
+<p>该方法在多个需要高可靠性的场景中表现出色：</p>
+
+<ul>
+<li><strong>数学事实性与推理链检查</strong>: 在评估 LLM 解决数学问题的能力时，可以为推理过程的每一步计算 e-score，帮助用户快速识别出错误的步骤。</li>
+<li><strong>属性约束满足评估</strong>: 在需要模型输出满足特定属性（如<strong>指令遵循度、真实性、诚实性、帮助性</strong>）时，e-scores 可以有效评估这些约束的满足程度。实验中，该方法在 UltraFeedback 数据集上展现了优于 p-scores 的性能。</li>
+</ul>
+
+<p><strong>性能度量</strong>: 论文通过多个指标验证了 e-scores 的有效性，包括：
+*   <strong>尺寸失真 (Size Distortion)</strong>: 衡量最终响应集中错误响应的期望比例，理论证明 e-scores 能将其上界控制在 1 以内。
+*   <strong>精确率与召回率</strong>: 实验表明，相较于 p-scores，e-scores 能在过滤掉更多错误响应（高精确率）的同时，不过度牺牲正确的响应（合理的召回率）。</p>
+
+<hr />
+
+<h4><strong>六、 核心优势总结</strong></h4>
+
+<ol>
+<li><strong>灵活性</strong>: 允许用户在观察结果后动态选择容忍度 <code>α</code>，适应数据依赖的需求。</li>
+<li><strong>统计有效性</strong>: 提供了强大的统计保证（如控制尺寸失真），理论上覆盖了更广泛的生成模型和任务类型。</li>
+<li><strong>高效性</strong>: e-scores 的计算复杂度是常数时间，而 p-scores 通常与校准数据量呈线性关系，因此在大规模数据上效率更高。</li>
+<li><strong>易于理解</strong>: “高分=错误”的设计直观，便于用户快速判断模型输出的可靠性，增强了模型的可用性和用户的信任度。</li>
+</ol>
+
+<p><strong>结论</strong>: 通过引入 e-scores 及其配套的后验容忍度选择机制，该论文为生成模型的输出评估提供了一种更灵活、高效且统计上更稳健的解决方案，有力地推动了生成模型在实际应用中的可靠性和可信度。</p>
+
+<h3>实验设计</h3>
+
+<p>为了验证e-scores的有效性，论文进行了一系列实验，主要设计如下：
+- <strong>核心对比</strong>：在多个任务上系统地比较e-scores和p-scores的表现。
+- <strong>应用场景</strong>：
+    1.  <strong>数学事实性和推理</strong>：评估LLM在解决数学问题（如GSM8K, MATH数据集）时的响应正确性。
+    2.  <strong>属性约束满足</strong>：评估模型输出是否遵循指令、是否真实、有帮助等，使用了UltraFeedback等数据集。
+- <strong>评估指标</strong>：实验关注的关键指标包括大小失真（size distortion）、实际错误率、精确度和召回率。
+- <strong>数据划分</strong>：通常将数据随机划分为测试集和校准集，以进行有效的统计评估。</p>
+
+<h3>数据集和代码</h3>
+
+<p>在提供的论文片段中，<strong>没有明确提供集中的代码库链接</strong>。但是，实验中提及使用了多个公开的基准数据集，包括：
+- <strong>数学推理</strong>：GSM8K, MATH, OlympiadBench, Omni-MATH。
+- <strong>指令遵循与属性评估</strong>：UltraFeedback, Evol-Instruct, TruthfulQA。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果一致且有力地支持了本文的假设：
+- <strong>性能优越</strong>：在所有测试场景中，e-scores在关键指标（如大小失真、错误率控制）上的表现均优于或显著优于传统的p-scores方法。
+- <strong>有效性验证</strong>：e-scores能够有效地区分正确和不正确的模型响应，无论是在客观的数学推理任务中，还是在主观的属性评估任务中。
+- <strong>灵活性优势</strong>：实验证明了后验α策略的有效性，确认了用户可以在观察数据后灵活设定容忍度，同时不破坏统计保证。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献可以总结为以下几点：
+1.  <strong>提出新方法</strong>：提出了e-scores，一种新颖、灵活且具有严格统计保证的生成模型输出（不）正确性评估方法。
+2.  <strong>解决核心缺陷</strong>：通过允许后验容忍度选择，有效解决了传统p-value方法存在的p-hacking风险和灵活性不足的问题。
+3.  <strong>广泛的实证验证</strong>：通过在数学推理和多维属性评估等多个任务上的大量实验，证明了e-scores相较于现有方法的优越性。
+4.  <strong>提升模型可靠性</strong>：为评估和部署更可信、更可靠的生成模型提供了一种强大的新工具，具有广泛的应用潜力。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.25770v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 16:36:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

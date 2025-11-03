@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1+1>2: A Synergistic Sparse and Low-Rank Compression Method for Large Language Models</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>1+1>2: A Synergistic Sparse and Low-Rank Compression Method for Large Language Models</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Hikvision Research Institute, School of Data Science and Engineering, East China Normal University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.487</span>
+                <span class="paper-id">arXiv ID: 2510.26446v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.26446v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-02/8f9bab2fed5f8f1deaca78beefc7b32297f0c698fa5b10bf91342f06ac403782.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了协同稀疏和低秩压缩方法（SSLC），有效解决了大型语言模型（LLMs）在压缩过程中的性能损失问题。通过将稀疏优化与低秩近似结合，SSLC实现了高达50%的模型压缩，并在不降低性能的情况下，显著提升了计算效率，提供了高效部署LLMs的新方案。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）因其庞大的体积和高计算需求而在实际部署中面临的挑战。现有的模型压缩技术，如剪枝（稀疏化）和低秩近似，通常被独立使用，未能充分发挥它们的协同效应，导致在压缩模型时往往会牺牲性能。因此，如何开发一种能够同时实现高压缩率和高性能保持的压缩方法，是LLM高效部署的关键问题。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过一个统一的框架协同地结合稀疏优化和低秩近似，可以比单独使用任一方法更有效地压缩LLM。这种协同方法（SSLC）能够通过低秩部分捕捉权重矩阵的相干结构，同时通过稀疏部分保留关键的、非相干的信息（如最重要的权重），从而在大幅减少参数和计算量的同时，最大限度地保留模型的表达能力和性能。</p>
+
+<h3>相关研究</h3>
+
+<p>论文的相关研究涵盖了多种LLM压缩技术，主要包括：
+*   <strong>剪枝/稀疏化方法</strong>: SparseGPT, Wanda, DSNoT, Optimal Brain Surgeon (OBS)。
+*   <strong>低秩近似方法</strong>: SVD-LLM, LoRA。
+*   <strong>结合或相关方法</strong>: LoRAshear, LoRAPrune, LoSA, LoRaP, RIA, ALPS, RPCA。</p>
+
+<h3>解决方案</h3>
+
+<p>本文提出了一种名为<strong>协同稀疏与低秩压缩（Synergistic Sparse and Low-Rank Compression, SSLC）</strong>的创新模型压缩方法。该方法旨在高效压缩大型语言模型（LLMs），通过巧妙地结合稀疏优化（剪枝）与低秩近似技术，在显著减少模型参数量、降低计算与存储需求的同时，最大限度地保持模型的性能。</p>
+
+<h4><strong>一、 核心理念与目标</strong></h4>
+
+<p>SSLC方法的核心理念在于，稀疏化和低秩近似这两种技术具有互补优势。
+*   <strong>低秩近似 (Low-Rank Approximation)</strong>：擅长捕捉权重矩阵中的全局、共同的基础结构，保留模型的核心信息。
+*   <strong>稀疏化 (Sparsification/Pruning)</strong>：擅长保留那些对模型性能至关重要、但不符合全局结构的、离散的、非一致性的神经元权重。</p>
+
+<p>传统方法通常只采用其中一种技术，导致信息损失较大。SSLC通过将两者结合，将一个大型权重矩阵分解为一个低秩部分和一个稀疏部分，从而能够以更高的保真度重构原始模型，实现“1+1>2”的协同压缩效果。</p>
+
+<p><strong>最终目标</strong>：在给定的压缩率下，通过联合优化低秩和稀疏两个部分，最大限度地减少对模型输出的重构误差，从而维持其强大的语言理解和生成能力。</p>
+
+<h4><strong>二、 详细方法论</strong></h4>
+
+<p>SSLC的实现并非简单地先后应用两种技术，而是将它们整合进一个统一的数据感知优化框架中，并通过一个迭代算法来求解。</p>
+
+<p><strong>1. 联合优化框架</strong></p>
+
+<p>SSLC将模型压缩问题形式化为一个数学优化目标。其目标是找到一个低秩矩阵 <code>L</code> 和一个稀疏矩阵 <code>S</code>，使得它们的和能够最好地替代原始权重矩阵 <code>W</code>，同时最小化对模型输出 <code>WX</code> 的影响。优化目标如下：
+$$ \text{min}<em>{L,S} \quad \| (W - L - S)X \|</em>F \quad \text{s.t.} \quad \text{rank}(L) = r, \quad \text{sparsity}(S) = k\% $$
+其中，<code>X</code> 是来自校准数据集的输入数据。这种<strong>数据感知（data-aware）</strong>的方式使得优化过程直接与模型性能挂钩，而非单纯的数学分解，这是该方法的一大创新。</p>
+
+<p><strong>2. 协同迭代优化算法</strong></p>
+
+<p>由于直接求解上述问题是NP难问题，SSLC采用了一种高效的协同迭代优化算法：</p>
+
+<ul>
+<li><p><strong>步骤一：保留关键权重 (Preserving Critical Weights)</strong>
+在压缩开始前，算法首先识别并<strong>保留模型中最重要的前1%的权重</strong>。这些权重通过其显著性（salience）来确定，并在整个压缩过程中保持不变，以确保模型的核心性能不受影响。</p></li>
+<li><p><strong>步骤二：交替优化低秩与稀疏部分 (Alternate Optimization)</strong>
+算法在保留了关键权重后，对剩余的权重矩阵进行迭代优化：</p>
+
+<ol>
+<li><strong>稀疏化 (Sparsification)</strong>：在第 <code>t</code> 次迭代中，首先固定当前的低秩矩阵 <code>L_t</code>，然后计算残差矩阵 <code>(W - L_t)</code>。算法会计算残差矩阵中每个权重的显著性，并保留那些显著性最高的权重，将其余权重置零，从而生成新的稀疏矩阵 <code>S_t</code>。</li>
+<li><strong>低秩近似 (Low-Rank Approximation)</strong>：接着，固定上一步生成的稀疏矩阵 <code>S_t</code>，计算新的残差矩阵 <code>(W - S_t)</code>。然后，通过<strong>奇异值分解（SVD）</strong>找到该残差矩阵的最佳低秩近似，生成新的低秩矩阵 <code>L_t</code>。为了提高在大规模矩阵上的计算效率，算法采用了<strong>随机SVD（Randomized SVD）</strong>。</li>
+</ol>
+
+<p>这两个步骤交替进行，通过多次迭代，逐步逼近最优的低秩和稀疏分解，从而在高压缩率下实现极小的性能损失。</p></li>
+</ul>
+
+<h4><strong>三、 关键优势与创新</strong></h4>
+
+<ul>
+<li><strong>性能保持卓越</strong>：通过协同保留模型的全局结构（低秩）和关键的离散信息（稀疏），SSLC在大幅压缩模型的同时，能有效保持甚至提升模型在语言建模（如困惑度PPL）和零-shot任务上的表现。</li>
+<li><strong>无需额外再训练</strong>：SSLC是一种训练后（post-training）压缩方法，能够在不进行任何额外微调的情况下实现显著的模型压缩和性能加速，极大地节约了计算资源。</li>
+<li><strong>高效的低秩微调</strong>：在压缩后如果需要进一步微调以恢复性能，SSLC提供了一种高效的方案。它可以冻结稀疏矩阵 <code>S</code>，仅对低秩矩阵 <code>L</code> 分解出的两个小矩阵 <code>U</code> 和 <code>V</code> 进行微调。这种方式比传统的LoRA（低秩适配器）等方法更节省参数。</li>
+<li><strong>显著的推理加速</strong>：实验证明，SSLC不仅减小了模型体积，还能带来实际的推理速度提升。例如，在Qwen2.5-7B模型上实现了<strong>1.63倍</strong>的推理加速；在LLaMA2-7B模型上，多头自注意力（MHA）和前馈网络（FFN）模块分别实现了<strong>1.74倍和1.84倍</strong>的速度提升。</li>
+</ul>
+
+<h4><strong>四、 实验验证与结果</strong></h4>
+
+<p>该方法在多个主流开源LLM（如LLaMA、LLaMA2、Qwen2.5系列，规模从7B到70B）上进行了广泛验证。
+*   <strong>性能对比</strong>：SSLC的表现全面超越了单独使用剪枝（如Wanda、SparseGPT）或低秩近似的基线方法。
+*   <strong>高压缩率表现</strong>：在高达<strong>50%</strong>的压缩率下，Qwen2.5模型在多种零-shot任务中<strong>没有出现性能下降</strong>。
+*   <strong>消融研究</strong>：实验证明，保留关键权重、迭代次数以及低秩近似的秩（rank）等超参数对最终性能有重要影响，验证了该协同框架设计的有效性。</p>
+
+<h4><strong>五、 局限性与未来方向</strong></h4>
+
+<ul>
+<li><strong>局限性</strong>：尽管算法经过优化，但在稀疏化阶段计算权重显著性的过程会引入额外的计算开销。</li>
+<li><strong>未来方向</strong>：当前SSLC对模型所有层采用统一的压缩率。未来的研究将探索基于层敏感性的<strong>动态分层压缩策略</strong>，为对压缩不敏感的层分配更高的压缩率，从而在准确性和计算成本之间实现更优的权衡。</li>
+</ul>
+
+<h4><strong>结论</strong></h4>
+
+<p><strong>协同稀疏与低秩压缩（SSLC）</strong>方法通过一个创新的数据感知联合优化框架，成功地将稀疏化与低秩近似的优势结合起来，为大型语言模型的压缩提供了一个高效、实用且性能卓越的解决方案。它不仅在理论上具有创新性，在实践中也展示了显著的压缩效果和推理加速能力，为在资源受限设备（如移动设备或边缘端）上部署强大的LLMs铺平了道路。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型</strong>: 在多个开源LLM系列上进行评估，包括LLaMA（LLaMA, LLaMA2）和Qwen2.5，模型规模从7B到70B不等。</li>
+<li><strong>评估任务</strong>: 主要通过语言建模的困惑度（Perplexity, PPL）和多种零样本（zero-shot）下游任务来评估压缩后模型的性能。</li>
+<li><strong>对比基线</strong>: 与仅使用剪枝（如Wanda, SparseGPT）或仅使用低秩近似的方法进行比较。</li>
+<li><strong>分析</strong>: 进行了消融研究，以分析关键超参数（如秩、稀疏率、迭代次数和权重保留策略）对性能的影响，并使用ViTCoD等工具模拟评估加速效果。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>:
+<ul>
+<li><strong>校准数据</strong>: 使用C4数据集的一个子集。</li>
+<li><strong>评估数据</strong>: 使用WikiText-2和C4进行困惑度评估。</li>
+<li><strong>指令数据</strong>: 使用Stanford Alpaca。</li>
+</ul></li>
+<li><strong>代码</strong>: 在提供的所有片段中，均未提及代码的公开位置。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>: SSLC在不同模型和稀疏率（50%-70%）下，其性能（困惑度和零样本准确率）均显著优于现有的基线方法（如Wanda, DSNoT）。例如，在零样本任务上平均性能提升了1.1%。</li>
+<li><strong>高效压缩</strong>: 该方法能够在不降低甚至提升性能的情况下实现高压缩率。例如，在Qwen2.5-7B模型上实现了50%的压缩，并带来了至少1.63倍的速度提升。</li>
+<li><strong>优化有效性</strong>: 实验证明，所提出的迭代优化算法能够实现误差的单调减少，并具有良好的收敛性，验证了框架的有效性。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出SSLC框架</strong>: 提出了一个新颖的SSLC框架，首次将稀疏和低秩压缩技术在一个统一的优化问题中进行协同，有效提升了LLM的压缩效率。</li>
+<li><strong>验证协同效应</strong>: 通过广泛的实验证明，协同方法在性能保持方面优于单一的压缩技术，为LLM的高效部署提供了新的思路。</li>
+<li><strong>实现SOTA性能</strong>: 在多个主流LLM模型和标准基准测试上，SSLC在无需额外微调的情况下，取得了最先进的（SOTA）压缩性能。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.26446v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 16:36:51</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
