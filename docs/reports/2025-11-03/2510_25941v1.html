@@ -229,7 +229,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了RECAP框架，旨在从大型语言模型（LLM）中有效提取和验证其记忆的训练数据。通过反馈驱动的迭代过程和监狱破解模块，RECAP显著提高了提取准确性，解决了模型拒绝生成内容的问题。实验结果显示，RECAP在提取受版权保护文本方面的性能优于现有方法，平均ROUGE-L分数提升近24%。
+                本文提出了RECAP框架，通过反馈驱动的迭代过程，系统性地提取大型语言模型（LLM）中的记忆内容。RECAP结合了内容提取与越狱技术，有效克服了模型的安全对齐限制，显著提高了提取的准确性和成功率，实验结果显示ROUGE-L得分提升近24%。此外，创建的EchoTrace基准为评估LLM的逐字记忆提供了新工具。
             </div>
         </div>
         
@@ -632,158 +632,150 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决如何有效、准确地从大型语言模型（LLM）中提取和验证其记忆的训练数据的问题。随着LLM的广泛应用，这个问题变得日益重要，原因如下：
-- <strong>版权与合规性</strong>：LLM可能记忆并重现受版权保护的材料（如书籍、论文），引发了严重的法律和伦理挑战。
-- <strong>透明度与安全性</strong>：理解模型的记忆行为对于确保其安全、可信和合规至关重要。
-- <strong>现有方法不足</strong>：传统方法（如成员推断攻击）提供的是间接证据，而现有的提取方法（如Prefix-Probing）在面对模型的安全对策（如拒绝回答）时效率低下且准确性有限。</p>
+<p>本文旨在解决大型语言模型（LLM）在训练过程中记忆并可能重现受版权保护内容的核心问题。随着LLM的广泛应用，其训练数据的透明度和合规性变得至关重要，因为无意中重现版权材料会引发严重的法律和道德风险。现有用于检测或提取模型记忆内容的方法存在效率低下、准确性不足、易受模型安全对齐（如生成拒绝）阻碍以及偏向于知名文本等局限性，因此需要一种更系统、更有效的方法来准确验证和提取LLM的逐字记忆内容。</p>
 
 <h3>Hypothesis</h3>
 
-<p>论文的核心假设是：通过一个结合了<strong>迭代反馈循环</strong>和<strong>“监狱破解”（Jailbreak）模块</strong>的自动化代理流程（即RECAP方法），可以显著提高从LLM中逐字提取其记忆的训练数据的准确性和成功率，即使在模型试图拒绝或规避此类请求时也能奏效。</p>
+<p>本文的核心假设是，通过一个迭代的、由反馈驱动的框架（RECAP），可以系统性地引导LLM更准确地重现其记忆中的训练数据。该框架通过循环修正和绕过模型的安全对齐机制，能够显著提高逐字提取的成功率和准确性，其效果将远超现有的单次提取方法（如Prefix-Probing）。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>成员推断攻击 (MIA)</strong>：旨在判断特定数据点是否在模型的训练集中，但通常提供的是间接证据。</li>
-<li><strong>内存提取方法</strong>：
-<ul>
-<li><strong>Prefix-Probing</strong>：使用前缀提示来引导模型生成记忆内容。</li>
-<li><strong>Dynamic Soft Prompting (DSP)</strong>：通过生成适应性提示来引导模型输出。</li>
-<li>这些方法在应对模型的拒绝行为时效果有限。</li>
-</ul></li>
-</ul>
+<p>该研究建立在多个领域的工作之上：
+- <strong>记忆推断攻击（MIAs）</strong>：旨在判断特定数据点是否在训练集中的传统方法。
+- <strong>训练数据提取方法</strong>：如前缀探测（Prefix-Probing）和动态软提示（Dynamic Soft Prompting, DSP）等直接提取技术。
+- <strong>“越狱”（Jailbreaking）技术</strong>：用于绕过LLM因安全对齐而设置的内容生成限制。
+- <strong>LLM版权问题研究</strong>：探讨生成式AI在版权合规性方面的法律和伦理挑战。</p>
 
-<h3>解决方案</h3>
+<h3><strong>解决方案：RECAP——一种用于提取大型语言模型记忆内容的代理管道</strong></h3>
 
-<h3><strong>完整解决方案：RECAP——用于从LLM中再现训练数据的代理管道</strong></h3>
-
-<p>论文中提出的核心解决方案是一个名为 <strong>RECAP (Reproducing Copyrighted Data from LLMs Training with an Agentic Pipeline)</strong> 的自动化代理管道。该系统的设计目标是通过一个反馈驱动的迭代过程，高效、准确地引导大型语言模型（LLM）逐字重现其在训练过程中记忆的内容，尤其是版权文本。RECAP不仅能检测记忆的痕跡，更能通过系统化的方式提取出完整的段落，为模型记忆研究、合规性验证和对齐工作提供了强有力的工具。</p>
+<p>本文提出了一种名为 <strong>RECAP (Reproducing Copyrighted Data from LLMs Training with an Agentic Pipeline)</strong> 的先进框架，旨在系统性地、准确地从大型语言模型（LLM）中提取其在训练过程中记忆的内容，特别是受版权保护的文本。RECAP的核心创新在于其代理式（Agentic）管道结构，通过一个反馈驱动的迭代循环和专门的“越狱”模块，引导模型逐步精确地再现目标文本，显著优于传统的单次提示方法。</p>
 
 <hr />
 
-<h4><strong>一、 RECAP的整体架构与工作流程</strong></h4>
+<h4><strong>一、 RECAP 核心框架与工作流程</strong></h4>
 
-<p>RECAP是一个由多个智能代理（Agent）协同工作的多步骤管道。其工作流程旨在将复杂的提取任务分解为一系列结构化的子任务，并通过反馈循环不断优化结果。</p>
-
-<p><strong>管道的核心模块包括：</strong></p>
+<p>RECAP的代理管道由多个协同工作的模块组成，形成一个闭环系统，以实现高效、准确的文本提取。其标准工作流程如下：</p>
 
 <ol>
-<li><p><strong>数据输入与预处理</strong>：</p>
+<li><p><strong>数据准备与分段 (Section Summary Agent)</strong>:</p>
 
 <ul>
-<li><strong>用户输入</strong>：系统接受书籍、研究论文等多种格式的文本文档作为提取目标。</li>
-<li><strong>自动化文本提取（针对学术论文）</strong>：对于像arXiv上的LaTeX格式论文，系统包含一个自动化管道，能够检索源文件，识别主文档，递归地整合所有引用的子文件（如使用 <code>\input</code> 或 <code>\include</code>），并去除注释、图形等非文本内容，最终输出干净、完整的文本以供后续处理。</li>
+<li><strong>输入</strong>: 用户提供目标文本，如书籍、研究论文等。对于像arXiv上的研究论文，系统首先通过自动化管道处理LaTeX源文件，提取并清理出纯文本。</li>
+<li><strong>处理</strong>: <strong>章节摘要代理 (Section Summary Agent)</strong> 接收文本后，将其分割成多个语义上独立的片段或“事件”。</li>
+<li><strong>输出</strong>: 对每个事件，该代理会生成高层次的摘要、关键角色、开头句等结构化元数据。这些元数据将作为动态软提示（Dynamic Soft Prompting），用于引导后续的提取过程。</li>
 </ul></li>
-<li><p><strong>节摘要代理 (Section Summary Agent)</strong>：</p>
+<li><p><strong>初始提取 (Extraction Agent)</strong>:</p>
 
 <ul>
-<li><strong>目的</strong>：此代理负责将输入的长文本分割成语义上独立且不重叠的块，称为“事件”（events）。</li>
-<li><strong>过程</strong>：为每个“事件”生成高层次的要点摘要和结构化元数据。这些信息将作为<strong>动态软提示（Dynamic Soft Prompting, DSP）</strong>，在后续步骤中指导模型精确地针对特定内容进行生成，确保提取的段落与源材料中的独特部分一一对应。</li>
+<li><strong>提取代理 (Extraction Agent)</strong> 使用上一阶段生成的动态软提示，与目标LLM进行交互，提示模型“回忆”并生成与该事件相关的文本段落。此阶段的目标是尽可能准确地再现原始文本。</li>
 </ul></li>
-<li><p><strong>提取代理 (Extraction Agent)</strong>：</p>
+<li><p><strong>验证与处理拒绝 (Verbatim Verifier &amp; Jailbreaker)</strong>:</p>
 
 <ul>
-<li><strong>目的</strong>：执行核心的文本提取任务。</li>
-<li><strong>过程</strong>：利用节摘要代理生成的元数据和动态软提示，向目标LLM发出指令，尝试逐字复现记忆中的段落。此阶段专注于生成，不进行实时分析。</li>
+<li><strong>逐字验证器 (Verbatim Verifier)</strong> 评估提取代理生成的文本。它将输出分为两类：
+<ul>
+<li><strong>接受 (Accepted)</strong>: 如果模型尝试对请求的段落进行了实质性的重构（即使内容不完整或不准确），则输出被视为有效，并传递给反馈代理进行优化。</li>
+<li><strong>拒绝 (Rejected)</strong>: 如果模型因其对齐措施而拒绝生成内容（例如，回答“我无法提供受版权保护的材料”），则该尝试被标记为拒绝。</li>
 </ul></li>
-<li><p><strong>逐字验证器 (Verbatim Verifier)</strong>：</p>
+<li><strong>越狱模块 (Jailbreaker)</strong> 在收到被拒绝的尝试后介入。它会使用一个经过特殊设计的静态提示重新表述提取请求，旨在绕过模型的安全对齐机制，从而解锁被屏蔽的内容。重新表述后的提示会再次发送给提取代理进行尝试。</li>
+</ul></li>
+<li><p><strong>反馈驱动的迭代优化 (Feedback Agent &amp; Loop)</strong>:</p>
 
 <ul>
-<li><strong>目的</strong>：充当“红队助手”，对提取代理的输出进行质量控制。</li>
-<li><strong>过程</strong>：该验证器对每一次提取尝试进行二元分类——“接受”或“拒绝”。当模型因对齐保护而拒绝生成内容时（例如，直接拒绝复制版权材料），输出被标记为“拒绝”；否则标记为“接受”。</li>
-</ul></li>
-<li><p><strong>监狱突破者 (Jailbreaker)</strong>：</p>
-
+<li><strong>反馈代理 (Feedback Agent)</strong> 接收被验证器接受的生成文本。它将该文本与原始参考文本进行比较，识别出两者之间的差异。</li>
+<li>该代理生成的反馈是结构化的、高层次的纠正性指导，分为三类：
 <ul>
-<li><strong>目的</strong>：克服模型的对齐限制和内容拒绝。</li>
-<li><strong>过程</strong>：当逐字验证器识别到“拒绝”时，该模块会介入。它使用一个经过精心设计的<strong>静态破解提示</strong>来重新表述请求，绕过模型的安全护栏，从而解锁被封锁的内容。实验证明，该模块能显著提升提取成功率（ROUGE-L得分提升近42%）。</li>
+<li><strong>主要结构问题</strong>: 指出生成内容中虚构的事件或缺失的关键情节。</li>
+<li><strong>缺失元素</strong>: 描述被遗漏的信息或对话。</li>
+<li><strong>不准确性</strong>: 指出错误的时间线、事件顺序或角色动作归属。</li>
 </ul></li>
-<li><p><strong>反馈代理 (Feedback Agent)</strong>：</p>
-
-<ul>
-<li><strong>目的</strong>：通过迭代反馈，指导提取代理更精确地重建目标段落。</li>
-<li><strong>过程</strong>：当提取尝试被“接受”但不够完美时，反馈代理会介入。它比较模型的生成内容与原始参考文本，识别差异，并生成结构化的修正提示。这些提示是高层次的指导（而非逐字编辑），分为三类：
-<ul>
-<li><strong>主要结构问题</strong>：指出虚构事件或缺失的关键部分。</li>
-<li><strong>缺失元素</strong>：描述缺失的信息类型（如对话、情景描述）。</li>
-<li><strong>不准确性</strong>：指出错误的时间、事件顺序或行为归属。
-这个反馈过程最多重复五轮，直到提取质量不再提升。</li>
-</ul></li>
+<li>重要的是，反馈代理<strong>不会</strong>提供逐字的正确答案或直接引用原文，而是引导模型自行修正。</li>
+<li>这个包含“提取-评估-反馈”的循环最多可重复五次，或直到提取质量（通过ROUGE-L分数衡量）不再提升为止，从而逐步提高生成文本的准确性。</li>
 </ul></li>
 </ol>
 
 <hr />
 
-<h4><strong>二、 核心机制与优化策略</strong></h4>
-
-<p>为了提高效率和准确性，RECAP整合了多项关键技术和优化策略。</p>
-
-<ol>
-<li><p><strong>反馈循环的迭代改进</strong>：
-反馈代理是RECAP的核心创新。与单次提取方法不同，这个循环允许模型在每次生成后进行自我修正，逐步逼近目标文本。这使得RECAP在提取版权书籍时，ROUGE-L得分能从仅使用DSP和越狱模块的0.366进一步提升至0.460。</p></li>
-<li><p><strong>成本效益优化：记忆分数过滤</strong>：
-由于反馈循环的计算成本较高，RECAP引入了一个可选的过滤模块，以减少不必要的迭代。</p>
+<h4><strong>二、 关键模块与技术详解</strong></h4>
 
 <ul>
-<li><strong>混合记忆评分 (Hybrid Memorization Score)</strong>：该系统为每个初始提取的段落计算一个“记忆分数”，以判断其是否值得进一步优化。该分数结合了三个指标：
-<ol>
-<li><strong>Parrot BERT Loss</strong>：一个在目标文本上经过度拟合训练的BERT模型，用于计算重建损失。</li>
-<li><strong>ROUGE-L</strong>：衡量文本的重叠程度。</li>
-<li><strong>余弦相似度 (Cosine Similarity)</strong>：衡量语义相似度。</li>
-</ol></li>
-<li><strong>过滤机制</strong>：只有记忆分数超过预定义阈值的段落才会被送入反馈代理进行优化。这种策略能够在保持高质量提取的同时，显著降低API调用次数和成本。</li>
-</ul></li>
-</ol>
-
-<hr />
-
-<h4><strong>三、 实验评估与主要贡献</strong></h4>
-
-<ul>
-<li><strong>实验基准</strong>：RECAP在一个名为 <strong>EchoTrace</strong> 的新基准上进行了评估。该基准包含20篇arXiv论文和35本完整的书籍（涵盖公共领域作品、版权畅销书和作为对照的非训练数据书籍）。</li>
-<li><strong>显著性能提升</strong>：实验结果表明，RECAP在提取版权文本的平均ROUGE-L得分上，从基线的0.38提高到了0.47，提升了近24%。在某些模型上（如Claude-3.7），RECAP能够从《哈利·波特》中提取约3000个段落，而最佳基线方法仅能识别75个。</li>
-<li><strong>广泛兼容性</strong>：该方法适用于白盒和黑盒模型，具有很强的通用性。</li>
-<li><strong>系统化证据</strong>：RECAP通过自由形式生成来引导模型再现目标文本，提供了模型确实“记住”了这些内容的明确证据，大大降低了因随机匹配而产生的误报风险。</li>
-<li><strong>伦理考量</strong>：研究者承认该工具可能被滥用，并承诺不会公开发布任何提取出的受版权保护的段落，旨在推动对LLM记忆风险的分析和理解。</li>
+<li><p><strong>越狱模块 (Jailbreaker Module)</strong>:
+该模块是应对现代LLM强大对齐机制的关键。通过对提示进行巧妙的重新措辞，它能让模型在不违反其核心安全原则的情况下生成所需内容。实验表明，该模块能成功绕过超过75%的被拒绝请求，显著提高了数据提取的覆盖率和整体性能。</p></li>
+<li><p><strong>反馈代理 (Feedback Agent)</strong>:
+这是RECAP实现高精度提取的核心。通过提供结构化而非逐字的纠正提示，它鼓励模型利用自身的内部知识进行修正，从而更真实地反映其记忆能力。这种迭代优化机制使得最终提取的文本在完整性和准确性上远超单次提取的结果。</p></li>
+<li><p><strong>动态软提示 (Dynamic Soft Prompting, DSP)</strong>:
+通过章节摘要代理生成的元数据，RECAP能够为每个提取任务创建高度定制化的提示。此外，该技术还涉及对模型“温度”参数的调整：在需要创意生成时使用高温度，在要求精确提取时使用低温度（如0.0），以确保输出的确定性和一致性。</p></li>
 </ul>
 
 <hr />
 
-<h4><strong>结论</strong></h4>
+<h4><strong>三、 效率优化策略</strong></h4>
 
-<p>RECAP通过其创新的多代理、反馈驱动的管道，为从大型语言模型中系统性地提取记忆内容提供了一个强大而高效的解决方案。它通过结合动态提示、监狱破解、迭代反馈和智能过滤等多种技术，不仅显著提升了提取的准确性和完整性，也为未来研究LLM的内部机制、评估版权风险以及改进模型对齐工作奠定了坚实的基础。</p>
+<p>为了使RECAP在实际应用中更具经济效益，论文提出了一种可选的优化策略：</p>
+
+<ul>
+<li><strong>记忆评分过滤 (Memorization Score Filtering)</strong>:
+在进入昂贵的反馈循环之前，系统会为每个初始提取的段落计算一个“记忆得分”。该分数结合了BERT损失、ROUGE-L和余弦相似度等多个指标：
+$$m = \sigma(\beta<em>1 \cdot (1 - \text{BERT Loss}) + \beta</em>2 \cdot \text{Rouge} + \beta<em>3 \cdot \text{CS} + \beta</em>0)$$
+只有得分超过预定义阈值的段落（即那些初步显示出模型已具备一定记忆的段落）才会被送入反馈代理进行进一步优化。这能有效减少不必要的LLM调用次数，在保持较高提取质量的同时降低了成本。</li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 实验验证与结果</strong></h4>
+
+<p>RECAP在一个名为<strong>EchoTrace</strong>的新基准上进行了评估，该基准涵盖了超过30本公共领域和受版权保护的书籍。</p>
+
+<ul>
+<li><strong>性能提升</strong>: 实验结果表明，RECAP将文本提取的<strong>ROUGE-L分数从基线的0.38提升至0.47，实现了近24%的性能增长</strong>。</li>
+<li><strong>有效性</strong>: 在提取《哈利·波特》第一本书的实验中，RECAP成功提取了约3000个段落，而表现最佳的基线方法仅识别出75个，证明了其卓越的提取能力。</li>
+<li><strong>模型洞察</strong>: 研究还发现，模型规模越大，其记忆和数据提取的能力越强；同时，流行度越高的书籍也越容易被提取，这为理解LLM的记忆机制提供了重要见解。</li>
+</ul>
+
+<hr />
+
+<h4><strong>五、 应用场景与意义</strong></h4>
+
+<p>RECAP框架的提出具有重要的学术和现实意义：</p>
+
+<ul>
+<li><strong>版权合规与风险评估</strong>: 帮助开发者识别模型记忆了哪些受版权保护的内容，从而采取措施避免侵权风险。</li>
+<li><strong>模型透明性与对齐</strong>: 通过揭示模型的记忆内容，为研究模型的透明度、安全性和对齐性提供实证基础。</li>
+<li><strong>理解模型记忆机制</strong>: 为研究人员提供了一个强大的工具，以探索大型语言模型的学习和记忆能力，推动模型优化。</li>
+</ul>
+
+<p>综上所述，RECAP通过其创新的代理管道、反馈循环和越狱技术，为从大型语言模型中系统性、高精度地提取记忆数据提供了一个完整且强大的解决方案。</p>
 
 <h3>实验设计</h3>
 
-<ul>
-<li><strong>基准测试</strong>：实验在论文作者创建的新基准 <strong>EchoTrace</strong> 上进行。该基准包含超过70,000个文本片段，来源包括20篇arXiv研究论文和35本书籍（涵盖公共领域作品和受版权保护的畅销书）。</li>
-<li><strong>评估方法</strong>：将RECAP与Prefix-Probing、DSP等基线方法进行比较。</li>
-<li><strong>评估指标</strong>：主要使用 <strong>ROUGE-L</strong> 分数来衡量提取文本与原文的相似度。</li>
-<li><strong>分析维度</strong>：实验分析了不同LLM家族（如GPT系列、Claude系列、Gemini系列）的表现、反馈迭代次数的影响、以及监狱破解模块的有效性。</li>
-</ul>
+<p>研究团队设计了一个新的基准测试<strong>EchoTrace</strong>来进行实验。
+- <strong>评估基准</strong>：EchoTrace包含20篇来自arXiv的研究论文和35本完整的书籍（涵盖公有领域作品和受版权保护的畅销书，如《哈利·波特》），共计超过70,000个40-token长度的段落。
+- <strong>评估模型</strong>：实验在多个主流LLM上进行，包括GPT-4.1、Gemini-2.5 Pro和Claude-3.7。
+- <strong>对比方法</strong>：将RECAP的性能与Prefix-Probing、DSP等基线方法进行比较。
+- <strong>评估指标</strong>：主要使用ROUGE-L分数来衡量提取文本与原文的相似度。</p>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>：使用了专门构建的 <strong>EchoTrace</strong> 基准，数据源包括 <strong>arXiv</strong> 和 <strong>Project Gutenberg</strong> 等。</li>
-<li><strong>代码</strong>：论文片段中提到代码和数据集是公开的，但未提供具体链接。</li>
+<li><strong>数据集</strong>：实验使用了专门构建的<strong>EchoTrace</strong>基准。</li>
+<li><strong>代码</strong>：论文作者表示，相关的代码和模型输出将被公开发布，以确保研究的可复现性。</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<ul>
-<li><strong>性能显著提升</strong>：RECAP在所有测试模型上的表现均显著优于现有方法。例如，在提取受版权保护内容方面，RECAP的平均ROUGE-L分数达到0.46-0.47，比之前的最佳方法提升了约78%。</li>
-<li><strong>反馈循环有效</strong>：实验证明，迭代反馈能持续提升提取质量。不同模型对反馈的响应不同，例如Claude-3.7在多轮反馈中表现出更持久的改进能力。</li>
-<li><strong>监狱破解至关重要</strong>：监狱破解模块成功绕过了超过75%的模型拒绝请求，是提高提取成功率的关键。</li>
-<li><strong>提取实例</strong>：RECAP能够从《哈利·波特》中提取约3,000个片段，而最佳基线方法仅能提取75个。</li>
-</ul>
+<p>实验结果有力地支持了论文的假设，表明RECAP框架在提取LLM记忆内容方面表现卓越：
+- <strong>性能显著提升</strong>：RECAP在所有测试模型上的表现均显著优于基线方法。例如，它将GPT-4.1提取版权文本的ROUGE-L分数从0.38提高到0.47，并在某些情况下实现了高达78%的性能提升。
+- <strong>提取规模巨大</strong>：RECAP成功从《哈利·波特》第一本书中提取了约3,000个段落，而表现最好的基线方法仅能提取75个。
+- <strong>模型行为差异</strong>：实验发现不同模型对反馈的反应不同。GPT-4.1和Gemini-2.5 Pro在第一轮反馈后改进最显著，而Claude-3.7则在多轮反馈中表现出更持续的改进。
+- <strong>越狱有效性</strong>：“越狱”模块成功绕过了超过75%的模型拒绝请求。</p>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出了RECAP框架</strong>：一个新颖、有效的自动化代理管道，通过结合迭代反馈和监狱破解，系统性地解决了从LLM中提取记忆内容的问题。</li>
-<li><strong>创建了EchoTrace基准</strong>：为评估LLM逐字记忆提取能力提供了一个新的、全面的基准测试集。</li>
-<li><strong>提供了深入的实验分析</strong>：通过大量实验证明了RECAP的优越性，并揭示了不同LLM在记忆提取和安全对策方面的行为差异，为理解和审计LLM提供了重要工具和见解。</li>
+<li><strong>提出RECAP框架</strong>：设计并验证了一种新颖、系统的框架，通过迭代反馈和越狱技术，显著提高了从LLM中提取逐字记忆内容的能力。</li>
+<li><strong>创建EchoTrace基准</strong>：构建了一个新的、专门用于评估LLM逐字记忆提取能力的基准数据集，填补了该领域的空白。</li>
+<li><strong>提供强有力的实证证据</strong>：通过广泛实验，清晰地揭示了现代LLM中存在的 verbatim memorization（逐字记忆）问题，并为审计模型的训练数据透明度和版权合规性提供了有效工具。</li>
+<li><strong>深化对模型行为的理解</strong>：揭示了不同LLM在面对提取请求、安全对齐和纠正反馈时的行为差异，为未来模型开发和对齐研究提供了重要参考。</li>
 </ol>
 
                     </div>
@@ -799,7 +791,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-03 16:58:22</p>
+            <p>生成时间: 2025-11-03 17:08:08</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
