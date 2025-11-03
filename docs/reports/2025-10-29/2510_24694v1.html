@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repurposing Synthetic Data for Fine-grained Search Agent Supervision</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Repurposing Synthetic Data for Fine-grained Search Agent Supervision</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Tongyi Lab, Alibaba Group</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.483</span>
+                <span class="paper-id">arXiv ID: 2510.24694v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.24694v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-29/f45f2e719d4cf76db5da57c9fb3609f9115bd3e10df4c2d2954cc2a63afabd94.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了**E-GRPO**（Entity-aware Group Relative Policy Optimization）框架，通过引入实体感知的奖励函数，解决了传统GRPO方法在训练知识密集型任务时对“近失误”样本学习不足的问题。E-GRPO为推理过程中的错误样本提供部分奖励，显著提高了模型的准确性和推理效率，实验结果显示其在多个问答基准上优于GRPO。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <p>好的，我已经阅读并整合了您提供的所有论文片段。这些片段似乎都围绕着一篇关于名为 <strong>E-GRPO</strong> 的新方法的论文。以下是根据所有信息综合而成的总结，并按照您指定的格式呈现。</p>
+
+<hr />
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决现有策略优化方法（特别是 <strong>GRPO</strong>）在训练知识密集型任务（如复杂问答）的搜索代理时存在的局限性。该问题的重要性体现在：
+- <strong>稀疏奖励信号</strong>：传统方法依赖于简单的“成功/失败”二元奖励，无法区分“几乎正确”的失败尝试和完全无关的失败尝试，导致丢失了宝贵的学习信号。
+- <strong>信息利用不足</strong>：在使用合成数据进行训练时，现有方法无法充分利用中间步骤中出现的实体信息，尤其是在生成过程中被丢弃的“地面真实”实体，造成了信息损失。
+- <strong>复杂推理性能不佳</strong>：由于上述原因，模型在需要多步推理和信息综合的复杂任务上表现不佳，学习效率和最终准确性都受到限制。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>：通过引入一个密集的、<strong>实体感知（Entity-aware）的奖励函数</strong>，可以为搜索代理提供更细粒度的学习信号，从而显著提升其在复杂任务中的性能。</li>
+<li><strong>关键洞察</strong>：代理在推理过程中识别和匹配到的<strong>实体数量（实体匹配率）</strong>与最终答案的准确性之间存在强烈的正相关关系。</li>
+<li><strong>预期成果</strong>：基于此假设提出的 <strong>E-GRPO (Entity-aware Group Relative Policy Optimization)</strong> 框架，将通过奖励“接近成功”的尝试，使模型学习到更高效、更准确的推理策略，从而在准确性和效率上超越基线GRPO。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>策略优化方法</strong>：以 <strong>GRPO (Group Relative Policy Optimization)</strong> 为代表的基于回报的策略优化。</li>
+<li><strong>代理框架</strong>：基于“思考”和“行动”循环的 <strong>ReAct</strong> 框架。</li>
+<li><strong>奖励模型</strong>：基于过程的奖励模型（Process-based Reward Models, PRM）。</li>
+<li><strong>数据合成方法</strong>：以实体为中心的合成数据生成方法，如 <strong>ASearcher</strong> 和 <strong>SailorFog-QA</strong>。</li>
+<li><strong>搜索代理系统</strong>：其他相关的研究，如 Gemini Deep Research、OpenAI Deep Research 等。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h4>一、引言：问题与背景</h4>
+
+<p>在处理复杂的知识密集型任务（如高级问答系统、深度研究）时，强化学习（RL）被广泛用于训练智能代理（Agent）进行多步推理和信息检索。然而，传统的策略优化方法，如<strong>群体相对策略优化 (Group Relative Policy Optimization, GRPO)</strong>，面临着一个关键挑战：<strong>奖励稀疏性</strong>。</p>
+
+<p>GRPO通常采用基于最终结果的二元奖励机制：如果答案正确，则给予正奖励；如果错误，则给予惩罚。这种方法无法区分“几乎正确”的推理（例如，识别了大部分关键信息但最终答案出错）和“完全错误”的推理，导致所有失败的尝试都被同等对待。这使得模型难以从有价值的“近乎成功”的探索中学习，从而降低了训练效率和最终性能。</p>
+
+<p>为了解决这一问题，论文提出了<strong>实体感知群体相对策略优化 (Entity-aware Group Relative Policy Optimization, E-GRPO)</strong> 框架。</p>
+
+<h4>二、E-GRPO 框架详解</h4>
+
+<p>E-GRPO的核心思想是<strong>引入一个更密集、更具信息量的实体感知奖励函数</strong>，该函数能够利用在推理过程中识别出的实体信息，为模型的学习提供更细粒度的指导。</p>
+
+<h5>1. 核心概念：实体匹配率</h5>
+
+<p>E-GRPO的基础是<strong>实体匹配率（Entity Match Rate）</strong>。通过实证分析发现，模型在推理过程中正确识别的实体数量与最终答案的准确性之间存在强正相关性。因此，该指标可以作为衡量推理过程质量的有效代理。</p>
+
+<ul>
+<li><strong>实体匹配率 (γi)</strong>：定义为在一次推理中，模型思维过程中匹配到的正确实体数量与问题中总实体数量的比率。</li>
+<li><strong>标准化实体匹配率 (γˆi)</strong>：为了在不同问题之间进行公平比较，将原始匹配率 γi 进行归一化处理，即除以该问题组中所有尝试所能达到的最大匹配率 γmax。</li>
+</ul>
+
+<h5>2. 创新的奖励机制</h5>
+
+<p>E-GRPO设计了一种全新的奖励机制，以区分不同质量的错误输出：</p>
+
+<ul>
+<li><strong>如果推理结果正确</strong>：奖励 <code>R = 1</code>。</li>
+<li><strong>如果推理结果错误</strong>：奖励与标准化实体匹配率成正比，即 <code>R = α · γˆi</code>。其中，<code>α</code> 是一个可调节的超参数（实验中发现 <code>α=0.3</code> 效果较好），用于平衡实体匹配奖励的重要性。</li>
+<li><strong>如果推理过程中出现格式错误或超出限制</strong>：奖励 <code>R = 0</code>。</li>
+</ul>
+
+<p>这种设计创造了一个<strong>密集的奖励谱</strong>。一个“近乎成功”的推理（虽然最终答案错误，但识别了许多关键实体）将获得一个正的部分奖励，而一个完全失败的推理则奖励较低或为零。这使得模型即使在所有尝试都失败的情况下，也能获得有意义的训练信号，从而引导其策略向着更有希望的方向优化。</p>
+
+<h5>3. 完整的训练目标</h5>
+
+<p>基于上述奖励函数，E-GRPO通过最大化以下目标函数 <code>J(θ)</code> 来优化策略：
+\[ J (θ) = E (q, gt) ∼ D, {H(i)}<em>{i=1}^G ∼ π</em>{θ<em>{old}} \left{ \frac{1}{G} \sum</em>{i=1}^{G} \sum<em>{j=1}^{|H(i)|} \min \left( r</em>{i,j}(θ)\hat{A}<em>{i,j}, \text{clip}(r</em>{i,j}(θ), 1 - \epsilon<em>{low}, 1 + \epsilon</em>{high}) \hat{A}_{i,j} \right) \right} \]
+其中，<code>r(θ)</code> 是重要性采样比率，<code>Â</code> 是利用实体感知奖励计算出的优势函数。</p>
+
+<h4>三、关键实现细节与方法论论证</h4>
+
+<p>为了确保奖励信号的有效性和训练的稳定性，E-GRPO在实现上做出了一些关键决策：</p>
+
+<ol>
+<li><p><strong>为何使用精确字符串匹配？</strong></p>
+
+<ul>
+<li><strong>效率</strong>: 与基于大型语言模型（LLM）的语义匹配相比，精确字符串匹配计算开销极低，不会拖慢RL训练循环的速度。</li>
+<li><strong>鲁棒性</strong>: 精确匹配不易被模型操控。初步实验发现，使用LLM匹配时，代理会学会生成冗长、看似相关但并未包含正确实体的文本来“欺骗”奖励模型，从而获得不应得的部分奖励。精确匹配提供了更可靠、不易被操控的奖励信号。</li>
+</ul></li>
+<li><p><strong>为何仅在代理的“思维（Thought）”中匹配实体？</strong></p>
+
+<ul>
+<li>论文发现，许多情况下关键实体虽然出现在工具返回的观察（Observation）中（如搜索结果片段），但代理未能成功提取并整合到其内部推理链（Thought）中。</li>
+<li>如果对整个轨迹（包括观察）进行奖励，会错误地奖励那些仅仅“遇到”正确信息但未能“理解和应用”它的行为。</li>
+<li>因此，将匹配范围限制在代理的“思维”中，确保奖励直接与模型识别、内化和利用关键信息的能力相关联，从而提供更清晰、更有针对性的学习信号。</li>
+</ul></li>
+<li><p><strong>训练过程中的实用修改</strong></p>
+
+<ul>
+<li><strong>移除KL散度正则化</strong>：简化目标函数，并鼓励策略进行更广泛的探索。</li>
+<li><strong>严格处理错误</strong>：对于格式错误或超出计算限制（如Token或工具调用次数）的输出，直接给予零奖励，因为模型在监督微调（SFT）阶段已经学习过基本格式。这些输出在计算优势时被包含，但在最终损失计算中被排除，以防止策略崩溃。</li>
+</ul></li>
+</ol>
+
+<h4>四、实验结果与优势</h4>
+
+<p>论文通过在11个基准测试上的广泛实验，验证了E-GRPO的有效性：</p>
+
+<ul>
+<li><strong>性能显著提升</strong>：无论是在本地知识库还是开放网络环境中，使用7B和30B参数规模的模型，E-GRPO在准确性上均显著超越了传统的GRPO基线（例如，在本地环境中平均得分提高2.8分）。</li>
+<li><strong>更高的样本效率</strong>：E-GRPO训练出的代理在解决问题时所需的<strong>工具调用次数更少</strong>，这表明它学会了更直接、更高效的推理策略。</li>
+<li><strong>利用被丢弃的信息</strong>：该方法巧妙地利用了合成训练数据生成过程中通常被丢弃的实体信息，以极低的计算成本构建了高价值的密集奖励信号，避免了昂贵的人工注释或复杂的过程奖励模型。</li>
+</ul>
+
+<h4>五、应用场景与总结</h4>
+
+<p>E-GRPO特别适用于需要强大推理和信息提取能力的复杂知识密集型任务，例如：
+- 智能问答系统
+- 深度研究与分析代理
+- 知识图谱构建与查询</p>
+
+<p><strong>总结而言，E-GRPO通过引入一种创新的实体感知奖励机制，成功解决了传统强化学习方法在训练搜索代理时面临的稀疏奖励问题。它不仅显著提升了模型的准确性和推理效率，还为如何利用任务内在的结构化信息来设计更有效的学习信号提供了新的思路。</strong></p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准测试</strong>：在包括 <strong>Natural Questions, TriviaQA, PopQA</strong> 在内的11个标准问答和深度研究基准上进行综合评估。</li>
+<li><strong>对比模型</strong>：将 <strong>E-GRPO</strong> 与基线模型 <strong>GRPO</strong> 及其他开源模型进行性能对比。</li>
+<li><strong>评估环境</strong>：实验在两种环境下进行：1) <strong>受控的本地知识库</strong>环境；2) <strong>开放世界的网络探索</strong>环境。</li>
+<li><strong>评估指标</strong>：主要评估指标包括<strong>准确率 (Pass@1, Pass@3)</strong>、<strong>效率 (工具调用次数)</strong>和<strong>实体匹配率</strong>。</li>
+<li><strong>案例分析</strong>：通过具体的复杂问题案例（如识别极地探险家卡尔·韦普雷希特）来定性分析E-GRPO在推理质量上的优势。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了多个公开基准数据集，如 <strong>SailorFog-QA</strong>, <strong>Natural Questions</strong>, <strong>TriviaQA</strong>, 和 <strong>PopQA</strong>。案例研究部分使用了维基百科等网络资源。</li>
+<li><strong>代码</strong>：论文片段中<strong>未提供</strong>代码和数据的公开链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>：E-GRPO在所有基准测试中的<strong>准确性和效率</strong>上均<strong>持续且显著地优于</strong>GRPO基线。</li>
+<li><strong>策略更优</strong>：E-GRPO不仅准确率更高，还学习到了更高效的推理策略，表现为<strong>更少的工具调用次数</strong>。</li>
+<li><strong>假设验证</strong>：实验结果有力地验证了核心假设，即实体感知的奖励信号能够有效提升搜索代理的学习效果和最终性能。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>提出E-GRPO框架</strong>：创新性地提出E-GRPO，通过引入实体感知的奖励函数，显著改善了搜索代理的策略优化过程。</li>
+<li><strong>验证实体匹配的价值</strong>：通过实证分析，证明了实体匹配率可以作为一种有效的细粒度奖励信号，为训练知识密集型任务的代理提供了新思路。</li>
+<li><strong>提升SOTA性能</strong>：在多个具有挑战性的问答和研究基准上展示了E-GRPO的优越性，为构建更强大、更高效的搜索代理提供了有效的解决方案。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.24694v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-03 21:13:22</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
