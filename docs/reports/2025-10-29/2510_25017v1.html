@@ -229,7 +229,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了StorageXTuner，一个基于多LLM代理的自动调优框架，旨在解决异构存储系统的配置复杂性和效率问题。通过四个专门的代理（Executor、Extractor、Searcher、Reflector）协作，StorageXTuner实现了动态经验管理和闭环反馈，显著提升了性能，实验结果显示吞吐量提高至575%，p99延迟降低88%，并在多种存储系统中表现出优异的通用性和鲁棒性。
+                本文提出了StorageXTuner，一个多代理驱动的自动化存储系统调优框架，旨在解决存储系统配置调优的复杂性和低效性。通过Executor、Extractor、Searcher和Reflector四个代理的协作，StorageXTuner实现了高效的配置搜索和知识管理。实验结果显示，该框架在多个存储系统上显著提升了吞吐量和降低了延迟，展示了其优越的性能和通用性。
             </div>
         </div>
         
@@ -632,148 +632,153 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决异构存储系统自动配置与调优的复杂性、效率和通用性问题。这是一个长期存在且至关重要的问题，因为：
-- <strong>手动调优的局限性</strong>：手动配置耗时、易错，且需要深厚的专家知识。
-- <strong>配置空间巨大</strong>：现代存储系统有大量的配置参数，导致探索空间极其庞大。
-- <strong>缺乏通用性</strong>：现有的自动调优方法（包括传统的机器学习方法和早期的LLM方法）通常与特定的系统、工作负载或软件版本紧密耦合，难以迁移和适应变化。
-- <strong>LLM应用的挑战</strong>：直接应用LLM进行调优面临处理多阶段复杂任务效率低下、令牌限制、信息幻觉以及难以有效管理和复用调优经验等问题。</p>
+<p>本文旨在解决存储系统配置调优的复杂性、耗时性和低效性问题。这是一个长期存在且日益重要的问题，因为：
+- <strong>配置空间庞大</strong>：存储系统有大量配置参数，其相互作用复杂，手动调优或穷举搜索不切实际。
+- <strong>环境动态变化</strong>：默认配置在不同的工作负载、硬件和软件版本下通常是次优的，而传统调优方法难以适应这些变化。
+- <strong>现有方法局限性</strong>：传统的手动、启发式或机器学习方法通常是系统特定的，缺乏通用性。而现有的大语言模型（LLM）调优方法在处理多阶段调优任务、管理调优知识和避免幻觉方面存在不足。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过构建一个由多个专业化的大语言模型（LLM）代理协作的框架（StorageXTuner），可以将复杂的调优任务分解，并结合结构化探索、动态经验管理和自我修正机制，从而实现对异构存储系统更高效、通用和鲁棒的自动化性能调优。该框架能够显著超越传统的默认配置和现有的调优方法。</p>
+<p>本文的核心假设是：通过一个名为 <strong>StorageXTuner</strong> 的框架，可以实现对存储系统高效、自动化和鲁棒的配置调优。该框架的有效性基于以下几点：
+- <strong>多代理协作</strong>：将复杂的调优过程分解为四个独立的子任务，由专门的LLM代理（Executor、Extractor、Searcher、Reflector）协同完成，可以提高效率和准确性。
+- <strong>知识驱动的搜索</strong>：结合LLM的推理能力和分层记忆机制（短期和长期记忆），可以有效地管理和利用过去的调优经验（洞见），以指导配置搜索，从而减少收敛所需的迭代次数。
+- <strong>通用性与自动化</strong>：通过抽象通用的调优语义，该框架能够无需大量人工干预，即可适应不同的存储系统、版本和日志格式。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>传统与机器学习调优方法</strong>：包括基于贝叶斯优化的方法（如CherryPick, DBTune, Smac3）、深度强化学习（如QTune）和元学习（如OtterTune）。这些方法通常需要大量数据或难以适应环境变化。</li>
-<li><strong>基于LLM的调优方法</strong>：早期的探索如ELMo-Tune、GPTuner和λ-Tune，展示了LLM的潜力，但通常与特定系统耦合，通用性较差。</li>
-<li><strong>配置依赖分析</strong>：如SPEX、cDEP等研究，关注于理解软件配置间的依赖关系。</li>
-</ul>
+<p>本文的研究建立在多个领域的基础上，并与以下工作进行了比较：
+- <strong>基于机器学习的自动调优</strong>：如 Ottertune、Endure、DB-Tune、CherryPick 等，它们通常使用贝叶斯优化或强化学习等技术。
+- <strong>基于LLM的调优方法</strong>：如 ELMo-Tune、GPTuner 和 λ-Tune，本文旨在克服这些方法在结构化、反馈和通用性方面的局限。
+- <strong>配置依赖性分析</strong>：如 SPEX、cDEP 等，专注于理解配置参数之间的关系。</p>
 
-<h3>完整解决方案：StorageXTuner - 基于LLM的自动化存储系统调优框架</h3>
+<h3><strong>StorageXTuner：基于多代理LLM框架的异构存储系统自动化调优解决方案</strong></h3>
 
-<h4>一、引言：问题与设计理念</h4>
+<p>本文提出的核心解决方案是一个名为 <strong>StorageXTuner</strong> 的创新框架，旨在通过一个通用的、全自动的、端到端的体系，解决异构存储系统配置调优过程中的复杂挑战。该框架巧妙地集成了大型语言模型（LLM）的推理能力与结构化的系统工程方法，以实现高效、稳健且可扩展的性能调优。</p>
 
-<p>现代存储系统（如数据库、键值存储、缓存引擎）的配置空间极其复杂，包含数百个参数，这使得手动调优成为一项耗时、易错且需要深厚专业知识的任务。现有的自动化调优方法往往与特定系统紧密耦合，缺乏通用性，并且无法有效重用调优过程中获得的知识。</p>
+<hr />
 
-<p>为了解决这些挑战，论文提出了 <strong>StorageXTuner</strong>，一个通用的、完全自动化的端到端存储系统调优框架。其核心设计理念是<strong>整合大型语言模型（LLM）的推理能力</strong>，通过模块化的代理架构和动态的知识管理机制，实现高效、鲁棒且可解释的自动化调优。</p>
+<h4><strong>一、 核心设计理念与架构</strong></h4>
 
-<h4>二、核心架构：创新的多代理协作机制</h4>
+<p>StorageXTuner的设计理念是将复杂的调优过程分解为多个模块化的子任务，每个任务由专门的智能代理负责。这种设计解耦了特定存储系统的实现细节与通用的调优逻辑，使得框架具有高度的灵活性和通用性。</p>
 
-<p>StorageXTuner的核心是一个由四个专门的LLM代理（Agent）组成的协作系统。这种分工明确的架构将复杂的调优流程分解为模块化的子任务，并通过两个迭代循环协同工作，以实现持续优化。</p>
+<p>其核心架构由四个协同工作的LLM驱动代理组成：</p>
 
-<h5>1. 代理分工</h5>
-
-<ul>
-<li><strong>Executor (执行者)</strong>：负责存储系统的部署、基准测试和监控。它在沙盒环境中根据给定配置运行工作负载，并收集所有原始输出，包括性能统计数据和系统日志。</li>
-<li><strong>Extractor (提取器)</strong>：负责分析Executor收集的原始数据。它利用LLM的编程能力，为不同格式的日志（如文本、JSON）<strong>动态生成Python解析器</strong>，并提取关键性能指标。最终，它将这些信息整合成结构化的<strong>“性能摘要（Performance Digest）”</strong>，供后续代理使用。</li>
-<li><strong>Searcher (搜索者)</strong>：调优过程的大脑。它负责探索高维配置空间，根据Extractor的性能摘要和Reflector提供的调优洞察，决定下一轮要测试的候选配置。</li>
-<li><strong>Reflector (反思者)</strong>：框架的“记忆与学习中心”。它收集、分析和管理整个调优过程中产生的经验和<strong>“调优洞察（Tuning Insights）”</strong>，并对其进行评估和总结，以指导Searcher未来的决策。</li>
-</ul>
-
-<h5>2. 双迭代循环</h5>
-
-<p>框架通过两个紧密交织的迭代循环来运作：
-*   <strong>循环A (配置-执行-分析)</strong>：由Executor、Extractor和Searcher组成。Searcher提出新配置，Executor执行测试，Extractor分析结果，并将性能摘要反馈给Searcher。这个循环负责执行和评估。
-*   <strong>循环B (经验-反思-指导)</strong>：由Searcher和Reflector组成。Searcher将调优经验（配置及其性能）发送给Reflector，Reflector将其提炼为高层次的调优洞察，并反馈给Searcher以指导下一轮的配置搜索。这个循环负责学习和进化。</p>
-
-<h4>三、关键技术与机制详解</h4>
-
-<h5>1. 基于洞察的配置探索 (Insight-Driven Exploration)</h5>
-
-<p>为了高效导航复杂的配置空间，Searcher采用了<strong>结合LLM推理的树搜索（Tree Search）算法</strong>。
-*   <strong>结构化探索</strong>：将探索过程组织成一棵树，每个节点代表一个配置及其性能。从一个初始配置（如默认配置）作为根节点开始。
-*   <strong>洞察引导</strong>：Searcher利用Reflector提供的高层次调优洞察（例如，“增加写缓冲区大小有助于提高写密集型工作负载的吞吐量”），来决定扩展哪些树的分支，从而优先探索最有潜力的配置方向，避免盲目试错。</p>
-
-<h5>2. 动态洞察与分层内存管理 (Memory Management)</h5>
-
-<p>Reflector通过创新的内存机制来管理和利用调优知识，这是实现“学习”能力的关键。
-*   <strong>分层内存结构</strong>：
-    *   <strong>短期记忆 (STM)</strong>：存储当前调优会话中新产生的、尚未充分验证的临时洞察。
-    *   <strong>长期记忆 (LTM)</strong>：存储那些在多个会话中被反复验证、具有普适性的持久洞察。
-*   <strong>基于置信度的管理</strong>：
-    *   每个洞察都有一个<strong>置信度评分</strong>。当基准测试结果与洞察预测一致时，该洞察被“赞成”（Upvote），置信度提高；反之则被“反对”（Downvote），置信度降低。
-    *   高置信度的洞察会从STM晋升到LTM，而低置信度的洞察最终可能被丢弃。
-*   <strong>检索与应用</strong>：Searcher在决策时，Reflector会结合<strong>上下文相似度</strong>和<strong>置信度评分</strong>，通过检索增强生成（RAG）机制，提供最相关的Top-K个洞察，确保LLM的推理建立在可靠的经验之上。</p>
-
-<h5>3. 鲁棒性与安全保障</h5>
-
-<p>为了确保调优过程的稳定和安全，StorageXTuner集成了多层验证机制。
-*   <strong>Extractor的自我修正</strong>：如果Extractor生成的日志解析器执行失败或提取的数据异常，它会触发自我修正机制，要求LLM重新生成脚本，从而保证数据分析的准确性。
-*   <strong>Searcher的双层验证</strong>：
-    1.  <strong>领域约束过滤</strong>：LLM会根据用户指定的约束（如持久性保证）过滤掉不安全的候选配置。
-    2.  <strong>轻量级检查器</strong>：在执行前，一个轻量级检查器会验证配置的安全性，拒绝不安全的更改（如违反黑名单规则），并将错误信息反馈给LLM。</p>
-
-<h4>四、评估与效果</h4>
-
-<p>StorageXTuner在多个主流存储系统（如<strong>RocksDB、CacheLib、MySQL InnoDB</strong>）上，使用标准基准测试（如YCSB、TPC-C/H）进行了广泛评估。</p>
-
-<h5>1. 性能提升</h5>
+<ol>
+<li><p><strong>执行器 (Executor)</strong>：</p>
 
 <ul>
-<li><strong>显著优于基线</strong>：与出厂设置和现有的先进方案（如ELMo-Tune）相比，StorageXTuner取得了惊人的性能提升。
-<ul>
-<li>在RocksDB上，吞吐量提升高达 <strong>575%</strong>，p99延迟降低 <strong>88%</strong>。</li>
-<li>在MySQL InnoDB上，TPC-C事务吞吐量提升高达 <strong>709%</strong>。</li>
-<li>在CacheLib上，显著提高了缓存命中率和吞吐量。</li>
+<li><strong>职责</strong>：负责存储系统的部署、基准测试和监控。</li>
+<li><strong>工作流程</strong>：在沙箱环境（如Docker）中设置目标存储系统，应用给定的配置，并执行工作负载（如YCSB、TPC-C）。同时，它会监控CPU利用率、I/O带宽等运行时统计信息，并收集所有结构化（如JSON）和非结构化（如文本日志）的输出。</li>
 </ul></li>
-<li><strong>收敛效率高</strong>：能够在更少的试验次数内收敛到最佳性能，显示出其高效性。</li>
-</ul>
+<li><p><strong>提取器 (Extractor)</strong>：</p>
 
-<h5>2. 创新的评估指标</h5>
+<ul>
+<li><strong>职责</strong>：分析执行器收集的海量原始数据，并将其转化为结构化的性能摘要。</li>
+<li><strong>创新方法</strong>：为了避免将大量日志直接输入LLM（可能导致令牌溢出和幻觉问题），提取器利用LLM的编程能力，动态生成针对特定日志格式的<strong>Python解析器</strong>。这些解析器负责从原始输出中提取关键性能指标，并生成一个名为<strong>性能摘要 (Performance Digest)</strong> 的结构化JSON对象，其中包含定量的性能数据和定性的评估分析。该代理还内置了<strong>自我修正机制</strong>，如果生成的脚本执行失败，它会反馈给LLM进行修正。</li>
+</ul></li>
+<li><p><strong>搜索器 (Searcher)</strong>：</p>
 
-<p>由于LLM驱动的调优是新领域，论文提出了四个新指标来全面评估其效率和成本：
-*   <strong>最大性能增益 (MPG)</strong>：衡量相对性能提升。
-*   <strong>到达95%最大性能的令牌成本 (TC95)</strong>：衡量达到接近峰值性能的LLM调用成本。
-*   <strong>令牌效率 (TE)</strong>：每单位令牌消耗带来的性能增益。
-*   <strong>令牌加权错误率 (TWER)</strong>：衡量生成无效配置的频率。</p>
+<ul>
+<li><strong>职责</strong>：探索高维配置空间，决定下一轮测试的配置。</li>
+<li><strong>工作流程</strong>：搜索器是调优决策的核心。它接收来自提取器的性能摘要和来自反思者的调优见解，利用这些信息来指导其配置搜索过程。它还负责记录每次试验的经验，并将这些经验传递给反思者。</li>
+</ul></li>
+<li><p><strong>反思者 (Reflector)</strong>：</p>
 
-<p>在这些指标上，StorageXTuner同样表现出色，证明了其设计的成本效益和高稳定性。</p>
+<ul>
+<li><strong>职责</strong>：管理和提炼调优知识，生成高层次的调优见解。</li>
+<li><strong>工作流程</strong>：反思者收集来自搜索器的所有调优经验（即已探索的配置及其性能结果），通过分析和比较，推断出可以泛化的规则和模式，形成<strong>调优见解 (Tuning Insights)</strong>。这些见解将反过来指导搜索器进行更智能的探索。</li>
+</ul></li>
+</ol>
 
-<h4>五、结论与关键发现</h4>
+<p>这种多代理架构通过两个交织的迭代循环进行运作：
+*   <strong>循环A (执行与分析)</strong>：由执行器、提取器和搜索器组成，负责提出配置、运行测试和分析结果。
+*   <strong>循环B (反思与学习)</strong>：由搜索器和反思者组成，负责收集经验、提炼见解并用其指导未来的搜索。</p>
 
-<p>StorageXTuner通过将复杂的调优任务分解给专门的LLM代理，并结合动态的洞察管理和强大的学习机制，成功构建了一个通用、高效且鲁棒的自动化存储系统调优框架。</p>
+<p><img src="https://storage.googleapis.com/static.almanac.com/01HY0J3C4WAV11W828Q3J1B18W/image.png" alt="image" /></p>
 
-<p><strong>关键发现包括：</strong>
-1.  <strong>闭环多代理架构</strong>比单一模型推理更有效，能够实现更高的自主性。
-2.  LLM在<strong>编辑现有配置</strong>时比从头创建表现更好，这突显了提供良好初始配置和上下文的重要性。
-3.  通过<strong>分层记忆和置信度评分</strong>来动态管理调优洞察，是实现持续学习和适应性的关键。
-4.  该框架将人类专家的角色从繁琐的手动调优转变为<strong>战略监督</strong>，通过设定目标和预算来引导自动化过程。</p>
+<hr />
 
-<p>总之，StorageXTuner为利用LLM解决复杂的系统优化问题提供了一个开创性的范例，展示了其在现代数据管理领域的巨大潜力。</p>
+<h4><strong>二、 核心技术与机制</strong></h4>
+
+<p>为了实现高效和智能的调优，StorageXTuner集成了几项关键技术：</p>
+
+<h5><strong>1. 见解驱动的树形配置探索 (Insight-Driven Tree Search)</strong></h5>
+
+<p>搜索器采用结构化的<strong>树形搜索</strong>方法来导航复杂的配置空间。它将配置探索过程构建为一棵决策树，每个节点代表一个配置。与传统方法不同，它的探索不是盲目的，而是由反思者提供的高层次<strong>调优见解</strong>来驱动。例如，一个见解可能是“对于写密集型工作负载，增加写缓冲池大小能显著提高吞吐量”。搜索器会优先扩展与这些可靠见解一致的配置路径，同时剪除低潜力的分支，从而极大提高了探索效率。</p>
+
+<h5><strong>2. 分层记忆与基于信心评分的见解管理</strong></h5>
+
+<p>反思者采用<strong>分层记忆结构</strong>来高效管理调优见解：
+*   <strong>短期记忆 (Short-Term Memory, STM)</strong>：存储新生成的、尚未充分验证的见解。它是一个试验场，见解在这里通过基准测试来初步确认其有效性。
+*   <strong>长期记忆 (Long-Term Memory, LTM)</strong>：存储经过反复验证、可在不同调优会话中复用的通用见解。</p>
+
+<p>为了确保知识的可靠性，每个见解都附有一个<strong>信心评分</strong>。该评分会根据新的基准测试结果动态更新：
+*   <strong>好评 (Upvote)</strong>：当观测结果与见解预测一致时，提升信心评分。
+*   <strong>差评 (Downvote)</strong>：当结果与见解相悖时，降低信心评分。</p>
+
+<p>在进行新一轮探索时，系统会结合见解的<strong>信心评分</strong>和<strong>上下文相似度</strong>（使用检索增强生成，RAG技术）来检索最相关的见解，从而为LLM提供高质量的指导。</p>
+
+<h5><strong>3. 轻量级安全验证机制</strong></h5>
+
+<p>为确保调优过程的安全性和可靠性，StorageXTuner实施了多层验证策略：
+*   <strong>领域约束</strong>：允许用户定义如数据持久性、并发限制等硬性约束，LLM会在生成配置时过滤掉违反这些约束的选项。
+*   <strong>经验验证</strong>：通过预定义的脚本进行一致性检查，检测异常指标，并根据黑名单拒绝已知的危险配置更改。
+*   <strong>轻量级验证器 (Validator)</strong>：交叉验证LLM提出的信心更新是否与实际基准测试结果的变化趋势一致，防止错误的知识被固化。</p>
+
+<hr />
+
+<h4><strong>三、 实验评估与性能表现</strong></h4>
+
+<p>StorageXTuner在多个主流存储系统（如<strong>RocksDB、LevelDB、CacheLib和MySQL InnoDB</strong>）上，针对多种真实工作负载（如YCSB、MixGraph、TPC-C/H）进行了广泛评估。</p>
+
+<p><strong>性能结果亮点：</strong>
+*   在RocksDB上，与默认配置相比，吞吐量提升高达 <strong>575%</strong>，p99延迟减少 <strong>88%</strong>。
+*   在MySQL InnoDB上，TPC-C的事务吞吐量提升达 <strong>709%</strong>，TPC-H的查询性能提升 <strong>71%</strong>。
+*   在CacheLib中，缓存命中率提高了 <strong>3.1个百分点</strong>，吞吐量比其他基线方法高出 <strong>22%</strong>。
+*   与现有其他自动调优工具相比，StorageXTuner在性能增益、效率（令牌成本）和错误率方面均表现出显著优势。</p>
+
+<p>此外，敏感性分析表明，该框架对不同的系统版本、LLM模型（GPT-3.5, GPT-4o等）和超参数（如树搜索分支因子）均表现出良好的鲁棒性。</p>
+
+<hr />
+
+<h4><strong>四、 关键经验与总结</strong></h4>
+
+<p>该研究总结了几个关键的经验教训：
+1.  <strong>少数关键参数主导调优过程</strong>：配置搜索通常围绕少数几个关键参数展开。
+2.  <strong>LLM更擅长编辑而非从零创造</strong>：错误配置往往源于LLM试图修改未指定的参数，限制其仅编辑现有配置能有效减少错误。
+3.  <strong>闭环代理架构优于单次推理</strong>：多代理的持续反馈循环比单次大型推理提供了更稳定和高效的性能提升。
+4.  <strong>人机协作的演进</strong>：专家的角色从手动调优转变为战略监督，通过设定边界条件（如预算、服务目标）来指导AI进行安全的探索。</p>
+
+<p><strong>总结而言，StorageXTuner通过其创新的多代理LLM架构、见解驱动的树形搜索、分层记忆管理以及轻量级安全验证机制，提供了一个高效、通用且全自动的存储系统调优解决方案。它不仅显著提升了系统性能，还为未来基于LLM的系统优化领域提供了新的思路和评估标准。</strong></p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>评估系统</strong>：在多个主流的异构存储系统上进行了评估，包括RocksDB、LevelDB、CacheLib和MySQL InnoDB。</li>
-<li><strong>基准测试</strong>：使用多种标准工作负载进行测试，如YCSB、MixGraph、TPC-C和TPC-H，覆盖读密集型、写密集型和混合型场景。</li>
-<li><strong>对比方法</strong>：将StorageXTuner的性能与系统默认配置、以及其他先进的调优器（如ELMo-Tune）进行比较。</li>
-<li><strong>鲁棒性测试</strong>：评估了框架在不同系统版本、硬件资源限制下的性能和通用性。</li>
+<li><strong>评估系统</strong>：在多个主流存储系统上进行了评估，包括 <strong>RocksDB、LevelDB、CacheLib</strong> 和 <strong>MySQL InnoDB</strong>。</li>
+<li><strong>基准测试</strong>：使用了多种行业标准工作负载进行测试，如 <strong>YCSB、MixGraph、TPC-C</strong> 和 <strong>TPC-H</strong>，涵盖了读密集、写密集和混合型场景。</li>
+<li><strong>对比基线</strong>：将 StorageXTuner 的性能与系统的默认配置、其他最先进的调优器（如 ELMo-Tune）以及简化的LLM方法（LLM-Default）进行了比较。</li>
+<li><strong>评估指标</strong>：主要关注<strong>吞吐量</strong>、<strong>延迟</strong>和<strong>收敛所需的调优迭代次数</strong>。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
-<ul>
-<li><strong>数据集</strong>：实验使用的工作负载由YCSB、TPC-H/C等标准基准测试工具生成。</li>
-<li><strong>代码</strong>：论文提到源代码可在GitHub上获取。</li>
-</ul>
+<p>部分片段提到，该研究的代码可在 <strong>GitHub</strong> 上获取，但未提供具体链接。</p>
 
 <h3>实验结果</h3>
 
-<p>实验结果有力地支持了本文的假设，表明StorageXTuner在性能提升方面表现卓越：
-- <strong>RocksDB</strong>：在MixGraph工作负载下，吞吐量提升高达<strong>575%</strong>，p99延迟降低<strong>88%</strong>。在YCSB工作负载下，相比ELMo-Tune，吞吐量提高了<strong>111%</strong>，p99延迟降低了<strong>56%</strong>。
-- <strong>MySQL InnoDB</strong>：在TPC-C负载下，吞吐量提升了<strong>709%</strong>。
-- <strong>通用性</strong>：在不同的存储系统实现（RocksDB, LevelDB）和多个版本中均表现出优异且稳定的性能，证明了其强大的通用性和鲁棒性。
-- <strong>效率</strong>：有效减少了寻找最优配置所需的探索迭代次数。</p>
+<p>实验结果有力地支持了核心假设，表明 StorageXTuner 具有显著的性能优势：
+- <strong>性能提升显著</strong>：在不同系统和工作负载下均取得了大幅性能提升。例如，在 MySQL InnoDB 的 TPC-C 测试中，吞吐量提升高达 <strong>709%</strong>；在 RocksDB 的 MixGraph 测试中，吞吐量提升高达 <strong>575%</strong>，延迟降低了 <strong>88%</strong>。
+- <strong>高效收敛</strong>：相比基线方法，能够在更少的试验次数内找到优化配置。
+- <strong>鲁棒性和通用性</strong>：在不同的存储系统版本和工作负载下均表现出稳定和优异的性能。</p>
 
 <h3>论文贡献</h3>
 
-<ol>
-<li><strong>提出StorageXTuner框架</strong>：设计并实现了一个新颖的、基于多LLM代理协作的闭环框架，用于异构存储系统的自动化调优。</li>
-<li><strong>创新的代理协作与经验管理机制</strong>：详细阐述了四个代理（Executor, Extractor, Searcher, Reflector）的分工与协作模式，并提出了分层记忆（STM/LTM）和置信度评分机制来动态管理调优知识。</li>
-<li><strong>广泛的实验验证</strong>：通过在多个真实存储系统和标准工作负载上的大量实验，证明了该框架相比现有方法的显著优势，为LLM在系统调优领域的应用树立了新的标杆。</li>
-<li><strong>提升通用性与适应性</strong>：解决了现有方法与特定系统耦合的问题，展示了在不同系统、版本和工作负载下的强大适应能力。</li>
-</ol>
+<ul>
+<li>提出了 <strong>StorageXTuner</strong>，一个新颖的、全自动化的、端到端的存储系统调优框架，它创新地整合了协作式LLM多代理架构。</li>
+<li>引入了<strong>分层记忆和基于置信度的洞见管理机制</strong>，为在调优任务中有效管理和利用知识提供了新的范式。</li>
+<li>通过在多个真实存储系统和基准测试上的全面实验，验证了该框架的有效性、高效性和通用性，显著优于现有方法。</li>
+<li>为基于LLM的系统优化领域提供了新的思路，并引入了新的评估指标。</li>
+</ul>
 
                     </div>
                 
@@ -788,7 +793,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-03 20:10:59</p>
+            <p>生成时间: 2025-11-03 20:29:32</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
