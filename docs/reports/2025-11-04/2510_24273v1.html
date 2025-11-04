@@ -229,7 +229,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了SALS（Sparse Attention in Latent Space）框架，旨在优化大型语言模型在长上下文推理中的效率。通过将KV缓存压缩到潜在空间并进行稀疏令牌选择，SALS显著降低了内存需求和计算复杂度，同时保持了与基线模型相当的准确性。实验结果显示，SALS实现了高达6.4倍的KV缓存压缩和5.7倍的速度提升，显著提升了推理性能。
+                本文提出了SALS（Sparse Attention via Latent Space）框架，以解决大型语言模型推理中的KV缓存瓶颈问题。通过在潜在空间中进行低秩投影和稀疏令牌选择，SALS实现了高达6.4倍的KV缓存压缩和5.7倍的注意力计算加速，同时保持了模型的高准确性。该方法有效优化了长上下文任务的推理效率，推动了高效LLM推理的发展。
             </div>
         </div>
         
@@ -630,123 +630,157 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
-                        <h3>现有问题</h3>
+                        <p>好的，我已经根据您提供的所有论文片段，为您整合并总结了一份完整的摘要。</p>
 
-<p>本文旨在解决大型语言模型（LLM）在处理长上下文或长序列时面临的效率瓶颈。核心问题集中在<strong>键值（KV）缓存</strong>上，具体挑战包括：
-1.  <strong>内存开销巨大</strong>：随着序列长度增加，KV缓存的大小会急剧膨胀，甚至超过模型本身的权重大小，成为主要的内存瓶颈。
-2.  <strong>计算和内存带宽效率低下</strong>：传统的注意力机制需要大量的计算和内存访问，导致推理速度缓慢。
-3.  <strong>现有方法的局限性</strong>：
-    *   传统的低秩压缩方法在与旋转位置嵌入（RoPE）等现代技术结合时，会导致准确性下降和新的计算开销（如昂贵的重建过程）。
-    *   现有的稀疏注意力方法在如何快速、高效地识别和选择关键令牌（token）方面存在瓶颈。</p>
+<h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）在推理过程中因其庞大的键值（KV）缓存而面临的性能瓶颈。随着上下文长度的增加，KV缓存的内存占用和带宽需求急剧上升，甚至可能超过模型本身的权重大小，这严重限制了LLM在长序列任务中的推理效率。具体挑战包括：
+1.  <strong>内存与计算开销</strong>：巨大的KV缓存导致高昂的内存存储和访问成本，成为推理速度的主要瓶颈。
+2.  <strong>稀疏注意力的局限</strong>：现有的稀疏注意力方法虽然能减少计算量，但大多未能有效解决KV缓存的压缩问题。
+3.  <strong>RoPE（相对位置编码）的影响</strong>：RoPE的应用会增加键向量的方差和秩，使其难以通过传统的低秩方法进行有效压缩。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是，通过在一个共享的<strong>潜在空间（Latent Space）</strong>中结合<strong>低秩压缩</strong>和<strong>稀疏注意力</strong>，可以有效解决上述问题。具体来说：
--   将多头注意力中的预-RoPE键（pre-RoPE keys）投影到一个共享的、低维的潜在空间，可以极大地压缩KV缓存。
--   在这个计算成本更低的潜在空间中，可以高效地进行近似注意力分数计算，以识别并选择出最重要的“关键令牌”。
--   仅为这些被选中的关键令牌重建全秩键向量，并执行稀疏注意力计算，从而避免了重建整个KV缓存所带来的巨大开销。
--   这种名为SALS（Sparse Attention in Latent Space）的框架能够显著减少KV缓存大小、降低内存访问、提升计算速度，同时保持与基线模型相当的准确性。</p>
+<p>本文的核心假设是：通过在共享的低维潜在空间中结合低秩投影和稀疏令牌选择，可以有效压缩KV缓存并加速注意力计算，同时将对模型准确性的影响降至最低。该方法（SALS）能够在不重建整个KV缓存的情况下，高效识别并仅使用最关键的令牌信息，从而克服长上下文推理中的内存和计算瓶颈。</p>
 
 <h3>相关研究</h3>
 
-<p>论文的相关研究主要涵盖了以下几个领域：
--   <strong>KV缓存压缩技术</strong>：包括基于低秩矩阵分解的方法（如SVD、Palu、Eigen Attention）和量化方法（如KIVI）。
--   <strong>稀疏注意力机制</strong>：涵盖了早期的Transformer变体（如Longformer、Reformer）以及近期的稀疏解码方法（如Double Sparse、HShare、Loki）。
--   <strong>高效注意力实现</strong>：如FlashAttention等优化注意力计算的内核。
--   <strong>位置编码技术</strong>：特别是旋转位置编码（RoPE）及其对KV缓存特性的影响。</p>
+<p>本文的研究建立在以下几个领域的基础上：
+- <strong>KV缓存压缩</strong>：包括基于低秩矩阵分解的方法（如SVD、Palu、SVD-LLM）和量化方法（如KIVI）。
+- <strong>稀疏注意力与解码</strong>：借鉴了Sparse Transformer、Reformer、Longformer等稀疏注意力架构，以及HShare、Double Sparse等稀疏解码方法。
+- <strong>高效注意力机制</strong>：与FlashAttention2等旨在优化注意力计算效率的方法进行比较。
+- <strong>长上下文基准</strong>：使用了如LongBench和RULER等基准来评估模型在长序列任务上的表现。</p>
 
 <h3>解决方案</h3>
 
-<h3><strong>引言：大型语言模型（LLM）面临的挑战</strong></h3>
+<h3><strong>面向大语言模型的长序列推理优化方案：SALS框架详解</strong></h3>
 
-<p>随着大型语言模型（LLM）在处理长序列任务中的应用日益广泛，其对计算资源和内存带宽的需求也急剧增加。其中一个主要的性能瓶颈来自于自注意力机制中的<strong>键值缓存（KV Cache）</strong>。在生成每个新词元（token）时，模型需要存储并访问过去所有词元的键（Key）和值（Value），这导致内存占用随序列长度线性增长，并带来了巨大的内存访问开销，严重限制了模型的推理效率。</p>
+<h4><strong>一、 问题背景与解决方案概述</strong></h4>
 
-<h3><strong>核心解决方案：稀疏潜在空间注意力框架（SALS）</strong></h3>
+<p>随着大语言模型（LLMs）处理的序列长度不断增加，一个核心瓶颈日益凸显：自注意力机制中的<strong>关键值缓存（KV cache）</strong>。在推理过程中，KV cache会随着序列长度线性增长，导致巨大的内存开销和计算负担，严重制约了模型的效率和可扩展性。</p>
 
-<p>为了解决上述挑战，论文提出了一种名为<strong>稀疏潜在空间注意力框架（Sparse Attention in Latent Space, SALS）</strong>的创新解决方案。SALS的核心思想是结合<strong>低秩矩阵近似</strong>和<strong>稀疏注意力机制</strong>，通过在低维的“潜在空间”中进行高效计算，来显著压缩KV缓存并加速注意力操作，同时最大限度地保持模型的准确性。</p>
+<p>为解决此问题，论文提出了<strong>“稀疏注意力在潜在空间中的应用”（Sparse Attention in Latent Space, SALS）</strong>框架。SALS的核心思想是，通过将KV缓存压缩到一个低维度的“潜在空间”，并在此空间中高效地识别和选择最重要的“关键令牌”，从而在不牺牲模型准确性的前提下，显著降低内存占用和计算复杂度。</p>
 
-<p>该框架基于两个关键的观察：
-1.  <strong>旋转位置嵌入（RoPE）对秩的影响</strong>：RoPE是现代LLM中常用的位置编码技术，但将其应用于键向量后，会增加向量的方差和秩。这使得对应用了RoPE的键缓存进行低秩压缩变得更加困难且效果不佳。
-2.  <strong>潜在空间表示的稳定性</strong>：在应用RoPE之前，键向量在不同注意力层中的表示相对稳定。这为我们提供了一个理想的切入点，即在应用RoPE之前进行压缩，并在一个共享的低维潜在空间中识别出最重要的信息。</p>
+<hr />
 
-<h3><strong>SALS框架的详细工作流程</strong></h3>
+<h4><strong>二、 SALS框架的核心组件与三阶段流程</strong></h4>
 
-<p>SALS通过一个精巧的三阶段流程来优化注意力计算，该流程无需对模型进行重新训练，仅需一个简短的离线校准过程。</p>
+<p>SALS框架通过一个精巧的三阶段流程，实现了低秩压缩与稀疏注意力的有机结合：</p>
 
-<h4><strong>阶段一：KV缓存压缩至潜在空间</strong></h4>
+<p><strong>阶段一：KV缓存压缩到低秩潜在空间</strong></p>
 
-<p>此阶段的目标是将庞大的、多头的KV缓存压缩到一个紧凑的、单头的低维潜在空间中。</p>
-
-<ol>
-<li><strong>离线校准</strong>：首先，从预训练语料中选取一个小的校准数据集。</li>
-<li><strong>收集键张量</strong>：将该数据集输入LLM，并收集所有注意力头在应用RoPE<strong>之前</strong>的键张量（pre-RoPE key tensors）。</li>
-<li><strong>构建投影矩阵</strong>：计算这些键张量的经验协方差矩阵，并通过特征值分解提取其主要特征向量。这些特征向量构成了最优的<strong>低秩投影矩阵</strong>。</li>
-<li><strong>实时压缩</strong>：在实际推理过程中，使用这个预先计算好的投影矩阵，将所有新生成的、未经RoPE处理的键向量实时投影到一个共享的、低维的潜在空间中。这一步极大地减少了需要存储的数据量。</li>
-</ol>
-
-<h4><strong>阶段二：在潜在空间中选择关键Token</strong></h4>
-
-<p>在压缩后的潜在空间中，SALS能够以极低的计算成本快速识别出与当前查询最相关的“关键Token”。</p>
-
-<ol>
-<li><strong>查询投影</strong>：将当前的查询向量（query）同样使用投影矩阵映射到低维潜在空间。</li>
-<li><strong>近似分数计算</strong>：在潜在空间中，计算投影后的查询与所有已缓存的潜在键向量之间的内积。这个计算过程非常高效，因为它是在低维空间中进行的，避免了原始高维空间中昂贵的矩阵乘法。</li>
-<li><strong>选择Top-k</strong>：根据计算出的近似注意力分数，选择得分最高的<code>k</code>个Token，这些被认为是当前步骤中最重要的<strong>关键Token（critical tokens）</strong>。</li>
-</ol>
-
-<h4><strong>阶段三：选择性重建与稀疏注意力计算</strong></h4>
-
-<p>确定了关键Token之后，SALS只对这部分最重要的信息进行精确计算，从而实现稀疏注意力。</p>
-
-<ol>
-<li><strong>选择性重建</strong>：仅从潜在空间中重建被选中的<code>k</code>个关键Token对应的键向量。这一步避免了重建整个庞大KV缓存的巨大开销。</li>
-<li><strong>应用RoPE</strong>：对这<code>k</code>个重建后的键向量应用RoPE，以注入位置信息。由于RoPE只应用于一小部分数据，其计算开销也大大降低。</li>
-<li><strong>稀疏注意力计算</strong>：最后，使用原始的查询向量、重建并旋转后的<code>k</code>个键向量以及它们对应的<code>k</code>个值向量，来执行标准的注意力计算。由于只涉及一小部分Token，计算量和内存访问都得到了显著优化。</li>
-</ol>
-
-<p>为了进一步提升性能，SALS的实现采用了<strong>融合内核（fused kernel）</strong>技术，将Token选择、重建和RoPE旋转合并为单一的GPU操作，最大限度地减少了内存流量。</p>
-
-<h3><strong>实验评估与性能优势</strong></h3>
-
-<p>研究人员在LLaMA2-7B-Chat和Mistral-7B等模型上，以及在RULER、LongBench等多个基准测试中对SALS框架进行了全面评估。实验结果证明了其卓越的性能：</p>
+<p>此阶段的目标是将庞大的多头KV缓存压缩成一个紧凑的共享表示。</p>
 
 <ul>
-<li><strong>极高的压缩与加速比</strong>：与先进的FlashAttention2相比，SALS实现了<strong>6.4倍</strong>的KV缓存压缩比和<strong>5.7倍</strong>的注意力操作加速。</li>
-<li><strong>显著的吞吐量提升</strong>：在端到端推理性能上，与GPT-fast等优化基线相比，SALS在处理4K和32K长度的序列时，分别实现了<strong>1.4倍</strong>和<strong>4.5倍</strong>的吞吐量提升。</li>
-<li><strong>保持高准确性</strong>：即使在较高的压缩比（如25%和12.5%）下，SALS依然能够在GSM8K、CoQA等任务上保持与基线模型相当甚至更优的准确率，证明了其在效率和性能之间的出色平衡。</li>
-<li><strong>无需重新训练</strong>：SALS最大的优势之一是它是一个训练后（post-training）的解决方案，无需昂贵的模型重新训练，使其易于部署和扩展。</li>
+<li><strong>实现方法</strong>：首先，通过一个小的校准数据集收集模型在没有应用旋转位置嵌入（RoPE）前的键（Key）张量。然后，计算这些键张量的经验协方差矩阵，并通过特征值分解找到其主要成分。排名前 <code>r</code> 的特征向量构成一个<strong>低秩投影矩阵</strong>。</li>
+<li><strong>压缩过程</strong>：在实际推理中，所有注意力头的键向量都被这个共享的投影矩阵映射到一个低维的、单头的潜在空间。对于值（Value）张量，由于其通常是满秩的，SALS采用通道级分组量化的方式进行压缩，而非低秩投影。</li>
+<li><strong>核心优势</strong>：这一步直接将KV缓存的大小显著减小，为后续的高效计算奠定了基础。</li>
 </ul>
 
-<h3><strong>结论与贡献</strong></h3>
+<p><strong>阶段二：在潜在空间中进行高效的关键令牌选择</strong></p>
 
-<p>SALS框架通过巧妙地结合低秩KV缓存压缩和在潜在空间中进行稀疏令牌选择，为解决LLM在长上下文应用中的性能瓶颈提供了一种高效且实用的解决方案。它不仅显著降低了内存带宽需求和计算复杂度，还大幅提升了模型的推理速度，为未来LLM的优化和在资源受限环境下的部署提供了重要的思路和方法。</p>
+<p>在压缩后的潜在空间中，SALS能够以极低的成本识别出当前查询最需要关注的令牌。</p>
+
+<ul>
+<li><strong>实现方法</strong>：将当前的查询（Query）向量也投影到相同的潜在空间中。然后，通过计算投影后查询与潜在空间中所有键向量的内积，快速估算出近似的注意力分数。</li>
+<li><strong>选择过程</strong>：根据这些近似分数，选择得分最高的 <code>Nc</code> 个令牌作为“关键令牌”。<code>Nc</code> 的数量远小于总序列长度 <code>s</code>（即 <code>Nc ≪ s</code>）。</li>
+<li><strong>核心优势</strong>：此过程完全在低维空间中进行，避免了高维空间中代价高昂的完整查询-键矩阵乘法，极大地提升了选择效率。</li>
+</ul>
+
+<p><strong>阶段三：选择性重构与最终的稀疏注意力计算</strong></p>
+
+<p>在确定了关键令牌后，SALS仅对这部分最重要的信息进行精确计算。</p>
+
+<ul>
+<li><strong>实现方法</strong>：仅将上一步选出的 <code>Nc</code> 个关键令牌的键向量从潜在空间<strong>重构</strong>回其原始的高维表示。</li>
+<li><strong>计算过程</strong>：对这些重构后的高维键向量应用<strong>旋转位置嵌入（RoPE）</strong>，然后与原始的查询向量进行标准的、但规模小得多的注意力计算。</li>
+<li><strong>核心优势</strong>：该方法避免了重构整个KV缓存的巨大开销，将计算量严格限制在最关键的令牌子集上，从而实现了注意力计算的显著加速。</li>
+</ul>
+
+<hr />
+
+<h4><strong>三、 关键技术洞察与创新点</strong></h4>
+
+<p>SALS框架的成功建立在几个关键的观察和创新之上：</p>
+
+<ol>
+<li><strong>RoPE对压缩的影响</strong>：研究发现，RoPE会增加键向量的方差，使其秩更高，从而更难被有效压缩。SALS巧妙地将<strong>压缩步骤置于应用RoPE之前</strong>，解决了这一问题，这是其高效压缩的关键。</li>
+<li><strong>潜在空间的表示稳定性</strong>：论文观察到，键向量在被投影到潜在空间后，其表示在模型的大多数层中保持稳定。这一特性保证了在潜在空间中选择关键令牌的有效性和可靠性。</li>
+<li><strong>后期校准，无需重训练</strong>：与一些需要从头训练模型的方法不同，SALS的投影矩阵可以通过对预训练模型进行简单的后期校准获得。这使得SALS可以轻松应用于现有的大语言模型，大大降低了实施成本和复杂性。</li>
+</ol>
+
+<hr />
+
+<h4><strong>四、 实验评估与性能表现</strong></h4>
+
+<p>SALS框架在LLaMA2-7b、Mistral-7b等多个模型以及RULER、LongBench等长序列基准测试上进行了全面评估，结果证明了其卓越的性能。</p>
+
+<ul>
+<li><p><strong>效率提升</strong>：</p>
+
+<ul>
+<li><strong>KV缓存压缩</strong>：实现了高达 <strong>6.4倍</strong> 的KV缓存压缩率。</li>
+<li><strong>注意力加速</strong>：与FlashAttention2相比，在4K序列上实现了 <strong>5.7倍</strong> 的注意力计算加速。</li>
+<li><strong>端到端吞吐量</strong>：在4K和32K序列长度上，分别实现了 <strong>1.4倍</strong> 和 <strong>4.5倍</strong> 的整体吞吐量提升。</li>
+</ul></li>
+<li><p><strong>内存优化</strong>：</p>
+
+<ul>
+<li>在25%的压缩率下，内存访问量降低至基线的 <strong>11%</strong>。</li>
+<li>在12.5%的压缩率下，内存访问量进一步降低至基线的 <strong>5.8%</strong>，显著减少了内存带宽瓶颈。</li>
+</ul></li>
+<li><p><strong>准确性保持</strong>：</p>
+
+<ul>
+<li>尽管进行了高度压缩和稀疏化，SALS在多个推理任务（如GSM8K、CoQA）上依然保持了与基线模型相当甚至更优的准确性，证明了其在效率和性能之间的出色平衡。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>五、 总结与优势</strong></h4>
+
+<p>综上所述，SALS框架通过一个<strong>“压缩-选择-重构”</strong>的流程，为解决大语言模型长序列推理的效率瓶颈提供了一个完整且高效的解决方案。其核心优势可总结如下：</p>
+
+<ul>
+<li><strong>极高的存储效率</strong>：通过低秩投影和量化，大幅压缩KV缓存，显著降低内存占用。</li>
+<li><strong>卓越的计算效率</strong>：通过在潜在空间进行令牌选择和后续的选择性重构，避免了大量冗余计算，大幅提升了推理速度。</li>
+<li><strong>强大的模型准确性</strong>：通过精确选择和重构信息最丰富的令牌，确保了模型在各类任务上的高性能表现。</li>
+<li><strong>广泛的适用性</strong>：无需模型重训练，使其能够灵活地应用于现有的各种大语言模型。</li>
+</ul>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>模型</strong>：实验主要在 LLaMA2-7b-chat 和 Mistral-7b 等模型上进行。</li>
-<li><strong>数据集与基准</strong>：在多个基准上进行了评估，以验证其在不同任务和序列长度下的性能，包括 GSM8K（推理）、CoQA（问答）以及专门用于长上下文评估的 LongBench 和 RULER。</li>
-<li><strong>对比方法</strong>：将SALS与多种先进的基线方法进行比较，包括高效注意力内核（FlashAttention2）、KV缓存压缩方法（Palu、KIVI）和其他稀疏注意力方案（GPT-fast、Double Sparse等）。</li>
-<li><strong>评估指标</strong>：主要评估指标包括KV缓存压缩比、注意力操作的加速比（吞吐量）、内存访问量以及在下游任务上的模型准确性。</li>
+<li><strong>模型与平台</strong>：实验在LLaMA2-7b-chat和Mistral-7b等主流大语言模型上进行。</li>
+<li><strong>数据集</strong>：使用了多个基准数据集来全面评估模型性能，包括用于通用任务的GSM8K和CoQA，以及用于长上下文任务的LongBench和RULER（上下文长度高达128k）。</li>
+<li><strong>对比基线</strong>：将SALS与多种先进方法进行比较，包括标准注意力实现（FlashAttention2、GPT-fast）和其他稀疏解码器。</li>
+<li><strong>评估指标</strong>：主要评估指标包括模型准确性、端到端吞吐量、KV缓存压缩率、注意力计算速度以及内存访问成本。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
-<p>论文中提到了使用了GSM8K、CoQA、LongBench和RULER等公开基准数据集。关于代码，片段中提到未来计划公开源代码，但并未提供具体的链接。</p>
+<ul>
+<li><strong>数据集</strong>：实验使用了公开的基准数据集，包括GSM8K、CoQA、LongBench和RULER。</li>
+<li><strong>代码</strong>：论文中提到代码将在未来公开，但当前未提供具体链接。</li>
+</ul>
 
 <h3>实验结果</h3>
 
-<p>实验结果有力地支持了SALS框架的有效性：
--   <strong>效率提升</strong>：SALS实现了高达<strong>6.4倍</strong>的KV缓存压缩和<strong>5.7倍</strong>的注意力操作加速（相较于FlashAttention2）。在长序列（32K）上，其吞吐量比GPT-fast高出<strong>4.5倍</strong>。
--   <strong>内存优化</strong>：内存访问量显著降低，例如，SALS-25%（选择25%的令牌）的内存访问量仅为基线的<strong>6%</strong>。
--   <strong>准确性保持</strong>：尽管实现了显著的压缩和加速，SALS在多个基准测试中仍能保持与基线方法相当甚至更优的准确性。即使在较高的压缩率下，性能也仅有轻微下降，表现出很强的竞争力。</p>
+<p>SALS框架在实验中取得了显著成果，验证了其有效性：
+- <strong>效率提升</strong>：实现了高达<strong>6.4倍</strong>的KV缓存压缩和<strong>5.7倍</strong>的注意力操作加速。
+- <strong>吞吐量增加</strong>：与高度优化的基线相比，在4K和32K序列长度下，端到端吞吐量分别提升了<strong>1.4倍</strong>和<strong>4.5倍</strong>。
+- <strong>保持高准确性</strong>：即使在较高的压缩比下（例如25%的KV缓存大小），模型的准确性损失也微乎其微，与基线模型相当。
+- <strong>内存访问优化</strong>：显著降低了内存访问成本，例如在GSM8K数据集上，内存访问量降至基线的<strong>6%</strong>。</p>
 
 <h3>论文贡献</h3>
 
-<p>本文的主要贡献是提出了<strong>SALS框架</strong>，一个新颖且高效的解决方案，用于优化LLM在长上下文场景下的推理性能。具体贡献如下：
-1.  <strong>提出了一种新颖的协同方法</strong>：首次将低秩KV缓存压缩和稀疏注意力机制在共享的潜在空间中有机地结合起来。
-2.  <strong>设计了高效的关键令牌选择机制</strong>：通过在潜在空间中进行选择，有效避免了全尺寸KV缓存重建的巨大计算开销，解决了现有方法的瓶颈。
-3.  <strong>提供了坚实的实验验证</strong>：通过在多个模型和基准上的大量实验，证明了SALS在大幅提升计算效率（速度、内存）的同时，能够保持高水平的模型准确性。</p>
+<ol>
+<li><strong>提出SALS框架</strong>：设计并实现了一种创新的SALS框架，通过在潜在空间中进行低秩压缩和稀疏选择，有效解决了LLM推理中的KV缓存瓶颈问题。</li>
+<li><strong>分析并解决RoPE带来的挑战</strong>：首次深入分析了RoPE对键向量低秩特性的负面影响，并提出了在RoPE应用前进行压缩的有效策略。</li>
+<li><strong>实现SOTA性能</strong>：实验证明，SALS在保持高准确性的同时，显著提升了LLM在长上下文任务中的推理吞吐量和内存效率，性能优于现有方法。</li>
+<li><strong>推动高效LLM推理</strong>：为解决大模型长上下文推理的效率问题提供了新的思路和实用的解决方案。</li>
+</ol>
 
                     </div>
                 
@@ -761,7 +795,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-04 11:34:40</p>
+            <p>生成时间: 2025-11-04 13:06:02</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
