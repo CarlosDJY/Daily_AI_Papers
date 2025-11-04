@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Towards Reliable Evaluation of Large Language Models for Multilingual and Multimodal E-Commerce Applications</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Towards Reliable Evaluation of Large Language Models for Multilingual and Multimodal E-Commerce Applications</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Shopee</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.501</span>
+                <span class="paper-id">arXiv ID: 2510.20632v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.20632v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-30/a88ec1463e6189cd644df1c708cfb6c337a33748ca0c654584afa98021856caa.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了EcomEval，一个全面的多语言和多模态评估基准，旨在解决大型语言模型（LLMs）在电子商务领域评估不足的问题。EcomEval涵盖37个真实场景任务，采用半自动化流程生成高质量答案，并通过多维度评估和难度分级，提供更准确的模型性能分析，填补了现有评估工具的空白。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在复杂、多语言和多模态的电子商务领域中缺乏全面、真实且可靠的评估基准的问题。现有的评估基准（如EcomInstruct、ChineseEcomQA）在任务多样性、真实性和对低资源语言的支持方面存在局限，无法有效反映模型在真实购物场景中的能力，导致实践者难以准确评估和选择适用于电子商务应用的LLM。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过构建一个覆盖多样化任务、基于真实用户数据、支持多语言和多模态，并划分了难度等级的综合性基准（EcomEval），可以更准确、全面地评估和区分不同LLM在电子商务领域的真实能力。实验旨在验证：
+- EcomEval能够有效揭示不同LLM（包括开源和闭源模型）在电商任务上的性能差异。
+- 领域特定的调优或更强大的闭源模型在专业电商任务上会超越通用的开源模型。
+- 模型在不同难度、不同语言和不同任务类型（如理解 vs. 生成）上的表现会存在显著差异。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>电子商务评估基准</strong>: EcomInstruct, ChineseEcomQA, eCeLLM, Shopping MMLU。</li>
+<li><strong>相关技术领域</strong>: LLM在知识密集型问答、多任务推理、多语言处理和多模态学习方面的研究。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h4><strong>EcomEval: 一个全面的多语言多模态电子商务LLM评估解决方案</strong></h4>
+
+<p>本文提出的核心解决方案是 <strong>EcomEval</strong>，一个旨在全面评估大语言模型（LLMs）在多语言和多模态电子商务领域能力的综合性基准（benchmark）。该方案通过建立一个结构化的框架、一个高质量的数据集以及一套严谨的构建流程，解决了现有通用基准无法准确衡量LLM在复杂、真实的电子商务场景中表现的难题。</p>
+
+<h5><strong>一、 EcomEval 的核心框架与组成部分</strong></h5>
+
+<p>EcomEval 解决方案的核心由三个关键部分构成，共同形成一个完整的评估生态系统：</p>
+
+<ol>
+<li><strong>综合性的任务分类体系</strong>：建立了一个覆盖六大类别和37个细分任务的分类系统，全面反映了真实电子商务环境中的多样化需求。</li>
+<li><strong>开放、高质量且难度感知的数据集</strong>：公开发布了一个包含约3100个测试项的数据集，每个项目都附有参考答案和校准后的难度级别，为研究提供了坚实基础。</li>
+<li><strong>广泛的评估与洞察</strong>：通过对19个主流的开源及商业LLM进行基准测试，揭示了它们在不同电商任务中的优缺点，为行业提供了可操作的指导。</li>
+</ol>
+
+<h5><strong>二、 EcomEval 基准的构建方法</strong></h5>
+
+<p>为了确保基准的真实性、高质量和可扩展性，EcomEval的构建遵循一个严谨的四步半自动化流程：</p>
+
+<p><strong>步骤一：数据收集 (Data Collection)</strong>
+*   <strong>来源</strong>：从真实的在线日志中收集数据，主要包括两种类型：
+    *   <strong>API调用数据</strong>：用户通过API调用LLM解决特定业务问题，提示（prompt）结构化程度高，场景明确。
+    *   <strong>网站交互数据</strong>：用户通过聊天界面与LLM互动，提示相对随机且多样化。
+*   <strong>目的</strong>：获取源于真实用户查询和商家需求的原始数据，捕捉真实场景的复杂性和噪声。</p>
+
+<p><strong>步骤二：任务分类 (Task Classification)</strong>
+*   <strong>方法</strong>：针对不同类型的数据采用不同的分类策略：
+    *   对于API调用数据，使用<strong>前缀聚类</strong>方法，根据提示的前缀对相似查询进行分组，自动提取任务类型。
+    *   对于网站交互数据，则<strong>微调一个分类模型</strong>，将其精准地划分到预定义的电子商务任务类别中。同时引入“其他”类别以捕获新颖或边缘请求，增强框架的灵活性。</p>
+
+<p><strong>步骤三：问题验证与答案生成 (Question Validation &amp; Answer Generation)</strong>
+*   <strong>问题验证</strong>：对分类后的问题进行人工审核，确保每个问题都与电子商务场景相关、信息充分且逻辑清晰，剔除不合格的数据。
+*   <strong>答案生成</strong>：
+    *   使用性能强大的基础模型（如Qwen3-8B-Instruct）为通过验证的问题生成初步的答案草稿。
+    *   对于需要专业知识的问题（如品牌信息、产品规格等），结合<strong>主流搜索引擎</strong>（Google, Bing）和<strong>电子商务平台</strong>（Amazon, Shopee）进行事实核查，确保答案的准确性。</p>
+
+<p><strong>步骤四：专家人工审查 (Expert Human Review)</strong>
+*   <strong>质量控制</strong>：组建一个由超过50名精通七种目标语言（包括英语、中文和五种东南亚语言）并具备深厚电子商务背景的专家团队。
+*   <strong>职责</strong>：该团队对LLM生成的问题和答案进行最终的审查、修改和校对，确保内容的质量、文化适应性和专业性。这一步骤是确保EcomEval高质量的关键。</p>
+
+<h5><strong>三、 EcomEval 的关键设计原则与特点</strong></h5>
+
+<p>EcomEval的设计融入了多个核心原则，使其成为一个强大而可靠的评估工具：</p>
+
+<ul>
+<li><strong>任务多样性与真实性</strong>：涵盖了六个主要类别，全面覆盖了从用户到商家的各个环节：
+<ol>
+<li><strong>Ecom问答</strong> (用户视角的基础知识)</li>
+<li><strong>购物概念</strong> (商家视角的产品属性、分类)</li>
+<li><strong>用户理解</strong> (用户行为和意图分析)</li>
+<li><strong>购物推理</strong> (产品推荐、价格计算)</li>
+<li><strong>Ecom生成</strong> (产品描述、标题生成)</li>
+<li><strong>Ecom多模态</strong> (结合图像和文本的任务)</li>
+</ol></li>
+<li><strong>多语言与多模态覆盖</strong>：支持七种语言，重点关注了资源相对匮乏的东南亚语言，反映了全球电子商务的多样性。同时，基准包含了需要理解产品图像的多模态任务。</li>
+<li><strong>难度感知设计</strong>：将任务划分为<strong>简单、中等、困难</strong>三个级别。这使得评估不仅能判断模型是否能完成任务，还能精细地区分不同模型在处理复杂指令和深度推理方面的能力差异。</li>
+<li><strong>高质量与可扩展性</strong>：半自动化的构建流程在保证数据质量的同时，也确保了生产效率，使其易于扩展和维护。</li>
+</ul>
+
+<h5><strong>四、 具体任务示例</strong></h5>
+
+<p>为了更清晰地展示EcomEval的应用，以下是其包含的几个具体任务：</p>
+
+<ul>
+<li><strong>品牌知识提取</strong>：要求模型从产品标题中识别并提取品牌信息，并以JSON格式输出分析过程和结果。</li>
+<li><strong>禁止物品识别</strong>：判断用户查询是否涉及违禁品（如武器、毒品）或违反安全政策，模型仅需输出“0”或“1”，无需解释。</li>
+<li><strong>用户情感分类</strong>：分析用户评论，判断其对送货体验（如速度、快递员态度）的情感是正面、中性还是负面。</li>
+<li><strong>品牌识别（多模态）</strong>：要求模型分析输入的产品图像，并从给定的品牌列表中识别出正确的品牌名称。</li>
+</ul>
+
+<h5><strong>五、 应用与验证</strong></h5>
+
+<p>EcomEval的有效性通过对19种主流LLM的广泛实验得到了验证。结果表明，该基准能够有效地区分不同模型的能力，并揭示出在通用基准上不明显的性能差异。例如，一些在通用NLP任务上表现优异的模型，在需要特定电商领域知识或多步推理的困难任务上表现不佳。</p>
+
+<h4><strong>总结</strong></h4>
+
+<p>EcomEval提供了一个系统化、多维度、贴近真实的解决方案，用于评估和理解大语言模型在电子商务领域的实际能力。它通过真实的数据来源、严谨的构建流程、多样化的任务设计以及多语言多模态的覆盖，填补了该领域评估工具的空白，为未来电子商务LLM的研发和应用提供了坚实的测试平台和明确的优化方向。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li>对19个主流的开源和闭源LLM（如GPT系列、Gemini、LLaMa、Qwen）及多模态LLM进行了全面评估。</li>
+<li>评估覆盖了EcomEval基准中的37种不同任务，这些任务基于真实的电子商务场景。</li>
+<li>采用LLM作为评审员（如GPT-4.1）进行初步评分（0-3分制），并由人类专家进行复核，以确保评估的客观性和准确性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li>数据集名为EcomEval，包含约3,100个评估项，来源于真实的客户查询和交易记录。</li>
+<li>数据集和代码将在论文被接受后公开发布于：https://github.com/ShopeeLLM/EcomEval</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>模型性能差异</strong>: 实验结果清晰地揭示了不同模型的能力差异，闭源模型（如GPT系列）的整体表现普遍优于开源模型。</li>
+<li><strong>任务难度影响</strong>: 模型在简单任务上表现良好，但在需要领域知识和复杂推理的困难任务上表现明显下降。</li>
+<li><strong>特定能力短板</strong>: 所有模型在电商生成任务（如产品标签和标题生成）和用户意图理解方面的表现普遍不佳，得分集中在62%-78%之间。</li>
+<li><strong>多语言表现</strong>: 模型在处理英语任务时的性能普遍优于处理低资源语言的任务。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了EcomEval</strong>: 一个全面、真实、多语言、多模态的电子商务LLM评估基准，填补了该领域的空白。</li>
+<li><strong>发布了高质量数据集</strong>: 提供了一个包含约3,100个真实场景评估项的数据集，促进了可重复性研究。</li>
+<li><strong>揭示了LLM的能力现状</strong>: 通过对19个模型的广泛评估，系统地分析了当前LLM在电子商务领域的优势和普遍存在的短板，为未来的模型优化提供了明确方向。</li>
+<li><strong>确立了新的评估标准</strong>: 为电子商务领域的LLM评估提供了包含多样性、真实性、质量控制和多语言支持的新范式。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.20632v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 13:45:20</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

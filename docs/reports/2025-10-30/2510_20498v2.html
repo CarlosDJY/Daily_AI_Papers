@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robust Preference Alignment via Directional Neighborhood Consensus</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Robust Preference Alignment via Directional Neighborhood Consensus</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> The Hong Kong University of Science and Technology (Guangzhou), Shanghai Jiao Tong University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.499</span>
+                <span class="paper-id">arXiv ID: 2510.20498v2</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.20498v2" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-30/8bba0446907ad2893c1ae54eb1ba0efa35aa2dea66c7b311db6a944c9fb88dc6.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为鲁棒偏好选择（RPS）的方法，旨在解决大语言模型（LLM）在处理个体化偏好时的“偏好覆盖缺口”问题。RPS通过从用户偏好附近的多样化响应中选取最佳候选，增强了模型在特定偏好下的鲁棒性，且无需重新训练。实验结果表明，RPS在多种偏好对齐模型上显著提高了性能，尤其在处理分布外偏好时表现优越。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文主要解决大语言模型（LLM）在与人类偏好对齐时存在的“偏好覆盖缺口”（preference coverage gap）问题。具体来说，现有模型在训练时往往集中于主流、平均的偏好，导致它们在处理分布外（Out-of-Distribution, OOD）、特定或个体的用户偏好时表现脆弱且不稳定，输出质量会显著下降。这是一个重要问题，因为它损害了模型的可靠性和用户信任。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过一种名为<strong>鲁棒偏好选择（Robust Preference Selection, RPS）</strong>的推理时方法，可以显著提升模型对OOD偏好的鲁棒性。该方法基于“邻域共识”思想：通过从用户目标偏好附近的、更可靠的训练数据区域中采样多个候选偏好，生成一组多样化的响应，最终能从中选出一个比直接生成更高质量的响应，从而有效弥补偏好覆盖缺口，且无需重新训练模型。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>偏好对齐方法</strong>: 强化学习人类反馈（RLHF）、直接偏好优化（DPO）、方向性偏好对齐（DPA）以及监督微调（SFT）。</li>
+<li><strong>理论基础</strong>: 分布稳健优化（Distributionally Robust Optimization, DRO）。</li>
+<li><strong>其他相关技术</strong>: 控制文本生成（如SteerLM）、数据增强策略等。</li>
+</ul>
+
+<h3><strong>完整解决方案：鲁棒偏好选择 (Robust Preference Selection, RPS)</strong></h3>
+
+<p>本文提出的核心解决方案是<strong>鲁棒偏好选择（Robust Preference Selection, RPS）</strong>，这是一种创新的、无需训练的后处理方法。它旨在解决大型语言模型（LLM）在与人类偏好对齐时遇到的“偏好覆盖差距”（Preference Coverage Gap）问题，即模型在面对训练数据中未充分代表的、分布外（Out-of-Distribution, OOD）的用户偏好时，性能会显著下降。RPS通过利用“方向邻域共识”（Directional Neighborhood Consensus）的思想，显著增强了模型响应的鲁棒性和可靠性。</p>
+
+<h4><strong>核心目的</strong></h4>
+
+<p>RPS方法的主要目标包括：
+*   <strong>解决偏好覆盖差距</strong>：使模型在面对未被充分代表或全新的用户偏好时，依然能够生成高质量的响应。
+*   <strong>提升鲁棒性</strong>：提高语言模型在处理OOD用户偏好时的表现，避免因偏好向量的微小变化而导致性能急剧下降。
+*   <strong>增强个性化对齐</strong>：提高模型与用户个性化需求的对齐能力，确保在各种具体请求下都能提供令人满意的输出。
+*   <strong>简化对齐过程</strong>：提供一个高效、无需重训练的解决方案，避免了复杂的模型权重修改，降低了计算成本和对外部指导模型的需求。</p>
+
+<h4><strong>方法详解：RPS的三阶段过程</strong></h4>
+
+<p>RPS算法通过一个清晰的三阶段程序，将理论思想转化为可行的实践操作：</p>
+
+<p><strong>第一阶段：邻域构建 (Neighborhood Construction)</strong></p>
+
+<p>此阶段旨在规避直接使用可能不稳定的目标偏好向量 (<code>v_target</code>) 所带来的风险。当用户的目标偏好位于模型训练数据的“空隙”中时，RPS会从该目标偏好的局部邻域中，识别并采样出 <code>k</code> 个更可靠、更接近训练数据分布的偏好方向。</p>
+
+<ul>
+<li><strong>过程</strong>：在预定义的最大角度阈值 <code>θ_max</code> 内，生成多个候选偏好方向。然后，选择与原始目标方向 <code>v_target</code> 最接近的 <code>k</code> 个方向，构成一个“邻域”候选集 <code>Nk</code>。</li>
+<li><strong>作用</strong>：这一步骤将生成过程从一个高不确定性的区域，巧妙地转移到了模型表现更为稳健和可预测的“安全”区域。</li>
+</ul>
+
+<p><strong>第二阶段：多方向候选生成 (Multi-Directional Candidate Generation)</strong></p>
+
+<p>在构建好邻域后，模型会针对邻域中的每一个偏好向量 <code>v_i</code>，独立地生成一个相应的响应 <code>y_i</code>。</p>
+
+<ul>
+<li><strong>过程</strong>：语言模型（如DPA, DPO, SFT模型）利用其在这些“安全”偏好区域内已有的强大能力，生成一组多样化的候选响应。</li>
+<li><strong>作用</strong>：这个过程创建了一个高质量的候选响应池。每个候选响应都反映了在不同属性（如“有用性”和“冗长性”）之间的不同权衡，从而为最终选择提供了丰富且优质的选项。</li>
+</ul>
+
+<p><strong>第三阶段：共识选择 (Consensus Selection)</strong></p>
+
+<p>这是RPS的最后一步，也是决策的关键环节。算法会评估第二阶段生成的所有 <code>k</code> 个候选响应，并从中选出最优的一个。</p>
+
+<ul>
+<li><strong>过程</strong>：所有候选响应 <code>y_i</code> 都会根据用户<strong>原始的目标偏好向量 <code>v_target</code></strong> 进行评估。评估标准是最大化投影奖励分数，即 <code>s_i = v_target^T * r(x, y_i)</code>，其中 <code>r(x, y_i)</code> 是由一个独立的奖励模型（Reward Model）为每个响应计算出的奖励向量（例如，包含有用性、冗长性等维度的评分）。最终，得分最高的响应 <code>y^*</code> 被选为最终输出。</li>
+<li><strong>作用</strong>：通过结合“基于邻域的生成”和“基于目标的评估”，RPS确保最终选择的响应不仅质量高，而且与用户的原始意图高度契合。</li>
+</ul>
+
+<h4><strong>理论基础</strong></h4>
+
+<p>RPS的有效性建立在坚实的理论基础之上：
+*   <strong>分布鲁棒优化 (DRO) 的补充</strong>：RPS作为一种后处理方法，有效补充了训练阶段的DRO策略，专门应对推理时可能出现的分布变化。
+*   <strong>期望评分优势</strong>：理论分析证明，从邻域偏好生成的响应，其期望质量（<code>E[v_i^T * r(x, y_i)]</code>）要高于直接从不稳定的目标偏好生成的响应（<code>E[v_target^T * r(x, y_target)]</code>）。这意味着RPS生成的候选池在整体质量上优于基线方法，这种性能提升被称为<strong>“鲁棒性增益”（Robustness Gain）</strong>。</p>
+
+<h4><strong>实验验证与实现细节</strong></h4>
+
+<p>RPS的有效性通过广泛的实验得到了验证：
+*   <strong>实验设置</strong>：在三种主流的对齐范式（DPA, DPO, SFT）和三个广泛使用的数据集（UltraFeedback, HelpSteer, HelpSteer2）上进行了测试。
+*   <strong>评估方法</strong>：通过在多个挑战性的偏好方向（与训练分布偏离10°到45°）上进行随机化的A/B测试，并使用GPT-4o-mini作为裁判，来评估RPS的性能。
+*   <strong>关键参数</strong>：实验中通常设置邻域大小 <code>k=5</code> 和最大偏差角度 <code>θ_max=30°</code>。
+*   <strong>显著成果</strong>：实验结果显示，RPS在所有模型和数据集上均显著优于强基线方法，尤其是在处理偏离训练分布较远的OOD偏好时，优势愈发明显，<strong>赢得率最高可达69%</strong>。</p>
+
+<h4><strong>核心优势</strong></h4>
+
+<ul>
+<li><strong>无需训练</strong>：作为一种后处理技术，RPS无需对模型进行任何修改或重训练，可直接在推理阶段应用。</li>
+<li><strong>高鲁棒性</strong>：通过引入邻域共识，有效利用了模型已训练好的能力，显著提升了处理未知偏好的鲁棒性。</li>
+<li><strong>模型无关性</strong>：RPS不依赖于特定的模型架构，使其能够广泛应用于多种偏好对齐模型。</li>
+<li><strong>理论支持</strong>：拥有坚实的理论框架支撑，证明了其策略的优越性。</li>
+</ul>
+
+<h4><strong>应用场景</strong></h4>
+
+<p>RPS适用于任何需要高可靠性和深度个性化的AI系统，尤其是在用户偏好多样化且可能超出模型训练范围的场景中，例如：
+*   <strong>个性化推荐系统</strong>：当用户兴趣发生偏移时，仍能提供高质量的推荐。
+*   <strong>智能客服与对话系统</strong>：在面对训练数据中未见过的用户意图和偏好时，生成更贴切、更有帮助的回答。
+*   <strong>任何需要与用户偏好紧密对齐的应用</strong>。</p>
+
+<p>综上所述，<strong>鲁棒偏好选择（RPS）</strong>为解决大型语言模型与人类偏好对齐中的核心挑战，提供了一个创新、高效且实用的解决方案。</p>
+
+<h3>实验设计</h3>
+
+<p>实验在一个3x3的矩阵中进行，系统地评估了RPS在三种不同的偏好对齐模型（DPA、DPO、SFT）和三个标准的偏好学习数据集（UltraFeedback、HelpSteer、HelpSteer2）上的表现。实验通过A/B测试，将RPS方法的性能与直接从目标偏好生成响应的强基线方法进行比较，主要评估指标是RPS的胜率。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验使用了三个公开数据集：UltraFeedback、HelpSteer和HelpSteer2。</li>
+<li><strong>代码</strong>: 代码和相关数据已公开，可在以下地址获取：https://github.com/rcmao/robust-preference-alignment</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设。RPS在所有模型和数据集的组合上都显著优于基线方法，取得了超过50%的胜率，最高可达69%。结果还表明，当用户偏好与训练数据分布的差异越大（即OOD程度越高）时，RPS的优势越明显，证明了其在提升模型对齐鲁棒性方面的有效性。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>定义问题</strong>: 首次正式定义并阐述了“偏好覆盖缺口”问题，指出了其对LLM可靠性的关键影响。</li>
+<li><strong>提出新方法</strong>: 提出了RPS，一种新颖、有效且无需重新训练的推理时方法，通过邻域共识来增强模型对OOD偏好的鲁棒性。</li>
+<li><strong>全面验证</strong>: 通过在多种模型和数据集上的广泛实验，系统性地验证了RPS的有效性和泛化能力，为提升LLM在复杂动态环境中的可靠性提供了新的思路。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.20498v2" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 13:45:20</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

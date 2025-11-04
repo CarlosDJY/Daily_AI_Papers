@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citation Failure: Definition, Analysis and Efficient Mitigation</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Citation Failure: Definition, Analysis and Efficient Mitigation</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Ubiquitous Knowledge Processing Lab (UKP Lab), Department of Computer Science, Hessian Center for AI (hessian.AI), Technical University of Darmstadt</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.413</span>
+                <span class="paper-id">arXiv ID: 2510.20303v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.20303v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-30/3990b6226cb1ee934e876270ffd4fa12b5120d8e4b4efb1ad949432a235a159f.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了CITECONTROL基准和CITENTION框架，旨在解决大型语言模型（LLM）中的引用失败问题。CITECONTROL系统分析响应与证据关系的复杂性对引用质量的影响，而CITENTION则整合生成式、检索式和基于注意力的方法，以提高引用准确性。实验结果表明，该框架在多跳推理任务中显著改善了引用性能，验证了组合方法的有效性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）在生成内容时发生的<strong>引用失败（citation failure）</strong>问题。具体来说，模型可能生成了正确或有用的回答，但未能准确、完整地引用支持该回答的证据来源。</p>
+
+<p>该问题与<strong>响应失败（response failure）</strong>（即回答本身错误）不同，并且非常重要，因为：
+- 缺乏准确的引用会降低LLM生成内容的可信度和实用性，用户无法验证信息的来源。
+- 现有方法在处理复杂情况时表现不佳，尤其是在响应需要依赖多个文档进行多跳推理（multi-hop reasoning）时，引用失败率会显著增加。
+- 先前的研究未能系统性地分析响应与证据之间的复杂关系（如单跳、多跳、信息交叉）对引用失败的影响。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，通过<strong>整合多种互补的引用方法</strong>，可以显著改善LLM的引用能力，尤其是在复杂的推理场景下。
+- <strong>关键发现</strong>：响应与证据之间的关系复杂性是导致引用失败的关键因素。
+- <strong>核心假设</strong>：一个统一的框架，结合<strong>生成式（generation-based）</strong>、<strong>检索式（retrieval-based）</strong>和<strong>基于注意力（attention-based）</strong>的引用方法，能够互相取长补短，从而有效缓解引用失败问题。</p>
+
+<h3>相关研究</h3>
+
+<p>论文参考了多个领域的研究，主要包括：
+- <strong>生成式引用方法</strong>：模型直接生成引文。
+- <strong>检索式引用方法</strong>：通过信息检索技术（如BM25, DRAG）来定位相关证据。
+- <strong>基于注意力的引用方法</strong>：利用模型的注意力权重来识别和排序重要证据。
+- <strong>引用评估基准和数据集</strong>：如Gao et al. (2023) 等人提出的用于分析LLM引用能力的工作。
+- <strong>推理复杂性对引用的影响</strong>：如Hu et al. (2025) 的研究。</p>
+
+<h3>详细解决方案：通过分析与缓解框架应对大语言模型（LLM）的引用失败问题</h3>
+
+<p>该论文针对大型语言模型（LLMs）在生成内容时普遍存在的引用失败（即引用不准确、不相关或缺失）问题，提出了一个系统性的解决方案。该方案分为两个核心步骤：首先，通过一个专门构建的基准进行深入的<strong>失败分析</strong>；其次，基于分析结果，提出了一个名为 <strong>CITENTION</strong> 的高效<strong>缓解框架</strong>。</p>
+
+<hr />
+
+<h4><strong>第一步：分析引用失败（Citation Failure Analysis）</strong></h4>
+
+<p>为了系统地理解LLM为何以及何时会产生错误的引用，研究者首先需要一个可控的测试环境。为此，他们设计并引入了 <strong>CITECONTROL</strong> 基准。</p>
+
+<h5><strong>1. CITECONTROL 基准</strong></h5>
+
+<p>CITECONTROL 是一个专门用于评估LLM引用能力的基准测试集。其核心设计思想是通过系统性地改变“响应”（LLM生成的内容）与“证据”（源文档）之间的关系，来诊断不同的引用失败模式。</p>
+
+<ul>
+<li><p><strong>目的</strong>：</p>
+
+<ul>
+<li>明确引用失败发生的具体场景。</li>
+<li>分析响应与证据之间的关系（如推理的复杂性）对引用质量的影响。</li>
+</ul></li>
+<li><p><strong>构建与过程</strong>：</p>
+
+<ul>
+<li><strong>数据构成</strong>：基准包含了来自多种问答任务（如 SQuAD, BoolQ, MuSiQue, NeoQA）的实例。每个实例都包含一个正确答案和已知的证据来源。</li>
+<li><strong>干扰信息</strong>：为了模拟真实世界场景，每个实例的上下文中都混入了多个不相关的“干扰”段落，迫使模型必须准确识别真正的证据来源。</li>
+<li><strong>关系控制</strong>：基准定义了响应与证据关系的两个关键属性：<strong>推理类型</strong>（如单一事实、链式推理、多文档交叉推理）和<strong>明显性</strong>（证据与陈述的直接关联程度），从而可以对不同复杂度的场景进行针对性测试。</li>
+<li><strong>评估机制</strong>：采用严格的过滤评估机制，例如，对于问答任务，使用 token F1 分数或精确匹配来评估回答的正确性，确保评估的焦点是引用本身，而非模型生成内容的质量。</li>
+</ul></li>
+</ul>
+
+<p>通过在CITECONTROL上的实验，研究者发现，模型的引用能力会随着推理复杂度的增加而显著下降，并且没有单一的引用方法能在所有场景下都表现最佳。这一发现直接催生了第二步的解决方案。</p>
+
+<hr />
+
+<h4><strong>第二步：缓解引用失败（Mitigating Citation Failure）</strong></h4>
+
+<p>在深入分析了失败原因后，论文提出了 <strong>CITENTION</strong> 框架，这是一个旨在高效、准确地改善LLM引用能力的综合性解决方案。</p>
+
+<h5><strong>1. CITENTION 框架概述</strong></h5>
+
+<p>CITENTION的核心思想是，与其依赖单一的引用方法，不如<strong>组合多种互补的引用方法</strong>，以发挥各自的优势，从而在各种复杂场景下都能做出准确的引用。该框架整合了三种主要的引用策略：生成式、检索式和基于注意力的方法。</p>
+
+<ul>
+<li><strong>目的</strong>：
+<ul>
+<li>显著减少LLM在生成文本时的引用错误。</li>
+<li>在不进行额外模型训练或增加大量计算开销的前提下，提高引用的准确性和可追溯性。</li>
+</ul></li>
+</ul>
+
+<h5><strong>2. 框架的核心组件与方法</strong></h5>
+
+<p>CITENTION 将每个引用方法视为一个评分函数 <code>M(r, s)</code>，它为给定的响应 <code>r</code> 和源文档 <code>s</code> 计算一个相关性分数。</p>
+
+<ul>
+<li><p><strong>① 生成式引用 (Generative)</strong></p>
+
+<ul>
+<li><strong>方法</strong>：直接利用LLM在生成过程中产生的引用标记。其引用分数 <code>M_Gen</code> 通过生成这些标记的长度归一化概率来计算。</li>
+<li><strong>特点</strong>：这是最直接的方法，但如分析所示，它在复杂推理场景下容易失败。</li>
+</ul></li>
+<li><p><strong>② 检索式引用 (Retrieval-based)</strong></p>
+
+<ul>
+<li><strong>方法</strong>：在响应生成之后，使用外部信息检索算法来寻找支持证据。论文中使用了经典的 <strong>BM25</strong> 算法，它通过计算查询（响应）与文档之间的词语重叠来生成相关性分数。</li>
+<li><strong>特点</strong>：对于需要直接证据支持的场景非常有效，能够补充生成式方法的不足。</li>
+</ul></li>
+<li><p><strong>③ 基于注意力的引用 (Attention-based)</strong></p>
+
+<ul>
+<li><strong>方法</strong>：这是一种创新方法，它利用LLM在生成文本时内部产生的<strong>注意力值</strong>来判断源文档的重要性。这些注意力值在生成过程中是“免费”获得的，因此非常高效。</li>
+<li><strong>计算</strong>：注意力分数 <code>M_d(r, s)</code> 被定义为响应 <code>r</code> 中的每个词元对源文档 <code>s</code> 中所有词元的注意力分数之和的平均值。
+<code>M_d(r, s) = (1/|r|) * Σ_i Σ_j ATT_d(t_ri, t_sj)</code></li>
+<li><strong>具体实现</strong>：框架整合了多种先进的注意力归因方法，如 ICR、QRHEAD 和 AT2，它们在如何加权和选择注意力头（attention heads）方面有所不同。</li>
+</ul></li>
+</ul>
+
+<h5><strong>3. 方法的聚合与决策</strong></h5>
+
+<p>CITENTION 的强大之处在于其聚合机制。</p>
+
+<ul>
+<li><p><strong>分数聚合</strong>：通过一个加权线性模型将不同方法（<code>M_i</code>）计算出的分数进行组合，得到最终的综合分数 <code>M_Ω</code>。
+<code>M_Ω = Σ w_i * M_i + b</code>
+权重 <code>w</code> 和偏置 <code>b</code> 是在训练集上学习得到的，这使得框架能够智能地判断在特定情况下哪种方法的权重应该更高。</p></li>
+<li><p><strong>决策函数</strong>：最终，框架通过一个决策函数 <code>δ</code> 来决定是否引用某个文档。一个简单而有效的方法是选择综合评分最高的 <code>k</code> 个源文档作为最终引用。</p></li>
+</ul>
+
+<h5><strong>4. 实验结果与优势</strong></h5>
+
+<ul>
+<li><strong>性能显著提升</strong>：在CITECONTROL基准上，CITENTION框架（尤其是组合了所有方法的版本）显著减轻了引用失败问题。在复杂的推理任务中，其性能指标（如 Rk f）提升了超过10个百分点。</li>
+<li><strong>资源效率高</strong>：该框架主要利用模型已有的内部机制（如注意力值）和轻量级算法（如BM25），避免了昂贵的额外训练或多次调用LLM，实现了高效性。</li>
+<li><strong>良好的泛化能力</strong>：CITENTION不仅在CITECONTROL上表现出色，在未曾见过的“转移”数据集（如 QASPER 和 GovReport）上也同样有效，证明了其方法的普适性和鲁棒性。</li>
+<li><strong>创新性</strong>：该研究首次将注意力机制系统性地应用于引用生成任务，为该领域开辟了新的研究方向。</li>
+</ul>
+
+<h3><strong>总结</strong></h3>
+
+<p>该论文提供了一个从<strong>分析</strong>到<strong>缓解</strong>的闭环解决方案。首先，通过 <strong>CITECONTROL</strong> 基准精确诊断了LLM引用失败的根源；然后，提出了创新的 <strong>CITENTION</strong> 框架，通过智能地<strong>组合生成式、检索式和基于注意力的方法</strong>，高效且有效地提升了LLM引用的准确性和可靠性，最终增强了模型的可靠度和用户信任度。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>主要平台</strong>：实验在本文提出的 <strong>CITECONTROL</strong> 基准上进行。</li>
+<li><strong>评估任务</strong>：评估了不同LLM模型（如Llama, Qwen）在不同推理复杂度（单一、多跳、交叉）任务下的引用性能。</li>
+<li><strong>对比方法</strong>：比较了单一的引用方法（生成式、检索式、注意力式）与 <strong>CITENTION</strong> 框架下组合方法的性能。</li>
+<li><strong>评估指标</strong>：使用了如 Rk f-score 等指标来量化引用的质量。</li>
+<li><strong>迁移能力测试</strong>：还在两个外部数据集（QASPER和GovReport）上测试了框架的有效性，以验证其在没有领域内训练数据情况下的迁移能力。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>主要数据集</strong>：使用了新提出的 <strong>CITECONTROL</strong> 基准，该基准是基于现有的问答数据集（如SQuAD, BoolQ, MuSiQue, NeoQA）构建的。</li>
+<li><strong>代码和数据可用性</strong>：论文片段中提到数据和代码已公开，但<strong>未提供具体的链接</strong>。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能提升</strong>：<strong>CITENTION</strong> 框架在所有测试的数据集上都显著提高了引用性能（Rk f得分），尤其是在复杂的多跳和交叉推理任务中，效果远超任何单一方法。</li>
+<li><strong>假设验证</strong>：实验结果有力地支持了核心假设，即组合多种引用方法可以有效缓解引用失败问题。</li>
+<li><strong>模型表现</strong>：实验还发现，模型的大小对其在复杂推理任务中的引用表现有显著影响，较小的模型更容易出现引用失败。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出新概念</strong>：首次明确区分了“引用失败”与“响应失败”，为该领域的研究提供了更清晰的定义。</li>
+<li><strong>构建新基准</strong>：开发了 <strong>CITECONTROL</strong> 基准，能够系统性地分析和评估LLM在不同推理复杂度下的引用失败模式。</li>
+<li><strong>提出新框架</strong>：提出了 <strong>CITENTION</strong> 框架，首次将生成式、检索式和基于注意力的引用方法进行有效整合，为解决引用失败问题提供了全新的、高效的解决方案。</li>
+<li><strong>提供深刻见解</strong>：通过详尽的实验，揭示了LLM引用失败的关键原因，并验证了所提方法的有效性和泛化能力。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.20303v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 13:45:20</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
