@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule-Based Explanations for Retrieval-Augmented LLM Systems</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Rule-Based Explanations for Retrieval-Augmented LLM Systems</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of Waterloo, York University, AT&T Chief Data Office</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.468</span>
+                <span class="paper-id">arXiv ID: 2510.22689v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.22689v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-02/5dbab1c0e47a562c890a2c91c14a8c0c1f1af99ea385a17ff2268e71f62eab7a.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种基于规则的解释框架，旨在提高检索增强生成（RAG）系统的可解释性。通过设计两种高效的规则挖掘算法（Mono Rule Miner和Dual Rule Miner），该方法能够快速识别影响大型语言模型输出的文档组合，从而提供透明的“如果-那么”规则解释，解决了当前模型输出不透明的问题。实验结果验证了该方法的效率和有效性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决当前检索增强生成（RAG）系统在可解释性方面的核心挑战。当大型语言模型（LLM）结合外部知识源进行推理时，其输出的来源和逻辑变得复杂且不透明。这是一个重要且紧迫的问题，因为：
+1.  <strong>缺乏透明度</strong>：难以理解为什么模型会产生特定的输出，尤其是错误或有害的输出（例如，在医疗场景中推荐无效治疗或传播错误信息）。
+2.  <strong>现有方法不足</strong>：传统的解释方法（如特征归因）主要提供局部解释，不适用于解释由多个动态文档源共同作用产生的复杂行为。
+3.  <strong>可靠性与安全</strong>：在医疗、金融等高风险领域，无法解释和验证模型的输出会带来严重的安全隐患。
+4.  <strong>效率挑战</strong>：手动或暴力搜索导致特定输出的文档组合在计算上是不可行的。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，可以通过一个<strong>基于规则的解释框架</strong>来有效、高效地解释RAG系统的行为。具体假设如下：
+-   可以通过简单的“如果-那么”规则，将输入文档的<strong>存在（保留规则）</strong>或<strong>缺失（省略规则）</strong>与LLM的特定输出行为（如正确性、偏见等）联系起来。
+-   可以设计出高效的<strong>搜索算法</strong>（如Mono Rule Miner和Dual Rule Miner），通过智能剪枝和动态规划，在巨大的文档组合空间中快速挖掘出这些有效规则。
+-   这种方法不仅能提供可理解的解释，还能帮助用户识别并纠正导致模型产生不良输出的问题文档。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域之上：
+-   <strong>可解释性人工智能（XAI）</strong>：特别是与现有的局部解释方法（如LIME、SHAP）和反事实解释形成对比。
+-   <strong>规则挖掘</strong>：借鉴了关联规则挖掘（如Apriori算法）的思想，但应用于解释模型行为的新场景。
+-   <strong>检索增强生成（RAG）</strong>：直接针对这类模型的透明度问题进行研究。
+-   <strong>基准数据集</strong>：利用如HotpotQA等标准问答数据集进行评估。</p>
+
+<h3><strong>完整的详细解决方案：基于规则的 RAG-LLM 解释框架</strong></h3>
+
+<p>本文提出了一种新颖的、基于规则的解释框架，旨在为日益复杂的检索增强生成（RAG）大语言模型（LLM）的输出提供透明、可操作的解释。该框架的核心是构建“如果-那么”（If-Then）形式的规则，以揭示模型的输入（特别是检索到的信息源）如何影响其最终输出，从而解决现有解释方法在可靠性和可操作性上的局限性。</p>
+
+<h4><strong>1. 核心思想与目标</strong></h4>
+
+<p>该解决方案的根本目标是提升 RAG 系统的透明度和可信度。通过分析输入的信息源与模型输出之间的因果关系，该框架旨在实现以下目的：</p>
+
+<ul>
+<li><strong>解释性 (Explainability)</strong>: 让用户直观地理解模型是如何根据检索到的文档集做出决策的。</li>
+<li><strong>错误识别 (Error Identification)</strong>: 帮助开发者和审计人员快速定位导致模型产生不准确、有害或错误输出的特定信息源或其组合。</li>
+<li><strong>信息管理 (Information Management)</strong>: 使信息管理者能够标记、审查和修正数据库中可能引发问题的文档内容。</li>
+<li><strong>可操作性 (Actionability)</strong>: 提供清晰的见解，帮助用户通过调整输入信息源来修正或引导模型的输出。</li>
+</ul>
+
+<h4><strong>2. 规则框架的构建</strong></h4>
+
+<p>该框架通过挖掘规则来描述模型的行为，每一条规则都由“前提”和“结果”两部分构成。</p>
+
+<h5><strong>2.1 规则的构成：前提 (Antecedent) 与结果 (Consequent)</strong></h5>
+
+<ul>
+<li><strong>前提 (Antecedent)</strong>: 指的是对输入特征的描述。在 RAG 场景下，这通常是关于检索到的文档源的存在或缺失。例如，“如果‘文档123’被包含在检索源中”。为了增强解释能力，前提条件应尽可能广泛地覆盖输入特征空间。</li>
+<li><strong>结果 (Consequent)</strong>: 指的是对模型输出的描述，由用户根据其分析目标灵活定义。用户需要实现一个<strong>输出谓词函数 <code>O</code></strong>，它是一个分类器，用于判断模型的输出是否满足特定条件。例如，<code>O</code> 可以用来检查输出是否包含某个已知错误、是否引用了正确的来源，或者是否给出了正确的答案。</li>
+</ul>
+
+<h5><strong>2.2 规则的类型：保留 (Retention) 与遗漏 (Omission)</strong></h5>
+
+<p>为了更精确地描述信息源的影响，框架定义了两种互补的规则类型：</p>
+
+<ul>
+<li><strong>保留规则 (Retention Rule)</strong>: "如果输入子集 <code>s'</code> <strong>被保留</strong>，那么模型的输出<strong>总是</strong>满足条件 <code>O</code>"。这类规则用于识别哪些信息源是产生特定输出的<strong>充分条件</strong>。</li>
+<li><strong>遗漏规则 (Omission Rule)</strong>: "如果输入子集 <code>s'</code> <strong>被遗漏</strong>，那么模型的输出<strong>总是</strong>满足条件 <code>O</code>"。这类规则用于识别哪些信息源的存在是<strong>阻止</strong>特定输出产生的<strong>必要条件</strong>。</li>
+</ul>
+
+<h4><strong>3. 高效的规则挖掘算法</strong></h4>
+
+<p>为了从庞大的信息源组合中高效地找出所有有效的规则，论文设计了一套受频繁项集挖掘（Apriori算法）启发的搜索算法。该算法在代表所有可能输入组合的格（Lattice）数据结构上进行搜索。</p>
+
+<h5><strong>3.1 核心原理：搜索与验证</strong></h5>
+
+<p>算法通过系统性地探测所有可能的信息源组合，验证每个组合是否满足用户定义的输出谓词 <code>O</code>。为了应对组合爆炸带来的计算挑战，算法集成了多种优化技术：</p>
+
+<ul>
+<li><strong>剪枝 (Pruning) 和早期终止 (Early Termination)</strong>: 算法的核心优势在于其剪枝能力。例如，在挖掘保留规则时，如果一个小的文档组合 <code>s'</code> 已被证明无效（即无法保证输出满足 <code>O</code>），那么任何包含 <code>s'</code> 的更大组合（其超集）也必然无效，因此可以被安全地从搜索空间中剪掉，极大地提升了效率。</li>
+<li><strong>动态规划与缓存</strong>: 算法在自顶向下的层次遍历中，会缓存每一层的规则有效性验证结果。这利用了动态规划思想，避免了对相同子问题的重复计算。</li>
+</ul>
+
+<h5><strong>3.2 Mono Rule Miner (单规则挖掘器)</strong></h5>
+
+<p>该算法专注于一次挖掘一种类型的规则（保留或遗漏）。它通过动态维护一个无效候选集，在每一步都进行剪枝，从而高效地减少不必要的模型推理调用。在最坏情况下，它需要对所有 <code>2^|s|</code> 个组合进行推理，但在最优情况下（例如，没有有效规则时），它可能只需一次推理就能终止。</p>
+
+<h5><strong>3.3 Dual Rule Miner (双规则挖掘器)</strong></h5>
+
+<p>该算法是 Mono 算法的扩展，能够<strong>同时</strong>挖掘保留规则和遗漏规则。它为两种规则类型维护独立的有效/无效缓存，并使用两个不同的输出谓词（<code>O_ret</code> 和 <code>O_omi</code>）。虽然其剪枝机会相较于 Mono 算法有所减少（因为一种规则的无效不一定意味着另一种也无效），但它通过避免对同一输入子集进行两次独立的评估，在需要两种规则的场景下（如模型红队测试）通常比运行两次 Mono 算法更高效。</p>
+
+<h4><strong>4. 应用案例与实验评估</strong></h4>
+
+<h5><strong>4.1 案例研究：识别医疗领域中的错误信息</strong></h5>
+
+<p>论文通过一个具体的医疗案例展示了该框架的实用价值：</p>
+
+<ol>
+<li><strong>问题识别</strong>: 用户发现一个医疗聊天机器人在回答关于“长新冠”（Long COVID）的问题时，会推荐一种无效的治疗方法。</li>
+<li><strong>规则生成</strong>: 用户定义了一个输出谓词 <code>O_incorrect</code>，用于判断模型的回答是否包含此错误信息。</li>
+<li><strong>挖掘与分析</strong>: 运行 Mono Rule Miner 后，算法生成了多条有效的保留规则，例如：“如果保留文档 <code>D2</code> 和 <code>D4</code>，则LLM的响应<strong>总是</strong>包含错误信息。”</li>
+<li><strong>应用与验证</strong>: 基于这些规则，技术用户可以标记出有问题的文档 <code>D2</code> 和 <code>D4</code>，并将其移除以供医疗专家审查和修正。修正后，再次运行规则挖掘器，确认不再生成指向错误信息的规则，从而验证了修复的有效性。</li>
+</ol>
+
+<h5><strong>4.2 量化评估 (HotpotQA 数据集)</strong></h5>
+
+<p>为了验证算法的效率，研究者在 HotpotQA 数据集上进行了实验。实验通过控制提供给 RAG 系统的支持性事实（源文档）数量，来评估 Mono 和 Dual 算法的节点修剪效果。</p>
+
+<ul>
+<li><strong>结果表明</strong>: 随着支持性来源数量的增加，算法的剪枝比例也相应提高，证明了其剪枝策略在面对更大、更复杂的输入集时的有效性。实验结果验证了算法在实际访问的节点数量上远少于理论上的最大值，展示了其高效性。</li>
+</ul>
+
+<h4><strong>5. 总结与贡献</strong></h4>
+
+<p>本文的解决方案做出了以下关键贡献：</p>
+
+<ol>
+<li><strong>首创性</strong>: 首次为 RAG 系统提出了一种系统化的、基于规则的解释方法，填补了该领域的空白。</li>
+<li><strong>高效算法</strong>: 设计并实现了 Mono 和 Dual Rule Miner 两种高效的搜索算法，通过剪枝和早期终止等技术显著优化了规则挖掘过程。</li>
+<li><strong>实践价值</strong>: 通过医疗领域的案例研究和在标准数据集上的量化评估，证明了该框架在提高模型透明度、识别错误来源和确保输出可靠性方面的巨大潜力。</li>
+</ol>
+
+<p>未来的工作将探索“宽松”的规则模型，以更好地适应 LLM 的非确定性，并比较不同 LLM 在遵循预期规则方面的表现。</p>
+
+<h3>实验设计</h3>
+
+<p>论文通过一系列定性和定量实验来验证其解决方案的有效性：
+-   <strong>合成数据实验</strong>：在受控环境下测试算法的理论边界和效率，特别是在不同有效性配置下的剪枝性能。
+-   <strong>真实世界基准测试</strong>：在<strong>HotpotQA</strong>数据集上进行实验，评估算法在处理复杂多跳问答任务时的性能，并分析支持事实的数量对算法剪枝效率的影响。
+-   <strong>案例研究</strong>：在<strong>医疗领域</strong>进行深入的案例分析，模拟医疗聊天机器人回答关于“长新冠”治疗方案的场景，展示该方法如何识别导致模型推荐无效治疗或低估有效疗法的具体医疗文献。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li>实验使用了公开的<strong>HotpotQA</strong>数据集和自定义的<strong>合成数据集</strong>。</li>
+<li>在医疗案例研究中使用了相关的医疗文献。</li>
+<li>所有提供的片段中均<strong>未提及</strong>代码的公开存储库链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的假设：
+-   <strong>高效性</strong>：Mono Rule Miner的性能接近理论上的最优值，即以最少的模型评估次数找到所有有效规则。
+-   <strong>有效性</strong>：算法成功地在HotpotQA和医疗案例研究中识别出了导致LLM产生错误或特定输出的关键文档组合。
+-   <strong>可扩展性</strong>：实验表明，随着支持源（文档）数量的增加，算法的剪枝效率也随之提高，证明了其处理复杂问题的潜力。
+-   <strong>实用性</strong>：Dual Rule Miner虽然效率略有牺牲，但能提供更全面的解释，验证了其在需要双重解释场景下的价值。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出了首个针对RAG系统的基于规则的解释框架</strong>，填补了该领域在透明度和可解释性方面的空白。
+2.  <strong>设计并实现了两种高效的规则挖掘算法（Mono和Dual Rule Miner）</strong>，通过剪枝和动态规划等技术，使得在复杂输入空间中发现解释规则成为可能。
+3.  <strong>通过在合成数据、标准基准（HotpotQA）和高风险真实场景（医疗）中的全面实验</strong>，验证了所提方法的效率、有效性和实用价值。
+4.  <strong>为审计、调试和信任复杂的LLM应用提供了一种新的、可操作的方法论</strong>。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.22689v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 20:14:58</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
