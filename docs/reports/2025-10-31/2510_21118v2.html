@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Gray Zone of Faithfulness: Taming Ambiguity in Unfaithfulness Detection</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>The Gray Zone of Faithfulness: Taming Ambiguity in Unfaithfulness Detection</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Key Lab of Intelligent Information Processing, Institute of Computing Technology, Chinese Academy of Sciences, State Key Lab of Al Safety, University of Chinese Academy of Sciences</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.561</span>
+                <span class="paper-id">arXiv ID: 2510.21118v2</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.21118v2" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-31/0ffed7b49acd2e3ae11fc7f6e33b92dc533417e0c7f6f5600b3301be185d3323.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种新的信度注释框架，通过引入“Out-Dependent”类别，解决了大型语言模型生成摘要时的注释模糊性问题。基于此框架，构建了VeriGray基准数据集，揭示了当前最先进模型在处理不忠实性时的局限性，特别是在需要外部知识验证的情况下，推动了不忠实性检测技术的发展。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）生成内容（特别是摘要）时的<strong>信度问题</strong>，即如何准确检测和评估生成内容的不忠实性（或称“幻觉”）。现有用于检测不忠实性的基准和方法存在一个核心缺陷：<strong>注释模糊性</strong>。这种模糊性主要源于对外部知识的可接受范围界限不清，以及未能考虑注释者背景差异，导致评估结果不一致且不可靠。随着LLM在高风险领域（如金融、医疗）的应用日益广泛，确保其生成内容的准确性和可靠性是一个至关重要且亟待解决的问题。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过<strong>建立一个更系统、更细粒度的注释框架</strong>，可以有效解决当前不忠实性检测中的注释模糊性问题，从而更准确地评估和缓解LLM的幻觉。该框架的关键在于引入了明确的中间类别，如<strong>“Out-Dependent”</strong>（需要外部知识验证）和<strong>“Ambiguous”</strong>（存在多种合理解释），以清晰地界定不同类型的不忠实性。同时，研究假设现代的零样本（Zero-shot）LLM在检测不忠实性方面具有更强的能力，但仍需结合外部知识才能有效处理复杂情况。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个相关领域之上，主要包括：
+- <strong>现有的不忠实性检测基准和框架</strong>：如AIS框架和FaithBench，但这些研究未能有效解决注释模糊性问题。
+- <strong>不忠实性检测方法</strong>：如LLM-Check（基于模型内部检测）、CCP（基于概率）和InFusE（检索后验证）。
+- <strong>关于注释模糊性的研究</strong>：包括自动检测现有基准中注释错误和模糊性的方法（Seo et al., 2025），以及由外部知识引起的模糊性研究（Cao and Wang, 2021）。
+- <strong>更广泛的相关领域</strong>：如自然语言推理（NLI）、事实核查、归因方法在文本生成中的应用等。</p>
+
+<h3>解决方案</h3>
+
+<h4><strong>1. 问题背景与核心思想</strong></h4>
+
+<p>当前，大语言模型（LLMs）在生成摘要等知识密集型内容时，其“信度”（Faithfulness）或“忠实度”的评估面临着一个核心挑战：<strong>注释模糊性</strong>。评估者在判断一句生成的话是否“忠实”于原文时，常因个人背景知识、文化差异或对文本的不同解释而产生分歧。这导致现有的不可信度检测基准（Benchmark）存在一致性差、可靠性低的问题。</p>
+
+<p>为解决这一难题，论文《The Gray Zone of Faithfulness: Taming Ambiguity in Unfaithfulness Detection》提出了一套全新的解决方案，其核心是引入一个创新的<strong>信度注释框架</strong>和一个与之配套的<strong>不可信度检测基准——VeriGray</strong>。该方案旨在通过更精细、更客观的分类，系统性地处理评估中的“灰色地带”，特别是那些需要外部知识验证或存在多种合理解释的情况。</p>
+
+<hr />
+
+<h4><strong>2. 解决方案详解：创新的信度注释框架</strong></h4>
+
+<p>该解决方案的核心是一个多层次、细粒度的注释框架，它以决策树的形式指导注释者对生成摘要中的每一个句子进行分类。</p>
+
+<h5><strong>2.1 核心定义与分类体系</strong></h5>
+
+<p>为了消除模糊性，该框架建立了一套严格的分类体系，将句子的信度状态划分为以下几类：</p>
+
+<ul>
+<li><p><strong>无事实类 (No-Fact):</strong> 首先判断句子是否包含事实性内容。不传达事实的句子（如“你想了解更多吗？”）被归为此类，它们不参与后续的信度评估。</p></li>
+<li><p><strong>忠实类 (Faithful Classes):</strong></p>
+
+<ul>
+<li><strong>明确支持 (Explicitly-Supported):</strong> 句子的内容可以被源文档 <strong>直接且逻辑上</strong> 证实，源文档中有语义等价的对应表述。</li>
+<li><strong>隐含支持 (Implicitly-Supported):</strong> 句子的内容可以从源文档 <strong>逻辑上推断</strong> 出来，但文档中没有直接的、字面上的支持。</li>
+</ul></li>
+<li><p><strong>不忠实类 (Unfaithful Classes):</strong></p>
+
+<ul>
+<li><strong>矛盾 (Contradicting):</strong> 句子的内容与源文档中的信息在逻辑上 <strong>直接冲突</strong>。</li>
+<li><strong>虚构 (Fabricated):</strong> 句子的内容与源文档不矛盾，但既不能被源文档支持，也不能被外部知识证实。这通常被称为“幻觉”。</li>
+</ul></li>
+<li><p><strong>灰色地带 (The Gray Zone):</strong> 这是框架的关键创新，用于处理模糊情况。</p>
+
+<ul>
+<li><strong>外部依赖 (Out-Dependent):</strong> 句子内容仅靠源文档无法验证，但 <strong>结合外部世界知识</strong> 后可以被证实。这是识别模型是否引入了超出原文范围的正确信息的关键。</li>
+<li><strong>模糊 (Ambiguous):</strong> 句子存在多种合理的解释，不同的解释可能导致其归入不同的信度类别。框架会保留与每种解释相关的全部可能性。</li>
+</ul></li>
+</ul>
+
+<h5><strong>2.2 注释流程与质量保证</strong></h5>
+
+<p>为了确保高质量的标注，该研究设计了一套严谨的实施流程：</p>
+
+<ol>
+<li><p><strong>引用辅助注释:</strong> 开发了一个基于网络的注释工具。当注释者选中一个待评估的句子时，一个基于注意力的归因模块会自动在源文档中高亮相关的证据段落，极大地提高了寻找证据的效率。</p></li>
+<li><p><strong>外部知识检索与验证:</strong> 对于可能属于“外部依赖”的句子，注释者被要求使用搜索引擎（如Bing）进行事实核查，并必须引用可靠的外部来源（如维基百科、主流媒体）的URL作为证据。</p></li>
+<li><p><strong>严格的质量保证流程:</strong></p>
+
+<ul>
+<li><strong>培训:</strong> 所有注释者都必须经过培训，学习典型案例并通过关于疑难案例的测验。</li>
+<li><strong>多层决策:</strong> 注释者不仅选择最终标签，还需记录中间决策过程，系统会自动检查其一致性。</li>
+<li><strong>交叉复审:</strong> 每个实例都由第二位注释者进行复审，以确保一致性。</li>
+<li><strong>自动化错误检测:</strong> 利用多个先进的LLMs（如GPT-4o, Gemini等）作为“裁判”，对人类标注进行预测。当任何一个模型的预测与人类标签不一致时，该实例将被标记为潜在错误，并交由人类专家最终复审。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>3. 核心产出：VeriGray基准</strong></h4>
+
+<p>基于上述框架和流程，研究团队构建了一个新的不可信度检测基准——<strong>VeriGray (Verification with the Gray Zone)</strong>。</p>
+
+<ul>
+<li><strong>构建过程:</strong> 团队从现有数据集中收集文档，使用先进的LLMs（如GPT-5）生成摘要，然后由人工注释员对摘要中的2044个句子进行细粒度标注。</li>
+<li><strong>关键特性:</strong>
+<ul>
+<li><strong>客观性:</strong> 清晰的定义和严格的流程减少了主观判断，提高了注释的可重复性和可靠性。</li>
+<li><strong>挑战性:</strong> 该基准揭示了现有检测方法在识别“外部依赖”和“模糊”案例方面的不足，为未来的研究提供了新的挑战。</li>
+</ul></li>
+<li><strong>核心发现:</strong> 分析VeriGray发现，即便是最先进的LLM，其生成的摘要中仍有约6%的句子存在幻觉（不忠实），且有相当一部分（约8%）属于“外部依赖”类别，这凸显了外部知识验证的重要性。</li>
+</ul>
+
+<hr />
+
+<h4><strong>4. 评估协议与实验分析</strong></h4>
+
+<p>为了利用VeriGray对现有模型进行评估，论文提出了两种评估协议：</p>
+
+<ol>
+<li><p><strong>第一协议（二元分类评估）:</strong></p>
+
+<ul>
+<li><strong>标签合并:</strong> 简化标签空间，将“明确支持”和“隐含支持”合并为“忠实”类；将“虚构”和“矛盾”合并为“不忠实”类。移除“无事实”和“外部依赖”等中间实例。</li>
+<li><strong>目的:</strong> 在一个简化的二元分类任务上，评估检测器的基本性能。</li>
+</ul></li>
+<li><p><strong>第二协议（排名质量评估）:</strong></p>
+
+<ul>
+<li><strong>保留完整标签:</strong> 不对标签进行合并或过滤，考虑所有细粒度类别。</li>
+<li><strong>引入排名损失 (Lrank):</strong> 提出一个新的度量指标，用于评估检测器的预测分数是否能正确反映出信度标签的内在排序（例如，“明确支持”的信度高于“隐含支持”，而“矛盾”的信度最低）。</li>
+<li><strong>目的:</strong> 更全面、更细致地衡量模型对信度“灰色地带”的理解能力。</li>
+</ul></li>
+</ol>
+
+<p><strong>实验结果</strong>表明，零样本（Zero-shot）LLMs（特别是GPT-5和DeepSeek-R1）在VeriGray上表现最好，但它们在识别需要外部知识的“外部依赖”句子方面仍然存在显著困难，这证实了当前模型在知识验证方面的局限性。</p>
+
+<hr />
+
+<h4><strong>5. 贡献、结论与未来方向</strong></h4>
+
+<p><strong>主要贡献:</strong>
+1.  <strong>提出新框架:</strong> 设计了一个清晰的信度注释框架，通过定义“外部依赖”和“模糊”类别，系统性地解决了注释中的模糊性问题。
+2.  <strong>构建新基准:</strong> 创建了VeriGray基准，为不可信度检测领域提供了更具挑战性和客观性的评估工具。
+3.  <strong>揭示模型短板:</strong> 通过实验分析，揭示了即使是最先进的LLMs也容易产生不忠实内容，并指出现有检测方法在处理知识依赖性问题上的不足。</p>
+
+<p><strong>未来方向:</strong>
+*   <strong>开发知识增强的检测器:</strong> 未来的研究应聚焦于开发能够有效利用外部知识源的检测方法，以提升对“外部依赖”类句子的识别能力。
+*   <strong>扩展基准多样性:</strong> 将VeriGray的注释框架扩展到更多知识驱动的任务，如检索增强生成（RAG）和数据到文本生成，以构建更全面的评估体系。</p>
+
+<p>总之，该解决方案通过一个创新的框架和基准，为理解和提升大语言模型的生成内容可靠性提供了坚实的理论基础和实用的工具，对高风险应用领域（如医疗、金融）尤为重要。</p>
+
+<h3>实验设计</h3>
+
+<p>实验围绕新提出的VeriGray基准展开：
+- <strong>数据收集与生成</strong>：从FaithBench等来源收集文档，并使用多个最新的LLM（如GPT-5）生成摘要。
+- <strong>人工标注</strong>：由经过培训的标注团队使用新的注释框架和高效标注工具，对生成的2,044个句子进行标注，并通过多轮审核和自动错误检测确保质量。
+- <strong>模型评估</strong>：在VeriGray基准上对多个基线方法（包括传统的检测器和零样本LLM）进行评估，重点分析它们在识别<code>Out-Dependent</code>和<code>Ambiguous</code>等挑战性案例上的表现。
+- <strong>指标分析</strong>：使用平衡准确性（Balanced Accuracy）和F1分数等指标来衡量模型的性能。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li>本文构建的新基准数据集<strong>VeriGray</strong>已公开，包含2,044个句子的注释。</li>
+<li><strong>获取地址</strong>：https://huggingface.co/datasets/Ding-Qiang/veri-gray</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>LLM仍存在不忠实性</strong>：实验发现，即便是当前最先进的LLM（如GPT-5）在摘要任务中仍会产生约6%的幻觉内容。</li>
+<li><strong>零样本LLM表现最佳</strong>：在不忠实性检测任务中，零样本LLM（如GPT-5和DeepSeek-R1）在平衡准确性和F1分数等指标上显著优于其他基线方法。</li>
+<li><strong>核心挑战依然存在</strong>：尽管零样本LLM表现出色，但所有现有的检测方法在识别需要外部知识验证的<strong><code>Out-Dependent</code></strong>案例时都面临重大挑战，表明当前模型在结合外部知识方面仍有很大进步空间。</li>
+<li><strong>新框架的有效性</strong>：实验证明，新的注释框架和标注工具显著提高了标注效率和一致性。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献可以总结为以下几点：
+1.  <strong>提出了一个系统的信度注释框架</strong>：通过引入细粒度的类别（特别是<code>Out-Dependent</code>），明确地标注和解决了现有不忠实性检测中的注释模糊性问题。
+2.  <strong>构建并发布了一个新的基准VeriGray</strong>：为社区提供了一个更客观、更细致的评估工具，以推动不忠实性检测技术的发展。
+3.  <strong>揭示了当前技术的局限性</strong>：通过实验分析发现，即使是最先进的LLM也难以处理需要外部知识验证的不忠实内容，指出了未来研究的关键方向。
+4.  <strong>为提高LLM可靠性提供了新思路</strong>：强调了将外部知识源与检测方法相结合的重要性，并为未来构建更可靠的生成模型提供了实用的见解和方法。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.21118v2" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 14:23:38</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

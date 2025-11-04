@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estonian Native Large Language Model Benchmark</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Estonian Native Large Language Model Benchmark</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Department of Software Science, Tallinn University of Technology, Estonia</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.532</span>
+                <span class="paper-id">arXiv ID: 2510.21193v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.21193v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-31/f663838250043c2f119f601361c857fe221e70e34ef3a6fec43a6013552c5fce.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了首个针对爱沙尼亚语的大型语言模型（LLM）综合评估基准，涵盖七个多样化任务集，解决了低资源语言评估缺乏标准化的问题。通过对6个基础模型和26个指令调优模型的系统评估，验证了基准与人类评估的一致性，并展示了LLM作为自动化评估工具的有效性，推动了爱沙尼亚语及其他低资源语言的NLP研究。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决针对爱沙尼亚语（一种低资源语言）的大型语言模型（LLM）缺乏全面、标准化的评估基准的问题。现有的评估框架大多针对高资源语言，通过翻译创建的基准会引入翻译噪音且缺乏文化相关性，这限制了对LLM在爱沙尼亚语等小语种上性能的准确理解、比较和提升。</p>
+
+<h3>Hypothesis</h3>
+
+<p>通过创建一个专门针对爱沙尼亚语的、经过文化本地化的综合评估基准，可以有效且准确地衡量不同LLM在该语言任务上的真实表现。该基准的评估结果将与人类对模型输出质量的判断高度相关，并且能够揭示语言特定微调对模型性能的提升作用。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li>现有的LLM基准主要集中在高资源语言（如GLUE、SuperGLUE）。</li>
+<li>针对低资源语言的基准研究正在兴起，包括多语言基准（如M-MMLU）和文化适应性基准（如CMMLU）。</li>
+<li>研究借鉴了爱沙尼亚语的本地NLP资源，如Estonian WordNet、Ekilex、语法纠错数据集和新闻数据集。</li>
+<li>相关工作还包括对基础模型与指令调优模型的比较，以及语言特定微调方法的研究。</li>
+</ul>
+
+<h3><strong>针对爱沙尼亚语的大型语言模型综合评估框架</strong></h3>
+
+<p>这篇论文的核心解决方案是为低资源语言（以爱沙尼亚语为例）设计、开发并验证一个全面、可靠的大型语言模型（LLM）评估基准框架。该框架旨在克服传统翻译基准带来的文化偏差和翻译噪声问题，为研究人员和开发者提供一个能够真实反映LLM在爱沙ania语特定任务中表现的工具。</p>
+
+<p>该解决方案的实施包含三个核心部分：<strong>基准的设计与构建</strong>、<strong>多维度的模型评估流程</strong>，以及<strong>评估方法的验证与分析</strong>。</p>
+
+<hr />
+
+<h4><strong>第一部分：基准的设计与构建</strong></h4>
+
+<p>为了确保评估的全面性和真实性，该框架的核心是一个基于七个多样化数据集的基准套件。</p>
+
+<ol>
+<li><p><strong>数据集的多样性与来源</strong>:</p>
+
+<ul>
+<li><strong>内容覆盖</strong>：基准套件涵盖了广泛的评估维度，包括：
+<ul>
+<li><strong>事实与领域知识</strong>：通过爱沙尼亚国家考试（物理、化学、生物等学科）和本土知识问答（Trivia）来测试。</li>
+<li><strong>语言理解与生成</strong>：评估词义辨析、语法纠错、名词和动词的屈折变化能力。</li>
+<li><strong>高级认知能力</strong>：包括长文本摘要生成和从非结构化文本中提取结构化信息（如发言人姓名）。</li>
+</ul></li>
+<li><strong>原生数据</strong>：所有数据集均来自爱沙尼亚本土的原生资料，如官方考试文件和本地知识竞赛题库，完全避免了机器翻译，从而保证了数据的文化相关性和语言的真实性。</li>
+</ul></li>
+<li><p><strong>技术实现与适配</strong>:</p>
+
+<ul>
+<li><strong>数据处理</strong>：原始数据（如PDF格式的考试文件）通过光学字符识别（OCR）进行处理，并被重新结构化为适用于模型评估的格式（如问题、选项、答案的三元组）。</li>
+<li><strong>任务转换</strong>：利用 <code>lm-evaluation-harness</code> 框架，为每个数据集定义了具体的评估“任务”。这包括如何将数据项格式化为模型提示（Prompt）、如何从模型输出中解析答案，以及应采用何种评估指标。</li>
+<li><strong>适配不同模型</strong>：为基础模型（Base LLMs）和指令调优模型（Instruction-tuned LLMs）设计了不同的评估设置。基础模型采用 <strong>5-shot</strong> 设置以提供上下文示例，而指令调优模型则在 <strong>zero-shot</strong> 设置下进行评估，以测试其遵循指令的能力。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第二部分：多维度的模型评估流程</strong></h4>
+
+<p>该框架采用了一种混合评估方法，结合了人类专家评估和自动化评估，以确保结果的准确性和可扩展性。</p>
+
+<ol>
+<li><p><strong>广泛的模型覆盖</strong>:</p>
+
+<ul>
+<li>评估了共计32个模型，包括6个基础模型和26个指令调优模型，涵盖了业界领先的商业闭源模型（如Claude系列）和主流的开源模型（如Gemma、Kimi等）。</li>
+</ul></li>
+<li><p><strong>人类评估流程</strong>:</p>
+
+<ul>
+<li><strong>评估内容</strong>：创建了一套包含47个本地化的开放式问题，这些问题与爱沙尼亚文化高度相关，旨在评估模型在真实场景中的的应用能力。</li>
+<li><strong>评估界面</strong>：开发了一个基于Django的网页界面，评估者以A/B测试的形式对两个匿名模型的回答进行比较，并选择“模型A更好”、“模型B更好”或“两者同样好/差”。</li>
+<li><strong>评估指标</strong>：模型的表现通过<strong>胜率</strong>和<strong>ELO评分</strong>进行量化，以反映模型之间的相对实力。</li>
+</ul></li>
+<li><p><strong>自动化评估（LLM作为评判者）</strong>:</p>
+
+<ul>
+<li><strong>动机</strong>：为了解决人类评估成本高、难以扩展的问题，论文引入了“LLM作为评判者”（LLM-as-a-Judge）的方案。</li>
+<li><strong>模型选择</strong>：选用在基准测试中表现优异的 <strong>Claude 3.7 Sonnet</strong> 作为自动评判者。</li>
+<li><strong>评估协议</strong>：该LLM评判者遵循与人类评估者完全相同的评估指令和标准，对模型的成对输出进行比较判断。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第三部分：评估方法的验证与分析</strong></h4>
+
+<p>解决方案的最后一步是验证整个评估框架的有效性，特别是自动化评估方法与基准任务的可靠性。</p>
+
+<ol>
+<li><p><strong>“LLM作为评判者”的可靠性验证</strong>:</p>
+
+<ul>
+<li>通过比较LLM评判者与人类评估者的判断结果，发现两者之间存在极高的相关性。<strong>Pearson相关系数达到0.94，Spearman相关系数为0.92</strong>，这表明强大的LLM可以作为人类评估者的可靠替代，从而实现大规模、低成本的评估。</li>
+</ul></li>
+<li><p><strong>基准任务与人类偏好的相关性分析</strong>:</p>
+
+<ul>
+<li>论文进一步分析了各个基准任务的得分与人类评估结果（ELO评分）之间的相关性。</li>
+<li>研究发现，基于<strong>爱沙尼亚国家考试</strong>的基准任务得分与人类对模型综合能力的判断<strong>相关性最高</strong>。这不仅验证了该基准任务的有效性，也为未来开发更能反映模型真实能力的基准提供了方向。</li>
+</ul></li>
+<li><p><strong>主要发现与贡献</strong>:</p>
+
+<ul>
+<li><strong>性能洞察</strong>：评估结果显示，顶尖的商业模型在大多数任务中表现优于开源模型，但也发现一些经过特定语言微调的开源模型展现出强大的竞争力。</li>
+<li><strong>核心贡献</strong>：
+<ol>
+<li><strong>填补空白</strong>：建立了首个针对爱沙尼亚语的综合性LLM评估基准。</li>
+<li><strong>提供可靠方法</strong>：验证了“LLM作为评判者”在低资源语言评估中的有效性，为可扩展的评估提供了方案。</li>
+<li><strong>促进研究</strong>：公开发布了基准代码和数据集，旨在推动爱沙尼亚乃至其他低资源语言的自然语言处理研究。</li>
+</ol></li>
+</ul></li>
+</ol>
+
+<h3><strong>总结</strong></h3>
+
+<p>综上所述，该论文提出的解决方案是一个完整且经过严谨验证的评估框架。它不仅仅是创建了一系列数据集，而是通过<strong>精心设计的原生基准</strong>、<strong>结合人类与AI的混合评估流程</strong>以及<strong>深入的相关性分析</strong>，为爱沙尼亚语LLM的性能评估提供了一个系统化、可信赖且可扩展的解决方案，并为其他低资源语言的类似工作树立了典范。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>评估对象</strong>：对6个基础模型和26个指令调优（聊天）模型进行了评估。</li>
+<li><strong>评估设置</strong>：基础模型在5-shot设置下进行评估，而指令调优模型在zero-shot设置下进行。</li>
+<li><strong>评估方法</strong>：除了在七个基准任务上进行自动化评估外，还创建了一个包含47个本地化开放式问题的自定义评估集，通过人类评估员计算模型的胜率和ELO评分，以验证基准与人类偏好的一致性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<p>所有的数据集、代码和评估任务均已公开发布，以促进爱沙尼亚语及其他低资源语言的NLP研究。
+- <strong>代码库</strong>: <a href="https://github.com/taltechnlp/lm-eval-harness-tasks-estonian">https://github.com/taltechnlp/lm-eval-harness-tasks-estonian</a>
+- <strong>数据集</strong>: 数据集均未使用机器翻译，可在Hugging Face平台上的<code>TalTechNLP</code>组织下找到，例如<code>exam_et</code>、<code>trivia_et</code>、<code>grammar_et</code>等。</p>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能表现</strong>：旗舰商业模型（如Gemini 2.5 Pro）在平均性能上表现最佳。大规模开源模型（如Gemma-2 27B和Llama-3 70B）在经过语言特定微调后也表现出强大的竞争力。</li>
+<li><strong>评估一致性</strong>：基准任务的得分与人类评估结果之间存在显著的高度相关性，证明了该基准的有效性。</li>
+<li><strong>LLM作为评判者</strong>：实验表明，Claude 3.7 Sonnet作为自动化评估者，其评分与人类评估者有一致性，可以作为可靠的评估工具。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>填补空白</strong>：提出了首个针对爱沙尼亚语的综合性LLM评估基准，为低资源语言的评估提供了宝贵资源。</li>
+<li><strong>系统评估</strong>：对多种主流开源和商业LLM在爱沙尼亚语上的性能进行了系统性评估和比较，为模型选择和未来研究提供了实证依据。</li>
+<li><strong>验证方法</strong>：证明了本地化基准的重要性，并验证了强大的LLM可作为可靠的自动化评估工具，其结果与人类偏好高度一致。</li>
+<li><strong>促进研究</strong>：通过公开代码和数据集，推动了爱沙尼亚语及其他低资源语言的NLP研究和发展。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.21193v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 14:23:38</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
