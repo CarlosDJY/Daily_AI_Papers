@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modeling Hierarchical Thinking in Large Reasoning Models</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Modeling Hierarchical Thinking in Large Reasoning Models</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of California, Riverside</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.475</span>
+                <span class="paper-id">arXiv ID: 2510.22437v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.22437v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-01/6c0b51fd4de9fd99b4ed85355e0f6a2ca7d191b428231912eeaa7f7918b488db.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种基于有限状态机（FSM）的框架，用于系统性分析大型推理模型（LRMs）的思维链（CoT）推理过程。通过定义离散的推理状态并标注推理轨迹，研究揭示了不同模型在推理策略上的显著差异，提供了一种新的工具来理解和改进LLMs的推理能力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决对大型语言模型（LLMs）或大型推理模型（LRMs）的推理过程，特别是思维链（Chain-of-Thought, CoT）过程，缺乏系统性、结构化理解和分析的问题。尽管LLMs在复杂任务中表现出色，但其内部推理机制仍像一个“黑箱”。理解其推理过程至关重要，因为这有助于提升模型的可解释性、性能、鲁棒性，并指导未来的模型改进。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：<strong>通过将LLMs的CoT推理过程建模为有限状态机（FSM），可以提供一个结构化、可解释的框架来系统性地分析和比较不同模型的推理行为。</strong>
+具体来说：
+- <strong>关键发现</strong>: 不同模型在推理模式上存在显著差异，这些差异可以通过FSM的状态转换和轨迹特征来量化。
+- <strong>初步结论</strong>: 推理轨迹的特征（如长度）与模型在特定任务上的准确性相关。例如，在结构化的数学问题中，更长的推理链与更高的准确性相关；而在开放领域的事实问答中，推理效率（更短的链）可能更重要。
+- <strong>核心假设</strong>: FSM框架能够揭示模型的推理动态，如适应性、不确定性处理和回溯能力，从而区分出高效和低效的推理模式。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>思维链（CoT）推理</strong>: 包括“让我们一步一步思考”等提示策略。</li>
+<li><strong>结构化推理研究</strong>: 如树状思维（Tree-of-Thought）、自我验证（Self-verification）等。</li>
+<li><strong>人类问题解决理论</strong>: 特别是Polya的四步框架，为FSM状态的定义提供了理论参考。</li>
+<li><strong>LLM/LRM性能比较研究</strong>: 对不同模型在复杂推理任务上的表现进行评估。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：基于有限状态机（FSM）框架的大推理模型（LRM）思维过程分析方案</strong></h3>
+
+<p>本论文提出了一种创新的、基于有限状态机（FSM）模型的框架，旨在系统性地分析、解释和可视化大推理模型（LRMs）在解决复杂问题时所展现的层次化思维过程。通过将链式思维（Chain-of-Thought, CoT）的推理轨迹映射为一系列离散状态及其转换，该框架提供了一个结构化、可量化且模型无关的工具，用于深入理解不同模型的推理行为、识别其优缺点，并为优化其性能提供指导。</p>
+
+<h4><strong>一、 FSM框架的核心构成</strong></h4>
+
+<p>该框架的核心思想是将复杂的推理过程分解为一小组定义明确的离散状态。论文识别并定义了六个核心推理状态，这些状态捕捉了模型从接收问题到得出结论的完整思维周期。</p>
+
+<ol>
+<li><p><strong>初始化（init）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 在正式开始解决问题之前，对任务进行初步的解析、重述或澄清。</li>
+<li><strong>过程</strong>: 模型通常会复述问题、设定解题框架或声明将要使用的方法论，为后续推理奠定基础。</li>
+</ul></li>
+<li><p><strong>推导（deduce）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 基于已知信息进行逻辑推演、数学计算或逐步推理。</li>
+<li><strong>过程</strong>: 模型执行核心的推理步骤，从前提出发得出中间结论或最终结论。</li>
+</ul></li>
+<li><p><strong>增强策略（augment）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 当直接推导遇到困难或信息不足时，模型会调用辅助策略来加强或扩展推理路径。此状态可进一步细分为：
+<ul>
+<li><strong>增加知识（augment-fact）</strong>: 引入外部知识或回忆模型内部的、但提示中未明确给出的事实。</li>
+<li><strong>示例测试（augment-test）</strong>: 通过具体例子或测试用例来验证假设或获得见解。</li>
+<li><strong>探索替代路径（augment-branch）</strong>: 考虑并探索不同的解题思路或方向。</li>
+<li><strong>规划解决方案（augment-plan）</strong>: 制定一个高层次的、分步骤的解决方案计划。</li>
+<li><strong>精细化策略（augment-refine）</strong>: 进行自我反思、自我检查或对计算过程进行验证。</li>
+<li><strong>突现策略（augment-emerge）</strong>: 采用其他无法归入上述类别的创新策略。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>不确定性评估（uncertain）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 明确表达对当前推理步骤的怀疑、困惑或信心不足。</li>
+<li><strong>过程</strong>: 模型可能会承认信息缺失、问题模糊或对当前推论不确定，这通常是触发回溯或寻求增强策略的前兆。</li>
+</ul></li>
+<li><p><strong>回溯（backtrack）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 修正错误，重新审视之前的步骤、假设或计算。</li>
+<li><strong>过程</strong>: 当模型意识到之前的路径可能错误时，会返回到某个较早的推理节点，标志着推理过程的重大调整。</li>
+</ul></li>
+<li><p><strong>最终结论（closure）</strong>:</p>
+
+<ul>
+<li><strong>目的</strong>: 完成整个推理过程，并给出明确、简洁的最终答案。</li>
+<li><strong>过程</strong>: 模型总结其发现，并以最终形式输出结果。</li>
+</ul></li>
+</ol>
+
+<h4><strong>二、 方法论与实现过程</strong></h4>
+
+<p>为了将理论框架应用于实际分析，论文提出了一套系统化的实现流程：</p>
+
+<ol>
+<li><p><strong>CoT推理生成与自动标注</strong>:</p>
+
+<ul>
+<li>首先，使用前沿的开放推理模型（如Qwen3-4B-Thinking）在标准基准（如AIME 25和GPQA Diamond）上生成链式思维（CoT）推理文本。</li>
+<li>接着，利用基于LLM（如GPT-4o-mini）的自动标注方法，对生成的文本进行句子级或段落级的分割，并为每个片段分配上述六种推理状态标签之一。输出格式为 <code>["label"] &lt;合并段落文本&gt; ["end"]</code>，确保结构清晰。</li>
+</ul></li>
+<li><p><strong>构建数据集级FSM进行量化分析</strong>:</p>
+
+<ul>
+<li>为了从宏观层面分析模型的整体行为，论文通过聚合所有推理链的标注数据来构建数据集级的FSM。主要通过以下三个指标进行量化：
+<ul>
+<li><strong>状态频率 (State Frequency)</strong>: 计算每个状态在所有推理链中出现的平均归一化频率，以反映不同推理行为的普遍性。</li>
+<li><strong>状态转移概率矩阵 (Transition Probability Matrix)</strong>: 计算从一个状态转移到另一个状态的概率，捕捉模型在不同思维阶段之间切换的全局动态和倾向。</li>
+<li><strong>平均FSM长度 (Average FSM Length)</strong>: 计算所有推理链中状态数量的平均值，作为模型推理深度和复杂性的一个代理指标。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<h4><strong>三、 分析与发现</strong></h4>
+
+<p>通过上述方法，研究者能够对模型的推理路径（即状态序列）进行深入分析，并得出重要发现：</p>
+
+<ul>
+<li><strong>推理路径与准确率的关系</strong>: 在结构化数学问题上，更长的FSM轨迹（意味着更深入的思考和迭代）与高准确率显著相关。然而，对于开放领域的事实知识任务，过长的推理可能引入冗余信息，反而导致效率和准确率下降。</li>
+<li><strong>高性能模型的推理特征</strong>: 高性能模型（如Qwen3-4B-Thinking）通常展现出更复杂的推理模式，它们结合了持续的<strong>推导</strong>、定期的<strong>不确定性评估</strong>和必要的<strong>回溯</strong>。相比之下，性能较弱的模型倾向于进行较短、较线性的推理，缺乏自我修正和深度探索的能力。</li>
+<li><strong>有效的推理依赖于适应性调节</strong>: 论文强调，有效的推理不仅取决于推理链的长度，更关键的是模型根据任务需求自适应地调节状态转换的能力，这种能力支持了迭代改进和稳定收敛。</li>
+<li><strong>推理的逻辑约束</strong>: 分析发现了一些常见的转移模式和约束，例如，<strong>回溯</strong>后通常会紧跟<strong>推导</strong>或<strong>增强</strong>来修正路径；而从<strong>不确定</strong>直接跳到<strong>最终结论</strong>的罕见转移通常与较低的答案正确性相关。</li>
+</ul>
+
+<h4><strong>四、 应用价值与贡献</strong></h4>
+
+<p>该FSM框架不仅是一个分析工具，更具有广泛的应用潜力和重要贡献：</p>
+
+<ul>
+<li><strong>模型分析与比较</strong>: 提供了一个统一的、可解释的基准，用于系统地比较不同模型在推理策略、自我修正能力和不确定性管理上的差异。</li>
+<li><strong>错误定位与训练反馈</strong>: 通过识别无效或低效的状态序列（如陷入“增强-不确定”的死循环），可以系统性地诊断推理失败的原因，并为模型的课程学习（curriculum learning）或奖励塑造（reward shaping）提供结构化反馈。</li>
+<li><strong>推理可控性与编辑</strong>: FSM的抽象视图允许外部系统引导模型朝向更有效的推理模式，甚至可以用于自动化的推理编辑和验证，如修剪低效路径或强制执行状态约束。</li>
+<li><strong>缓解“过度思考”问题</strong>: 通过分析FSM轨迹，可以识别出得出正确答案所需的核心状态序列，并修剪冗余的思考步骤，为解决模型的“过度思考”问题提供了新思路。</li>
+<li><strong>迁移学习与鲁棒性</strong>: FSM轨迹可作为任务无关的紧凑推理特征，用于跨领域迁移学习，并帮助检测对抗性攻击中出现的异常推理模式。</li>
+</ul>
+
+<h4><strong>五、 局限性与未来展望</strong></h4>
+
+<p>尽管该框架功能强大，但仍存在一些局限性，如推理过程的离散化可能忽略连续的上下文信息，以及基于LLM的自动标注可能引入噪声。未来的工作可以探索自适应的状态发现、跨领域的框架校准，以及与人类认知对齐的验证，以进一步增强该框架的鲁棒性和可解释性。</p>
+
+<h4><strong>总结</strong></h4>
+
+<p>综上所述，本论文提出的基于有限状态机（FSM）的解决方案，为理解和优化大型推理模型的复杂思维过程提供了一个强大而新颖的分析框架。它通过将抽象的推理过程转化为结构化、可量化的状态模型，不仅揭示了不同模型推理能力的内在差异，还为未来设计更高效、更可控、更具鲁棒性的智能系统指明了方向。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型</strong>: 实验比较了多个先进的推理模型，包括Qwen3-4B-Thinking、Phi-4-reasoning和gpt-oss-20b。</li>
+<li><strong>数据集</strong>: 在两个不同类型的基准数据集上进行评估：
+<ul>
+<li><strong>AIME 25</strong>: 一个包含复杂数学问题的结构化推理任务集。</li>
+<li><strong>GPQA Diamond</strong>: 一个包含挑战性科学问题的开放领域事实知识任务集。</li>
+</ul></li>
+<li><strong>方法</strong>:
+<ol>
+<li>让各模型在上述数据集上生成CoT推理。</li>
+<li>使用一个强大的LLM（如OpenAI GPT-4o-mini）对生成的推理文本进行自动化的状态标注。</li>
+<li>计算并分析数据集层面的FSM结构（如状态转移矩阵），并将FSM特征（如轨迹长度）与模型的最终准确性进行关联分析。</li>
+</ol></li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验使用了 <strong>AIME 25</strong> 和 <strong>GPQA Diamond</strong> 基准数据集。</li>
+<li><strong>代码</strong>: 提供的论文片段中<strong>未提及</strong>代码是否公开。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>任务依赖性</strong>: FSM轨迹的长度与模型性能的关系因任务而异。在AIME 25（数学）上，更长的轨迹与更高的准确性强相关；而在GPQA Diamond（事实知识）上，推理效率和紧凑性更为重要。</li>
+<li><strong>模型差异</strong>: 高性能模型（如Phi-4-reasoning）表现出更强的适应性，能有效地结合推导、不确定性评估和回溯来修正推理路径。而较弱的模型则倾向于采用更线性、僵化的推理路径，或过早地结束推理。</li>
+<li><strong>FSM有效性</strong>: FSM框架成功地捕捉并量化了不同模型的推理行为模式，验证了该框架作为分析工具的有效性。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了一个新颖的FSM框架</strong>，为系统性地建模、分析和解释LLMs的CoT推理过程提供了一种统一、结构化的方法。</li>
+<li><strong>揭示了模型推理策略与任务类型的关系</strong>，证明了有效的推理模式（如深度探索 vs. 高效简洁）是依赖于具体任务的。</li>
+<li><strong>提供了定量的分析工具</strong>，通过FSM特征（状态分布、转移概率等）来比较不同模型的推理能力和风格，为理解、调试和改进LLMs的推理能力提供了新的视角和实证依据。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.22437v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 15:59:44</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
