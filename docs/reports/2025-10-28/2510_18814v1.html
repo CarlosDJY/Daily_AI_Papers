@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online SFT for LLM Reasoning: Surprising Effectiveness of Self-Tuning without Rewards</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Online SFT for LLM Reasoning: Surprising Effectiveness of Self-Tuning without Rewards</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> The Chinese University of Hong Kong, Shenzhen, Shanghai Jiao Tong University, The Chinese University of Hong Kong</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.513</span>
+                <span class="paper-id">arXiv ID: 2510.18814v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.18814v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-28/1897146b51668a7368a101752367cfde5c63b20b086508179532e0c79cb1e906.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为在线自助监督微调（OSFT）的方法，旨在提高大语言模型（LLM）在数学推理任务中的训练效率和性能。OSFT通过模型自生成数据进行无奖励的微调，显著降低了训练成本，并在多个基准测试中表现出与复杂强化学习方法相当的效果。该方法的关键在于解耦采样和训练温度，从而优化学习信号，增强推理能力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <p>好的，我已经阅读并整合了您提供的所有论文片段。其中一个片段（关于数学表达式 2 · 3 · 4 · 5 + 1）与其余片段的主题（关于大语言模型的OSFT方法）无关，因此在最终总结中已被忽略。</p>
+
+<p>以下是根据相关论文片段整合而成的最终总结：</p>
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决大语言模型（LLM）在推理任务（尤其是在数学领域）中的训练效率和性能瓶颈问题。现有的强化学习方法（如RLVR、GRPO）虽然有效，但通常依赖于复杂的、可验证的奖励信号，导致训练成本高昂。此外，LLM在生成过程中存在路径选择的不确定性，且标准的训练策略（如耦合的温度设置）可能导致梯度更新带有噪声，从而影响学习效果。因此，开发一种更简单、高效且无需奖励信号的训练策略至关重要。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：一种名为<strong>在线自助监督微调（Online Self-supervised Fine-tuning, OSFT）</strong>的简单、无奖励的训练方法，能够通过利用模型自生成的数据来强化其固有的知识和偏好，从而有效提升LLM的推理能力，并达到与复杂强化学习方法（如GRPO）相当甚至更优的性能。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>强化学习方法</strong>：特别是基于可验证奖励的变体（RLVR），如GRPO、PPO、DAPO和Dr. GRPO。</li>
+<li><strong>自我提升/自我调节方法</strong>：如STaR（Self-Taught Reasoner）和Self-Instruct。</li>
+<li><strong>对齐方法</strong>：如对比对齐（DPO）和人类反馈强化学习（RLHF）。</li>
+<li><strong>标准监督微调（SFT）</strong>：在推理数据上的应用。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>根据您提供的论文片段，核心解决方案是一种名为<strong>在线自助监督微調（Online Supervised Fine-Tuning, OSFT）</strong>的新颖训练范式。该方法旨在通过一种简单、高效且无需奖励（reward-free）的自助学习策略，显著提升大型语言模型（LLM）在复杂推理任务（尤其是在数学领域）中的能力。</p>
+
+<p>以下是该解决方案的详细整合解释：</p>
+
+<h4><strong>一、 核心理念与目标</strong></h4>
+
+<p>OSFT的核心思想是让模型利用其在预训练阶段学到的现有知识和偏好，通过<strong>自我生成响应</strong>并<strong>立即在这些数据上进行微调</strong>来强化这些能力。这种“自我弱变强”的现象，使得模型无需外部奖励信号或复杂的人工标注数据即可实现性能的自我提升。</p>
+
+<p><strong>主要目标：</strong>
+*   <strong>提升推理能力：</strong> 专门针对复杂的数学推理等任务，提高模型的准确性和逻辑连贯性。
+*   <strong>简化训练流程：</strong> 提出一种无奖励的自助算法，避免了传统强化学习（RL）方法中对复杂奖励模型（reward model）和验证机制的依赖，从而降低计算成本和训练复杂度。
+*   <strong>提高训练效率：</strong> 默认情况下，该方法仅需一次生成（single rollout），大大提升了训练的效率。</p>
+
+<h4><strong>二、 核心机制与流程</strong></h4>
+
+<p>OSFT的实现主要包含两个关键步骤：自数据生成和监督微调，其成功关键在于对这两个阶段中“温度”参数的解耦设置。</p>
+
+<p><strong>1. 自数据生成（Self-Data Generation）</strong>
+   - 模型从训练数据集中抽取问题（query），然后利用自身能力生成相应的解答或推理路径（response）。
+   - 在此阶段，模型使用一个<strong>较低的采样温度（τs）</strong>，例如 <code>τs = 0.6</code>。低温度会降低生成过程的随机性，鼓励模型输出更具确定性和更高置信度的内容，从而生成相对稳定和高质量的训练样本。</p>
+
+<p><strong>2. 监督微调（Supervised Fine-Tuning, SFT）</strong>
+   - 模型将上一步中自生成的“问题-答案”对作为新的训练数据。
+   - 立即在这些新数据上执行标准的监督微调（SFT）来更新自身参数。
+   - 在微调阶段，采用一个<strong>较高的训练温度（τt）</strong>，通常<code>τt = 1</code>。较高的温度有助于在训练时生成更多样化的输出，从而提高模型的适应性和泛化能力。</p>
+
+<h4><strong>三、 关键技术：温度解耦（Temperature Decoupling）</strong></h4>
+
+<p>OSFT最核心的创新之一是<strong>采样温度（τs）和训练温度（τt）的解耦</strong>。</p>
+
+<ul>
+<li><strong>机制：</strong> 保证采样温度低于训练温度（<strong>τs &lt; τt</strong>）。</li>
+<li><strong>原理：</strong> 这种设置能够为模型提供一个<strong>稳定的学习信号</strong>。如果 <code>τt = τs</code>，学习信号会退化为随机梯度噪声，导致模型无法有效学习。通过使用较低的<code>τs</code>生成确定性更高的数据，并使用较高的<code>τt</code>进行微调，模型可以在一个稳定的分布上进行学习，从而避免了学习信号的破坏。</li>
+<li><strong>损失函数：</strong> 该机制体现在其损失函数中，即负对数似然损失：
+$$L<em>{OSFT} = -E</em>{q\sim D, o\sim \pi<em>{old}(\cdot|q;\tau</em>s)}[\log \pi<em>{\theta}(o | q; \tau</em>t)]$$
+这个公式清晰地展示了模型在旧策略（低采样温度<code>τs</code>）生成的分布上，通过新策略（训练温度<code>τt</code>）进行学习的过程。</li>
+</ul>
+
+<h4><strong>四、 性能提升原理：强化已有偏好</strong></h4>
+
+<p>OSFT的成功并非因为它向模型注入了新的数学知识，而是通过<strong>重新对齐和强化模型已有的潜在知识</strong>。</p>
+
+<ul>
+<li><strong>调整路径偏好：</strong> 训练过程系统性地强化了模型对高质量推理路径（或称为“生成前缀”）的偏好。实验表明，OSFT能显著提高模型对正确推理路径的生成概率，同时拉大与次优路径之间的概率差距。</li>
+<li><strong>减少不确定性：</strong> 通过强化对正确路径的偏好，模型在推理过程中的不确定性降低。这可以通过<strong>困惑度（Perplexity, PPL）</strong>来衡量，OSFT训练后的模型在基准测试上的困惑度显著降低，表明其对正确推理路径的确定性更高。</li>
+</ul>
+
+<h4><strong>五、 优势与性能对比</strong></h4>
+
+<ul>
+<li><strong>简单高效：</strong> 相比于需要复杂奖励机制和多次采样的强化学习方法（如GRPO、DPO等），OSFT流程简单，计算效率高。</li>
+<li><strong>性能卓越：</strong> 大量实验证明，OSFT在多个数学推理基准测试（如MATH-500、Olympiad）上，其性能与更复杂的基于可验证奖励的强化学习（RLVR）方法（如GRPO）相当，甚至在某些情况下表现更优。</li>
+<li><strong>数据高效：</strong> 实验还探讨了自生成样本数量（G）的影响，发现即使在<code>G=1</code>（每个问题只生成一个样本）的高效设置下，OSFT也能取得优异表现。增加样本数量（如<code>G=4</code>）可以进一步提升某些指标（如pass@1）的性能。</li>
+</ul>
+
+<h4><strong>总结</strong></h4>
+
+<p><strong>在线自助监督微调（OSFT）</strong> 提供了一种创新、简单且高效的范式来提升大型语言模型的推理能力。其核心在于通过<strong>温度解耦（τs &lt; τt）</strong>的机制，让模型在<strong>低温度下生成自信的响应</strong>，并立即<strong>在这些自生成的数据上进行高温度的监督微调</strong>。这种无奖励的自助学习方法能够有效强化模型已有的知识偏好，降低推理的不确定性，最终在复杂的数学推理任务上取得了与复杂强化学习方法相媲美的性能，为未来LLM的自我优化和能力提升开辟了新的方向。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>对比基线</strong>：将OSFT的性能与强大的强化学习基线（主要是GRPO）进行广泛比较。</li>
+<li><strong>模型</strong>：实验在多种模型上进行，包括Qwen系列（如Qwen2.5-7B, Qwen2.5-Math-7B）和Llama。</li>
+<li><strong>评估任务</strong>：在多个公开的数学推理基准上进行评估，如MATH-500、AMC、Olympiad、Minerva以及DeepSclaR数据集中的任务。</li>
+<li><strong>分析方法</strong>：进行消融研究，以验证OSFT中关键组件（如解耦温度设置、自生成样本数量）的有效性和鲁棒性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>代码</strong>：已在GitHub上公开：<a href="https://github.com/ElementQi/OnlineSFT">https://github.com/ElementQi/OnlineSFT</a></li>
+<li><strong>数据集</strong>：实验主要使用了DeepSclaR数据集以及多个数学推理基准（Math500、AMC等）。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能相当</strong>：实验结果表明，OSFT在多个数学推理基准测试中，其性能与更复杂的RLVR方法（GRPO）相当，甚至在某些情况下表现更优。</li>
+<li><strong>超越基线</strong>：OSFT显著优于未经过微调的基础模型。</li>
+<li><strong>高效稳健</strong>：该方法被证明是高效且鲁棒的，尤其是在仅使用一个自生成样本（G=1）时，能有效提升时间效率。</li>
+<li><strong>降低不确定性</strong>：OSFT能有效降低模型在生成路径选择上的不确定性，增强对优质推理路径的偏好。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出OSFT方法</strong>：引入了一种新颖、简单且高效的无奖励训练范式（OSFT），为提升LLM的推理能力提供了一种有效的替代方案。</li>
+<li><strong>验证有效性</strong>：通过大量实验证明，OSFT能够在无需外部奖励信号的情况下，达到与复杂强化学习方法相媲美的性能。</li>
+<li><strong>提供新思路</strong>：提出了通过解耦采样和训练温度来优化学习信号的方法，为LLM的训练动态提供了新的见解和思路。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.18814v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 15:08:45</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

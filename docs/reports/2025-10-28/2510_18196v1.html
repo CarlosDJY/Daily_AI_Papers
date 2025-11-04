@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrastive Decoding Mitigates Score Range Bias in LLM-as-a-Judge</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Contrastive Decoding Mitigates Score Range Bias in LLM-as-a-Judge</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Cantina Labs</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.494</span>
+                <span class="paper-id">arXiv ID: 2510.18196v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.18196v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-28/d144f2dd9cf38f93a428909fc64a3637be92cc1b1a23b90edb2fe4684cc5aca9.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种对比解码方法，以解决大型语言模型（LLMs）在直接评估任务中存在的评分范围偏差问题。通过调整主模型与助手模型的输出，该方法显著提高了LLM评分与人类判断的一致性，实验结果显示Spearman相关性平均提升11.3%。此研究为LLM在自动化评估中的应用提供了有效的解决方案。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在作为评估者时所面临的<strong>评分范围偏差（Scoring Range Bias）</strong>问题。具体来说，LLM在进行直接评估任务（如摘要质量评分）时，其输出的评分对预定义的评分范围高度敏感，并且不同模型家族（如Llama和Qwen）会表现出对特定分数的偏好（例如，Llama倾向于输出高分，Qwen倾向于输出低分）。这导致了LLM评判的可靠性和一致性降低，限制了其作为自动化评估工具的有效性。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>: 通过采用<strong>对比解码（Contrastive Decoding）</strong>技术，可以有效缓解或消除LLM内部存在的评分范围偏差，从而使其评分结果更接近人类的判断，提高评估的可靠性。</li>
+<li><strong>关键发现</strong>: LLM作为评估者时，评分范围偏差是一种普遍存在的现象，贯穿于不同的模型家族和模型规模。</li>
+<li><strong>实验验证</strong>: 实验表明，应用对比解码后，LLM评分与人类评判的<strong>Spearman相关性平均提升了11.3%</strong>，证明该方法能显著提升评估的一致性。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>LLM评估任务</strong>: 直接评估与成对评估（Liu et al., 2023; Zheng et al., 2023）。</li>
+<li><strong>模型偏见</strong>: 自我增强偏差及家族增强偏差（Goel et al., 2025）。</li>
+<li><strong>评估基准</strong>: SummEval基准（Fabbri et al., 2021）、TruthfulQA、G-eval。</li>
+<li><strong>传统评估指标</strong>: ROUGE、BLEU等方法的局限性。</li>
+<li><strong>评分理论</strong>: Likert量表（Likert, 1932）。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>一个完整的详细解决方案：通过对比解码缓解LLM评估者的得分范围偏差</strong></h3>
+
+<p>本文提出的核心解决方案是采用一种名为<strong>对比解码（Contrastive Decoding）</strong>的技术，来解决大型语言模型（LLM）在作为自动评估工具时出现的<strong>得分范围偏差（Score Range Bias）</strong>问题。该方法通过一个主模型和一个辅助模型的协同工作，显著提高了评估结果与人类判断的一致性。</p>
+
+<h4><strong>1. 问题背景：大型语言模型（LLM）评估中的得分范围偏差</strong></h4>
+
+<p>在使用大型语言模型（如Llama和Qwen系列）对文本生成质量（例如新闻摘要）进行直接评分时，研究人员发现了一个显著的问题：<strong>模型倾向于在评分时偏爱特定的分数值</strong>。</p>
+
+<ul>
+<li><strong>具体表现</strong>：例如，Llama家族的模型在评分时普遍倾向于给出4分，而Qwen家族的模型则更倾向于给出2分。</li>
+<li><strong>负面影响</strong>：这种固有的偏差导致模型的评分结果与人类评估者的评分标准相关性降低，从而影响了自动评估系统的可靠性和公平性。</li>
+</ul>
+
+<p>为了解决这一问题，论文引入了对比解码技术。</p>
+
+<h4><strong>2. 核心解决方案：对比解码 (Contrastive Decoding)</strong></h4>
+
+<p>对比解码是一种新颖的解码策略，其核心思想是在生成评分结果的过程中，利用一个<strong>辅助模型（assistant model）</strong>来修正<strong>主模型（main model）</strong>的输出，从而抵消其固有的评分偏差。</p>
+
+<p><strong>主要目的：</strong>
+- <strong>缓解得分范围偏差</strong>：通过校准模型的输出概率分布，减少其对特定分数的偏爱。
+- <strong>提高与人类判断的一致性</strong>：使调整后的评分结果更接近人类评估者的标准，从而提升评估的有效性。</p>
+
+<h4><strong>3. 对比解码的详细机制</strong></h4>
+
+<p>该方法的实现流程如下：</p>
+
+<p><strong>a. 模型选择与设置</strong>
+- <strong>主模型 (Main Model)</strong>：用于生成初步评分的LLM。
+- <strong>辅助模型 (Assistant Model)</strong>：通常选择一个与主模型同属一个家族但规模较小的模型。其作用是提供一个“偏差参考”，因为同家族的模型往往具有相似的偏差倾向。</p>
+
+<p><strong>b. 数学过程与得分调整</strong>
+对比解码通过一个精简的公式来调整最终的输出分数。系统会计算主模型输出某个分数的概率 $p<em>{main}$ 和辅助模型输出同一分数的概率 $p</em>{asst}$，然后通过以下公式得出最终分数：</p>
+
+<p>$$
+\text{final score} = \log p<em>{main} - \lambda \log p</em>{asst}
+$$</p>
+
+<ul>
+<li><strong>超参数 $\lambda$ (缩放常数)</strong>：这是一个关键的超参数，用于控制辅助模型对最终结果的“惩罚”或影响程度。通过网格搜索（例如在 <code>[0.01, 0.1, 0.5, 1.0]</code> 范围内）可以找到最优值。</li>
+<li><strong>超参数 $t$ (温度)</strong>：为了使辅助模型的输出概率分布更平滑，避免过于尖锐的惩罚，通常会使用一个温度参数 $t &gt; 0$ 来调节 $p_{asst}$ 的分布。温度的搜索范围可以是 <code>[0.5, 1.0, 2.0, 3.0, 4.0, 5.0]</code>。</li>
+</ul>
+
+<p>这个过程的巧妙之处在于，如果主模型和辅助模型都对某个分数有很强的偏好（即 $p<em>{main}$ 和 $p</em>{asst}$ 都很高），那么辅助模型的项 $\lambda \log p_{asst}$ 就会抵消掉主模型的部分偏差，从而使评分更加客观。</p>
+
+<h4><strong>4. 应用场景：基于JudgeLM的新闻摘要评估</strong></h4>
+
+<p>论文将此方法具体应用在一个名为 <strong>JudgeLM</strong> 的微调模型上，用于评估新闻摘要的质量。</p>
+
+<p><strong>a. 评估标准</strong>
+JudgeLM依据三个核心维度对摘要进行评分：
+1.  <strong>连贯性 (Coherence)</strong>：评估摘要的逻辑结构和组织是否清晰。
+2.  <strong>相关性 (Relevance)</strong>：评估摘要是否抓住了原文的核心信息，避免冗余。
+3.  <strong>一致性 (Consistency)</strong>：评估摘要中的信息是否与原文事实相符，没有捏造。</p>
+
+<p><strong>b. 评估流程</strong>
+1.  <strong>阅读与识别</strong>：模型首先阅读原文，识别其主题和关键点。
+2.  <strong>比较与分析</strong>：接着，模型阅读摘要，并与原文进行对比，检查其是否覆盖了关键信息。
+3.  <strong>评分生成</strong>：最后，模型为上述三个维度分别生成评分（例如，在1-5或2-6的范围内），在这个评分生成步骤中应用<strong>对比解码</strong>技术来校准结果。</p>
+
+<h4><strong>5. 解决方案的优势与成果</strong></h4>
+
+<ul>
+<li><strong>有效消除模型偏差</strong>：通过抵消来自同一模型家族的相似偏差，显著减少了评分的偏见。</li>
+<li><strong>提升与人类评估的一致性</strong>：实验结果表明，经过对比解码调整后的评分，其与人类评分的皮尔逊相关性（Pearson correlation）最高可获得 <strong>11.3%</strong> 的相对改善。</li>
+<li><strong>增强评估的可靠性与稳健性</strong>：校准后的模型在不同的评分范围内（如1-5和2-6）都表现出更高的一致性和相关性。</li>
+<li><strong>适应性强</strong>：该技术可灵活应用于不同的LLM家族（如Llama和Qwen），具备良好的扩展性。</li>
+</ul>
+
+<h4><strong>6. 实现细节与局限性</strong></h4>
+
+<ul>
+<li><strong>计算成本</strong>：对比解码需要在测试时运行两个模型的前向传播，这会增加一定的计算开销。但通过选择一个较小的辅助模型，可以在效果和效率之间取得平衡。</li>
+<li><strong>模型规模</strong>：论文中的实验主要在14B参数规模以下的模型上进行，其在更大规模模型上的效果有待进一步研究。</li>
+</ul>
+
+<h3><strong>总结</strong></h3>
+
+<p>综上所述，该论文提出的解决方案通过<strong>对比解码</strong>技术，巧妙地利用主模型和辅助模型之间的协同作用，有效缓解了大型语言模型作为评估者时存在的<strong>得分范围偏差</strong>。该方法不仅在理论上具有创新性，并且在<strong>JudgeLM</strong>评估新闻摘要的具体应用中取得了显著成效，为构建更可靠、更公平的自动化文本评估系统提供了新的思路和强大的工具。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>任务</strong>: 聚焦于文本摘要质量评估任务，评估其一致性、相关性和连贯性。</li>
+<li><strong>模型</strong>: 使用了两个主流模型家族进行实验，包括<strong>Llama-3</strong>和<strong>Qwen-2.5</strong>系列。</li>
+<li><strong>方法</strong>:
+<ol>
+<li>在多个不同的评分范围（如0-4, 1-5, 2-6）下进行实验，以验证偏差的存在和解决方案的鲁棒性。</li>
+<li>对比了标准贪婪解码与对比解码两种策略下的评估结果。</li>
+</ol></li>
+<li><strong>评估指标</strong>: 使用<strong>Pearson、Spearman和Kendall相关系数</strong>来衡量LLM评分与人类专家评分之间的一致性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验主要使用了<strong>SummEval</strong>数据集，该数据集包含100篇新闻文章和1600个带有高质量人类评分的摘要。</li>
+<li><strong>代码</strong>: 论文片段中<strong>未提供</strong>代码的公开链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+- 使用对比解码后，LLM在所有测试的评分范围下，其评分与人类评分的相关性均得到<strong>显著提高</strong>。
+- 对比解码使得模型的评分分布更接近人类的评分分布，表现也更加稳定和鲁棒。
+- 结果表明，该方法能有效缓解不同模型家族固有的评分偏好。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>揭示并系统性地分析了</strong>LLM作为评估者时存在的<strong>评分范围偏差</strong>问题。</li>
+<li><strong>提出并验证了</strong>将<strong>对比解码</strong>作为一种有效缓解该偏差的策略，显著提升了LLM评估的可靠性和与人类判断的一致性。</li>
+<li>为提高LLM在自动化评估任务中的应用效果提供了新的视角和实用的方法论。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.18196v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 15:08:45</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

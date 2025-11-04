@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>See the Text: From Tokenization to Visual Reading</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>See the Text: From Tokenization to Visual Reading</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Nanjing University of Science and Technology, Central South University, Nanjing Forestry University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.481</span>
+                <span class="paper-id">arXiv ID: 2510.18840v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.18840v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-28/ff8311a8f2062e060acb4c7edb0b71cf7a86d07bf1a6e843c88833096839411f.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为SeeTok的视觉中心标记化方法，通过将文本渲染为图像并利用预训练的多模态语言模型进行处理，有效解决了传统子词标记化在低资源语言和视觉文本理解中的局限性。SeeTok显著减少了所需标记数量和计算量，同时提升了模型的鲁棒性和跨语言性能，标志着向更自然的语言处理方式的转变。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决现代大型语言模型（LLMs），特别是多模态大语言模型（MLLMs），中传统文本标记化方法（如子词标记化）的多种局限性。这些问题在多语言处理和视觉文本交互场景下尤为突出：
+- <strong>低资源语言处理不佳</strong>：传统标记化方法对高资源语言存在偏见，导致对低资源语言的文本过度分割，处理效率和效果均不理想。
+- <strong>鲁棒性差</strong>：模型对输入文本的微小扰动（如拼写错误、不同字体、字符或词级噪声）非常敏感，导致性能不稳定。
+- <strong>视觉文本理解能力弱</strong>：当指令或文本以图像形式（视觉文本）呈现时，MLLMs的理解和推理能力会显著下降。
+- <strong>效率低下</strong>：处理视觉文本或长文本时，生成的标记数量过多，导致计算成本（FLOPs）和延迟增加。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过一种名为SEETOK的视觉中心标记化方法，即<strong>将文本渲染成图像并由视觉编码器处理</strong>，可以有效克服传统文本标记化的局限性。具体假设包括：
+- SEETOK能够以更少的标记数和计算量，达到甚至超越传统文本标记化方法的性能。
+- 这种视觉方法具有语言无关性，能显著提升模型在多语言（尤其是低资源语言）任务上的通用性和翻译质量。
+- SEETOK能增强模型对拼写错误、视觉噪声等各类扰动的鲁棒性。
+- 通过对视觉文本指令进行微调，可以显著提升MLLMs理解和执行视觉形式指令的能力。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在以下几个领域之上：
+- <strong>文本标记化技术</strong>：包括传统的字符级、单词级和子词级（如BPE）标记化方法。
+- <strong>视觉文本处理模型</strong>：借鉴了如PIXEL、CLIPPO等通过处理文本图像来提升多语言性能和鲁棒性的方法。
+- <strong>多模态大语言模型（MLLMs）</strong>：基于Qwen2.5-VL、JanusPro等现有MLLMs的OCR和图文理解能力。
+- <strong>模型微调技术</strong>：利用低秩适配（LoRA）等高效微调方法，在不进行全面微调的情况下，使模型适应新的任务。</p>
+
+<h3><strong>完整解决方案：SEETOK - 一种基于视觉的文本标记化方法</strong></h3>
+
+<p>根据论文摘要，SEETOK是一种创新的、以视觉为中心的文本标记化（Vision-Centric Tokenization）方法。它旨在克服传统子词（subword）标记化技术在处理多语言（尤其是低资源语言）、文本噪声和计算效率方面的局re限。其核心思想是模仿人类的视觉阅读过程：将文本渲染成图像，然后利用强大的多模态大型语言模型（MLLM）来直接“看”和理解文本。</p>
+
+<h4><strong>一、 核心理念与目标</strong></h4>
+
+<p>传统文本标记化方法将文本分解为离散的符号（子词），这种方式存在几个问题：
+1.  <strong>语言偏见</strong>：词汇表通常偏向于高资源语言（如英语），导致低资源语言的文本被过度分割成非常小的单元。
+2.  <strong>效率低下</strong>：过度分割会产生很长的标记序列，增加了模型的计算负担（尤其是自注意力机制的二次复杂度）。
+3.  <strong>鲁棒性差</strong>：对拼写错误、字符级别的噪声等微小扰动非常敏感。
+4.  <strong>信息丢失</strong>：破坏了单词的视觉和层次结构。</p>
+
+<p>SEETOK通过将文本视为连续的视觉模式而非离散符号来解决这些问题，其主要目标包括：
+*   <strong>提高效率</strong>：显著减少输入序列的标记长度，降低计算成本和延迟。
+*   <strong>增强跨语言能力</strong>：以语言无关的方式处理文本，公平地对待所有语言。
+*   <strong>提升鲁棒性</strong>：减少对输入扰动和噪声的敏感性。
+*   <strong>保持信息完整性</strong>：更好地捕捉词汇的组合结构和视觉特征。</p>
+
+<h4><strong>二、 SEETOK 的技术架构与流程</strong></h4>
+
+<p>SEETOK的实现依赖于现有的MLLM架构，通过引入新的处理流程，而非进行昂贵的从头预训练。其工作流程主要包括以下三个关键组件：</p>
+
+<h5><strong>1. 视觉渲染器 (Visual Renderer)</strong></h5>
+
+<p>此组件是SEETOK的基础，负责将输入的原始文本序列（包括指令和内容）转换为RGB图像。
+*   <strong>过程</strong>：将文本渲染成图像，图像的尺寸（宽度和高度）可以根据文本长度动态调整。
+*   <strong>目的</strong>：将符号化的文本信息转化为视觉信息，为后续的视觉处理提供输入。</p>
+
+<h5><strong>2. 视觉中心标记化 (Vision-Centric Tokenization)</strong></h5>
+
+<p>这是SEETOK的核心，替代了传统的文本标记器。
+*   <strong>过程</strong>：
+    1.  渲染后的文本图像被送入一个预训练的<strong>视觉编码器</strong>（如Qwen2.5-VL）。
+    2.  视觉编码器将图像分割成多个补丁（patches），并提取每个补丁的特征。
+    3.  通过一个<strong>多层感知器（MLP）投影器</strong>，将这些视觉特征投影到与大型语言模型（LLM）的文本嵌入空间对齐的维度。这一步通常会聚合相邻的补丁，从而有效缩短标记序列的长度。
+*   <strong>目的</strong>：生成紧凑且信息丰富的视觉标记序列，供后续的LLM处理。</p>
+
+<h5><strong>3. 视觉中心指令微调 (Vision-Centric Finetuning)</strong></h5>
+
+<p>为了使模型能够理解并遵循以图像形式呈现的指令，SEETOK采用了一种轻量级的微调策略。
+*   <strong>过程</strong>：
+    1.  将训练数据中的<strong>指令部分渲染为图像</strong>，而答案部分保持为原始文本格式。
+    2.  使用轻量级的<strong>低秩适配（LoRA）</strong>层对视觉编码器和LLM进行微调。
+    3.  模型学习在给定视觉指令（文本图像）的情况下，生成正确的文本答案。在微调期间，MLP投影器通常保持冻结，以保留预训练阶段建立的跨模态对齐能力。
+*   <strong>目的</strong>：以极低的训练成本教会模型处理视觉化指令，避免灾难性遗忘。</p>
+
+<h4><strong>三、 SEETOK 的关键优势与实证效果</strong></h4>
+
+<p>SEETOK在多个自然语言理解和生成任务中展示了其优越性。</p>
+
+<h5><strong>1. 显著的效率提升</strong></h5>
+
+<p>SEETOK通过将文本图像化，大幅减少了标记数量。
+*   <strong>数据</strong>：在处理14种不同语言时，所需的视觉标记数量平均比文本标记少<strong>4.43倍</strong>。对于低资源语言（如格鲁吉亚语），压缩效果更佳，可达<strong>13.05倍</strong>。
+*   <strong>性能</strong>：在TriviaQA任务上，计算量（FLOPs）减少了<strong>70.5%</strong>，推理延迟降低了<strong>33.5%</strong>。</p>
+
+<h5><strong>2. 强大的跨语言泛化能力</strong></h5>
+
+<p>由于其语言无关的补丁式处理，SEETOK在多语言任务中表现出色。
+*   <strong>数据</strong>：在涵盖13种语言的多语言翻译任务中，SEETOK的“生育率”（Fertility，即每个源词生成的平均标记数）比文本标记化方法低<strong>86%</strong>，有效避免了对低资源语言的过度分割。
+*   <strong>性能</strong>：翻译质量（通过COMET分数衡量）优于基线模型，尤其是在非拉丁语系（如中文和俄语）中提升更为明显。</p>
+
+<h5><strong>3. 出色的鲁棒性</strong></h5>
+
+<p>将文本视为视觉模式使其对输入扰动具有更强的抵抗力。
+*   <strong>原理</strong>：轻微的字符级扰动（如增删改）仅影响局部的视觉特征，而单词的整体形状和上下文保持不变。
+*   <strong>性能</strong>：在MMLU基准测试中，面对字符级、词级和视觉级的攻击，SEETOK模型的性能下降幅度远小于传统文本标记化模型。</p>
+
+<h5><strong>4. 更好的层次结构和组合能力</strong></h5>
+
+<p>SEETOK能自然地学习语言的结构规律，而不是将单词拆分为独立的单元。
+*   <strong>原理</strong>：通过视觉整体感知，模型能够更好地捕捉从字符到单词的组合关系。
+*   <strong>性能</strong>：实验表明，通过SEETOK生成的子词组合嵌入与完整单词的嵌入具有更高的余弦相似度，证明其更好地保留了词汇的组合结构。</p>
+
+<h4><strong>四、 总结与展望</strong></h4>
+
+<p>SEETOK标志着从传统的符号标记化向更接近人类阅读方式的视觉标记化迈出了重要一步。它不仅是一种更高效、更公平、更鲁棒的文本处理方法，也为多模态模型的未来发展开辟了新的方向。通过将文本处理融入视觉领域，SEETOK为构建更自然、更灵活的语言处理技术提供了坚实的基础，特别是在处理世界多样化语言和应对现实世界复杂文本输入的场景中展现出巨大潜力。</p>
+
+<h3>实验设计</h3>
+
+<p>为了验证SEETOK的有效性，论文进行了一系列实验：
+- <strong>基础模型</strong>：主要使用Qwen2.5-VL（3B和7B）和JanusPro作为实验模型。
+- <strong>任务类型</strong>：在多个代表性任务上进行评估，包括自然语言理解（MMLU, SST5）、问答（TriviaQA）和多语言机器翻译。
+- <strong>对比基线</strong>：将SEETOK的性能与使用相同LLM但采用传统文本标记化的方法进行直接比较。
+- <strong>评估维度</strong>：从模型性能（准确率、COMET分数）、效率（标记数量、FLOPs、延迟）和鲁棒性（在字符、视觉、词级噪声下的性能下降幅度）三个方面进行综合评估。
+- <strong>微调设置</strong>：使用OpenHermes 2.5、ALPAGASUS等指令数据集对模型进行微调。</p>
+
+<h3>数据集和代码</h3>
+
+<p>论文中使用了多个公开的数据集进行训练和评估：
+- <strong>训练/微调数据集</strong>：OpenHermes 2.5、ALPAGASUS、ALMA双语语料库、Flores-200开发集。
+- <strong>评估数据集</strong>：MMLU、SST5、TriviaQA、FLORES测试集。
+- <strong>代码</strong>：论文片段中提到，训练和推理代码包含在补充材料中，但未提供公开的URL。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果全面支持了本文的假设：
+- <strong>效率提升</strong>：SEETOK显著减少了所需的标记数量（减少4.43倍）和计算量（FLOPs减少70.5%），同时保持了与基线相当或更好的性能。
+- <strong>多语言性能</strong>：在多语言翻译任务中，SEETOK在所有语言上都实现了更高的翻译质量（COMET分数）和更低的标记化Fertility（更高的效率）。
+- <strong>鲁棒性增强</strong>：在面对字符、视觉和词级噪声时，SEETOK模型的性能下降幅度明显小于文本标记化模型。
+- <strong>视觉指令遵循</strong>：经过微调后，模型在处理视觉文本输入时的准确率显著提升（例如，在TriviaQA上提升6.12%），证明了SEETOK能有效增强模型的跨模态理解能力。
+- <strong>低数据有效性</strong>：即使在小规模数据集（如9k样本的ALPAGASUS）上微调，SEETOK也能带来显著的性能增益（在MMLU上提升8.91%）。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出了SEETOK框架</strong>：一种新颖的、以视觉为中心的标记化方法，作为传统符号标记化的通用替代方案，显著提升了LLM的效率、鲁棒性和多语言处理能力。
+2.  <strong>解决了视觉文本处理难题</strong>：通过视觉渲染和微调，有效提升了MLLMs理解和执行视觉文本指令的能力，填补了现有研究的空白。
+3.  <strong>提供了认知启发的新方向</strong>：该方法从人类视觉阅读机制中获得灵感，为未来的语言模型研究提供了一个更自然、更高效的输入处理范式，为多模态推理奠定了基础。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.18840v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 15:08:45</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

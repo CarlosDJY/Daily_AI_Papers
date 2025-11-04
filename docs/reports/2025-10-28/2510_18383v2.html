@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MENTOR: A Reinforcement Learning Framework for Enabling Tool Use in Small Models via Teacher-Optimized Rewards</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MENTOR: A Reinforcement Learning Framework for Enabling Tool Use in Small Models via Teacher-Optimized Rewards</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Seoul National University of Science and Technology, Korea Advanced Institute of Science and Technology, LG CNS</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.483</span>
+                <span class="paper-id">arXiv ID: 2510.18383v2</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2510.18383v2" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-10-28/43498e6a092200ca56cc20a0fe44d6ffafe1db19071c97694da2bf019651d728.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了MENTOR框架，通过结合强化学习与教师指导的稠密奖励机制，有效解决了小型语言模型（SLMs）在工具使用中的泛化能力差和探索效率低的问题。MENTOR不仅提升了SLMs的策略执行能力，还显著改善了其在复杂任务中的表现，超越了传统的监督微调和稀疏奖励强化学习方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决将大型语言模型（LLMs）的复杂工具使用策略有效迁移到小型语言模型（SLMs）中的核心挑战。当前方法存在以下问题：
+- <strong>监督微调（SFT）的泛化能力差</strong>：SFT仅训练模型模仿静态的教师轨迹，导致模型难以内化底层的推理逻辑，在新领域或复杂任务上表现不佳。
+- <strong>强化学习（RL）的效率低下</strong>：标准的RL方法依赖稀疏奖励（例如，仅奖励最终的正确答案），导致SLMs探索效率低下，难以学习到最优策略。
+- <strong>伦理与安全风险</strong>：随着工具增强模型的应用普及，其可能被用于恶意目的（如生成有害脚本、传播错误信息），因此需要集成强有力的安全保障措施。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过将强化学习（RL）与一个由教师模型指导的<strong>稠密复合奖励机制</strong>相结合，可以有效地将教师模型的工具使用<em>策略</em>而非仅仅是行为轨迹蒸馏给学生模型（SLM）。这种方法（MENTOR框架）能够引导SLM学习更稳健、可泛化的解决方法，从而在复杂的推理和工具使用任务中，显著超越传统的SFT和稀疏奖励RL方法。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li>工具增强的语言模型研究。</li>
+<li>监督微调（SFT）在知识蒸馏中的应用。</li>
+<li>强化学习（RL），特别是PPO和GRPO算法，在自我优化和工具使用中的探索。</li>
+<li>教师-学生模型的训练与协同学习方法。</li>
+<li>语言代理的伦理与安全问题研究。</li>
+</ul>
+
+<h3><strong>MENTOR框架：结合强化学习与教师引导的详细解决方案</strong></h3>
+
+<h4><strong>一、 概述与核心思想</strong></h4>
+
+<p>论文中提出的核心解决方案是一个名为<strong>MENTOR</strong>（<strong>M</strong>odeling <strong>E</strong>xpert <strong>N</strong>etworks for <strong>T</strong>ool-use <strong>OR</strong>chestration）的框架。该框架旨在通过结合<strong>强化学习（RL）</strong>与<strong>教师引导的知识蒸馏</strong>，显著提升小型语言模型（SLMs）在复杂任务中（如数学推理）的工具使用能力。</p>
+
+<p>MENTOR框架的核心思想是，让一个较小的“学生”模型通过探索性学习，从一个强大的“教师”模型（如Qwen3-235B-Thinking）的成功经验中提炼出通用的工具使用策略，而不仅仅是机械地模仿其行为。为此，该框架解决了两大关键挑战：</p>
+
+<ol>
+<li><strong>监督微调（SFT）的可扩展性问题</strong>：传统的SFT方法让模型学习静态的专家轨迹，容易导致过拟合，泛化能力差。MENTOR通过RL机制鼓励学生模型探索更多样的解决方案。</li>
+<li><strong>强化学习中的稀疏奖励问题</strong>：在复杂的工具使用任务中，只有最终答案正确才能获得奖励，这使得学习过程非常低效。MENTOR设计了一套<strong>教师引导的复合奖励机制</strong>，为学生模型的每一步决策提供密集且细致的反馈信号。</li>
+</ol>
+
+<h4><strong>二、 MENTOR框架的核心工作流程</strong></h4>
+
+<p>MENTOR框架的运行流程可以分为以下三个主要步骤：</p>
+
+<ol>
+<li><p><strong>生成参考轨迹（Reference Trajectory Generation）</strong>：
+首先，使用一个强大的教师大模型（<code>π_teacher</code>），针对给定的问题（例如，从<code>AceReason-Math</code>数据集中选取）生成一个或多个成功的推理轨迹。这些轨迹包含了完整的解题步骤，由一系列<strong>推理（reasoning）、工具使用（tool use）和观察（observation）</strong>组成。只有当教师模型得出的最终答案与标准答案一致时，该轨迹才被视为成功轨迹并用于后续训练。</p></li>
+<li><p><strong>生成探索性轨迹（Exploratory Trajectory Generation）</strong>：
+接下来，让学生模型（<code>π_student</code>）针对同一个问题，生成多个不同的探索性轨迹（或称为“回滚样本”）。这一步骤利用了强化学习的探索特性，允许学生模型尝试多种不同的工具调用组合和推理路径，从而采样到多样化的解题过程。</p></li>
+<li><p><strong>策略优化（Policy Optimization）</strong>：
+最后，使用一种名为<strong>组相对策略优化（Group Relative Policy Optimization, GRPO）</strong>的算法来更新学生模型的策略。GRPO算法将教师生成的“参考轨迹”视为高奖励目标，并将学生生成的多个“探索性轨迹”与之进行对比。通过精心设计的奖励信号，该算法会鼓励学生模型的策略向教师的成功策略对齐，从而使其内化解决问题的战略原则，而非简单复制步骤。</p></li>
+</ol>
+
+<h4><strong>三、 关键技术：教师引导的复合奖励机制</strong></h4>
+
+<p>为了解决稀疏奖励问题并为学生模型提供精确指导，MENTOR设计了一套包含多个组件的复合奖励机制。这个机制是整个框架成功的关键。</p>
+
+<p><strong>奖励信号由以下三个核心部分组成：</strong></p>
+
+<ol>
+<li><p><strong>正确性奖励（Correctness Reward, <code>Rc</code>）</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：评估学生模型得出的最终答案是否与教师模型的答案一致。</li>
+<li><strong>定义</strong>：如果最终答案匹配，<code>Rc</code> = 1；否则为0。这是最直接的结果反馈。</li>
+</ul></li>
+<li><p><strong>教师对齐奖励（Teacher-Alignment Reward, <code>Ra</code>）</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：鼓励学生模型采用与教师相似的宏观策略，即选择相同的工具集来解决问题，而不必拘泥于完全相同的调用顺序。</li>
+<li><strong>定义</strong>：如果学生轨迹使用的工具调用集合与教师参考轨迹中的完全相同，<code>Ra</code> = 1；否则为0。</li>
+</ul></li>
+<li><p><strong>工具验证奖励（Tool Validation Reward, <code>Rv</code>）</strong>：</p>
+
+<ul>
+<li><strong>目的</strong>：惩罚无效或格式错误的工具调用，引导学生模型生成语法正确、可执行的轨迹。</li>
+<li><strong>定义</strong>：如果学生轨迹中的所有工具调用都有效，<code>Rv</code> = 1；否则为0。实验表明，该奖励对于稳定训练过程、快速降低错误率至关重要。</li>
+</ul></li>
+</ol>
+
+<p>这三个奖励分量通过超参数进行加权组合，形成一个密集的复合奖励信号，为学生模型的每一步探索提供全面而细致的指导。</p>
+
+<h4><strong>四、 实施细节与实验设置</strong></h4>
+
+<ol>
+<li><p><strong>模型与数据集</strong>：</p>
+
+<ul>
+<li><strong>教师模型</strong>：Qwen3-235B-Thinking。</li>
+<li><strong>学生模型</strong>：涵盖了四个不同规模的模型以验证方法的普适性。</li>
+<li><strong>训练数据</strong>：使用<code>nvidia/AceReason-Math</code>数据集，教师模型生成了1.27k条成功的解题轨迹用于训练。</li>
+</ul></li>
+<li><p><strong>工具执行架构</strong>：</p>
+
+<ul>
+<li>所有工具（如加、减、乘、除、维基百科搜索等）均通过一个基于<strong>FastAPI</strong>的远程服务器执行。当模型决定调用工具时，它会生成一个包含工具名称和参数的JSON对象，通过HTTP API发送给服务器执行，然后将结果返回给模型。这种架构提高了灵活性和可扩展性。</li>
+</ul></li>
+<li><p><strong>基线模型与评估</strong>：</p>
+
+<ul>
+<li>为了验证MENTOR的有效性，论文将其与三个基线进行了对比：
+<ul>
+<li><strong>Vanilla SLM</strong>：未经特定训练的基础模型。</li>
+<li><strong>SFT (Supervised Fine-Tuning)</strong>：在教师轨迹上进行监督微调。</li>
+<li><strong>Sparse RL</strong>：仅使用最终答案正确性（<code>Rc</code>）作为奖励的稀疏奖励强化学习。</li>
+</ul></li>
+<li>评估指标包括<strong>准确性（Accuracy）</strong>、<strong>精确匹配（Exact Match, EM）</strong>以及一个创新的<strong>对齐分数（Alignment Score, AS）</strong>，后者通过Jensen-Shannon散度（JSD）衡量学生与教师工具使用分布的一致性。</li>
+</ul></li>
+</ol>
+
+<h4><strong>五、 实验结果与贡献</strong></h4>
+
+<ul>
+<li><strong>性能卓越</strong>：实验结果表明，MENTOR框架在数学推理、工具调用等多个领域内和领域外的任务上，其性能均显著优于所有基线模型。</li>
+<li><strong>泛化能力强</strong>：通过RL的探索性学习，MENTOR有效避免了SFT的过拟合问题，在未见过的任务上表现出更强的泛化能力。</li>
+<li><strong>策略对齐有效</strong>：MENTOR训练出的学生模型在工具使用策略上与教师模型高度一致，同时保持了较低且稳定的工具调用次数，证明其学会了高效的问题解决策略。</li>
+<li><strong>奖励设计的重要性</strong>：消融研究证实，包含所有三个组件的复合奖励机制是实现最佳性能的关键。</li>
+</ul>
+
+<h4><strong>六、 总结</strong></h4>
+
+<p>MENTOR框架通过巧妙地结合强化学习的探索能力和教师模型的专家知识，并设计了一套精密的复合奖励机制，成功地将大型教师模型的复杂工具使用策略蒸馏到了小型模型中。该解决方案不仅提升了SLM在特定任务上的准确性，更重要的是赋予了它们更通用的、可泛化的问题解决能力，为开发更强大、更高效的智能代理提供了宝贵的思路和方法。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基线对比</strong>：将MENTOR框架与多个基线方法进行性能比较，包括Vanilla SLM（未经微调的模型）、监督微调（SFT）和使用稀疏奖励的标准强化学习（RL）。</li>
+<li><strong>任务评估</strong>：在多个领域和任务上评估模型性能，主要包括：
+<ul>
+<li><strong>数学推理任务</strong>（如MATH、AceReason-Math数据集）。</li>
+<li><strong>跨领域的工具调用任务</strong>（如BFCL v4基准）。</li>
+</ul></li>
+<li><strong>消融研究</strong>：通过移除或改变复合奖励机制中的不同组件，来验证每个部分（如教师对齐奖励）对模型性能的贡献。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>代码</strong>：研究代码已在GitHub上公开：<a href="https://github.com/choics2623/MENTOR-RL/">https://github.com/choics2623/MENTOR-RL/</a></li>
+<li><strong>数据集</strong>：实验中使用了多个公开基准和数据集，包括：
+<ul>
+<li><strong>nvidia/AceReason-Math2</strong>：用于构建高质量的教师参考轨迹。</li>
+<li><strong>MATH</strong> 和 <strong>Omni-MATH</strong>：用于评估数学推理能力。</li>
+<li><strong>BFCL v4</strong>：用于评估工具调用能力。</li>
+</ul></li>
+<li><strong>模型</strong>：实验中使用了<code>Qwen3-235B-Thinking</code>作为教师模型。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的假设：
+- <strong>性能超越基线</strong>：MENTOR在数学推理和工具调用等多个基准测试中，其性能显著优于SFT和稀疏奖励RL等所有基线方法。
+- <strong>优秀的泛化能力</strong>：与容易过拟合的SFT模型相比，MENTOR训练出的SLM在未见过的任务和领域中表现出更强的泛化能力。
+- <strong>策略对齐与效率</strong>：MENTOR能有效让SLM内化教师模型的策略原则，而不仅仅是模仿步骤，从而在工具调用效率和任务准确性上均有显著提升。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出MENTOR框架</strong>：设计并实现了一个新颖的框架，通过结合强化学习和教师指导的稠密奖励，成功地将LLM的工具使用策略蒸馏到SLM中。</li>
+<li><strong>创新的复合奖励设计</strong>：引入了一种包含教师对齐和工具验证的复合奖励机制，有效解决了标准RL中因奖励稀疏而导致的训练低效问题。</li>
+<li><strong>提升SLM的工具使用能力</strong>：通过广泛的实验证明，MENTOR能够显著提升SLM在复杂任务中的推理能力、跨领域泛化能力和策略执行能力。</li>
+<li><strong>强调伦理与安全</strong>：指出了工具增强代理的潜在安全风险，并强调了在未来研究中集成安全保障措施的重要性。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2510.18383v2" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-04 15:08:45</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
