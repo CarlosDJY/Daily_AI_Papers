@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveSecBench: A Dynamic and Culturally-Relevant AI Safety Benchmark for LLMs in Chinese Context</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LiveSecBench: A Dynamic and Culturally-Relevant AI Safety Benchmark for LLMs in Chinese Context</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Tsinghua University, Beijing University of Posts and Telecommunications, University of Science and Technology of China, Renmin University of China, IntokenTech</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.571</span>
+                <span class="paper-id">arXiv ID: 2511.02366v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.02366v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-05/71edfdd50a331dd8f8483ebde233ff94c1f881df1489bc50b69b17e81309d740.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了LiveSecBench，一个专为中文环境设计的动态安全基准，旨在解决现有评估方法对中文大语言模型（LLMs）安全性评估的不足。通过动态更新和多维度评估（合法性、伦理、事实性等），LiveSecBench提供了更准确的安全评估，并引入ELO评分系统实现公平排名，促进了中文LLM的安全能力研究。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决现有安全基准在评估大语言模型（LLMs）安全性方面的不足，尤其是在中文语言、文化和社会政治背景下。当前的安全基准大多基于英语，无法准确评估中文LLMs的安全性，并且传统的静态评估方法难以应对快速演变的新兴安全威胁和风险。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>: AI安全是一个动态且事件驱动的挑战，通过一个持续更新和动态评估的基准（LiveSecBench），可以更准确地测量和比较LLMs在真实世界中的安全表现。</li>
+<li><strong>关键发现</strong>: LiveSecBench通过动态更新和多维度评估，能够提供针对中文环境下LLMs的更准确、全面的安全评估。</li>
+<li><strong>初步结论</strong>: LiveSecBench的设计和实施，特别是其动态更新机制和ELO评分系统，显著提高了对中文LLMs安全性评估的相关性和有效性。</li>
+<li><strong>实验验证</strong>: 通过对22个代表性LLMs进行评估并提供安全性排行榜，验证了该基准的有效性和实用性。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li>现有的安全基准，如TruthfulQA、SafetyBench和HarmBench。</li>
+<li>中文安全评估相关工作，如CValues。</li>
+<li>AI安全性评估框架和ELO评分系统在其他领域的应用。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>论文中提出的核心解决方案是 <strong>LiveSecBench</strong>，一个专为中文大型语言模型（LLMs）设计的动态、持续更新的安全基准测试框架。该框架旨在克服传统静态基准的局限性，通过动态更新机制和文化相关性设计，提供一个能够实时反映LLMs在复杂安全环境中表现的评估工具。</p>
+
+<h4><strong>一、 LiveSecBench的核心设计理念与特征</strong></h4>
+
+<p>LiveSecBench的设计基于现代AI安全环境的动态和事件驱动特性，其核心在于适应性和文化相关性。</p>
+
+<ol>
+<li><p><strong>动态与持续更新机制</strong></p>
+
+<ul>
+<li><strong>评估维度的动态调整</strong>：为了捕捉新兴的AI安全挑战，LiveSecBench会根据当前广泛使用和新兴的应用场景，定期更新其评估维度，确保基准能够反映最新的安全风险。</li>
+<li><strong>测试问题的定期审查</strong>：框架会持续审查现有的测试问题。如果某些问题随着模型能力的提升而变得过于简单，它们将被移除或替换，以保持基准的严谨性和挑战性。</li>
+</ul></li>
+<li><p><strong>文化相关性与高质量数据集</strong></p>
+
+<ul>
+<li><strong>深植中文语境</strong>：所有测试问题均根植于中国的语言、社会、文化背景和法律框架，旨在捕捉多语言基准可能忽略的文化特定风险和区域性脆弱性。</li>
+<li><strong>高质量数据构建</strong>：数据集的构建遵循多样性和有效性原则。每个评估维度被划分为多个子维度，并根据难度分级。所有问题均由母语为中文的专家审查和重构，确保能够清晰、可重复地揭示主流模型在至少一个安全维度上的缺陷。</li>
+</ul></li>
+</ol>
+
+<h4><strong>二、 评估框架与机制</strong></h4>
+
+<p>LiveSecBench通过一个全面的评估框架来系统性地衡量模型的安全性。</p>
+
+<ol>
+<li><p><strong>评估维度</strong>
+在<strong>v251030</strong>版本中，LiveSecBench围绕六个关键维度进行评估：</p>
+
+<ul>
+<li><strong>合法性</strong>：评估模型内容是否遵循相关法律法规，避免生成与颠覆、分裂、恐怖主义等相关的内容。</li>
+<li><strong>伦理性</strong>：检查模型输出是否符合社会道德标准，重点评估在性别、种族、职业等方面的偏见和歧视。</li>
+<li><strong>真实性</strong>：评估模型的“诚实性”，测试其在知识范围外能否承认“不知道”，而不是编造虚假信息。</li>
+<li><strong>隐私性</strong>：检查模型是否会泄露个人隐私或诱导用户提供敏感信息。</li>
+<li><strong>对抗性鲁棒性</strong>：评估模型抵御复杂的越狱攻击、上下文嵌入攻击和格式嵌入攻击的能力。</li>
+<li><strong>推理安全性</strong>：专注于模型在推理过程中的安全性，确保其生成的推理内容不含有害信息。</li>
+</ul>
+
+<p>为了保持前瞻性，LiveSecBench计划在未来的 <strong>v251215</strong> 版本中引入两个新维度：</p>
+
+<ul>
+<li><strong>文本到图像生成的安全性</strong>：评估模型在生成或描述图像时过滤非法、有害或文化不当内容的能力。</li>
+<li><strong>代理安全性</strong>：评估模型在自主代理框架中运行时，抵抗基于工具的攻击或恶意指令链的能力。</li>
+</ul></li>
+<li><p><strong>评估流程：ELO评分系统</strong>
+LiveSecBench采用类似于国际象棋排名的<strong>ELO评分系统</strong>，通过模型间的直接比较进行排名。评估过程被组织成一个锦标赛，具体步骤如下：</p>
+
+<ol>
+<li><strong>获取回答</strong>：首先获取所有测试模型对问题的回答，包括其推理过程。</li>
+<li><strong>分组对战</strong>：将数据集随机分为五组，进行五轮一对一比较。采用瑞士系统配对策略，确保模型与评分相近且未对战过的对手进行比赛，以保证公平和效率。</li>
+<li><strong>计算预期胜率</strong>：根据模型A和模型B的当前ELO评分（$R<em>A$和$R</em>B$），计算模型A对模型B的预期胜率（$E<em>A$）：
+$$E</em>A = \frac{1}{1 + 10^{(R<em>B-R</em>A)/400}}$$</li>
+<li><strong>更新评分</strong>：根据比赛的实际结果（$S<em>A$，胜为1，平为0.5，负为0）和K因子（$K$），更新模型的ELO评分：
+$$R'</em>{A} = R<em>A + K(S</em>A - E_A)$$
+通过这一机制，不仅可以获得每个维度的细致排名，还能生成一个总体的安全排名。</li>
+</ol></li>
+</ol>
+
+<h4><strong>三、 应用与价值</strong></h4>
+
+<p>LiveSecBench不仅是一个评估工具，更是一个推动社区发展的平台。</p>
+
+<ol>
+<li><p><strong>模型提交与评估</strong>
+由于测试问题的敏感性，LiveSecBench的数据集不公开。采用被动评估机制，有意向的开发者需通过邮件联系研究团队提交模型，以参与评估并被纳入排行榜。</p></li>
+<li><p><strong>优势与贡献</strong></p>
+
+<ul>
+<li><strong>高适应性</strong>：动态更新机制使其能够快速适应新的攻击方法，保持评估的前瞻性和有效性。</li>
+<li><strong>透明的评估视图</strong>：通过在线公开的安全“雷达图”，LiveSecBench为公众和开发者提供了对主流LLMs安全表现的透明视图，促进了对AI安全的理解和监督。</li>
+<li><strong>为开发者提供支持</strong>：参与评估的模型开发者将收到一份详细的评估报告，报告会指出模型在各个维度上的具体表现、识别特定的脆弱领域，并通过案例研究进行深入分析，帮助开发者改进模型。</li>
+</ul></li>
+</ol>
+
+<h4><strong>结论</strong></h4>
+
+<p><strong>LiveSecBench</strong>通过其动态更新机制、对中文文化背景的深度关注以及严谨的ELO评估系统，为大型语言模型的安全性评估提供了一个创新且全面的解决方案。它不仅解决了静态基准易于过时的问题，还通过提供详细的反馈报告，赋能开发者持续提升模型的安全性，从而为中文AI应用的健康发展提供了必要的保护措施，并为未来的安全评估设定了新的标准。</p>
+
+<h3>实验设计</h3>
+
+<p>选择了22个代表性的LLMs进行评估。评估采用五轮随机分组的对抗方式，以确保模型之间的公平比较。基准的设计核心是动态更新，包括定期评审和更新测试问题，并引入新的评估维度以应对新兴挑战。</p>
+
+<h3>数据集和代码</h3>
+
+<p>由于数据集的敏感性，LiveSecBench的数据集未公开。开发者可以通过联系研究团队来申请评估其模型，并获取详细的评估报告。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果表明，LiveSecBench能够有效评估和比较不同LLMs在中文环境中的安全性，并能捕捉到模型在应对新兴安全挑战时的表现。评估结果提供了透明的模型性能对比和排名，揭示了各个模型在不同安全维度上的优势与劣势，验证了该动态基准的有效性和相关性。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li>提出了LiveSecBench，一个专为中文环境设计的动态AI安全基准，填补了现有评估方法的空白。</li>
+<li>建立了一套包含动态更新机制、多维度评估和ELO评分系统的科学评估框架。</li>
+<li>为中文LLM社区提供了持续、准确的安全评估工具和详细的评估报告，促进了AI安全能力的研究与提升。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.02366v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-05 20:41:30</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

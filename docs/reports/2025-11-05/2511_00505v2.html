@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-RAG: Towards Retrieval-Augmented Generation with Zero Redundant Knowledge</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Zero-RAG: Towards Retrieval-Augmented Generation with Zero Redundant Knowledge</h1>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> School of Computer Science, Fudan University, Shanghai Innovation Institute</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.562</span>
+                <span class="paper-id">arXiv ID: 2511.00505v2</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.00505v2" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-05/3e92c3eb43cdd6c1a7358d83dec409b9dc317c237fdee4375237e4d1a7fe300a.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Zero-RAG框架，旨在解决大型语言模型（LLM）与外部知识库之间的知识冗余问题。通过引入Mastery-Score度量标准，Zero-RAG有效修剪冗余文档，减少检索负担，并利用查询路由器和噪声容忍调优提升LLM的内部知识利用率。实验结果显示，该方法在保持问答准确率的同时，显著提高了检索效率。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决检索增强生成（RAG）框架中，大型语言模型（LLM）的内部知识与外部知识库之间的<strong>知识冗余</strong>问题。随着LLM自身知识储备的增加，外部语料库中的大量信息变得多余。这种冗余不仅加重了检索系统的工作负担、增加了计算成本和延迟，还可能引入不必要的噪声，反而干扰并降低LLM的最终性能。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过一种系统性的方法识别并<strong>修剪（Pruning）</strong>外部知识库中已被LLM掌握的冗余知识，可以在<strong>不损害甚至提升</strong>模型回答准确性的前提下，显著<strong>提高检索效率</strong>。该方法（Zero-RAG）能够让模型在适当的时候更有效地利用其内部知识，减少对外部检索的不必要依赖。</p>
+
+<h3>相关研究</h3>
+
+<p>相关研究主要涵盖以下几个方面：
+-   <strong>检索增强生成（RAG）</strong>：包括提升其鲁棒性和效率的各种方法，如Self-RAG。
+-   <strong>LLM内部知识评估</strong>：研究如何衡量LLM对特定知识的记忆和掌握程度，例如使用基于损失的策略。
+-   <strong>语料库修剪与数据管理</strong>：探索如何优化和筛选用于模型训练或检索的数据集。
+-   <strong>噪声容忍调优</strong>：训练模型以忽略检索到的不相关或误导性信息，增强其鲁棒性。</p>
+
+<h3><strong>Zero-RAG框架：一个减少知识冗余的高效检索增强生成解决方案</strong></h3>
+
+<p>本文提出的核心解决方案是一个名为 <strong>Zero-RAG</strong> 的创新框架，旨在解决传统检索增强生成（Retrieval-Augmented Generation, RAG）系统中的一个关键问题：<strong>外部知识库与大型语言模型（LLM）内部知识之间的冗余</strong>。这种冗余不仅增加了检索和索引的计算开销，还可能引入不相关的“噪声”信息，干扰LLM的回答质量。</p>
+
+<p>Zero-RAG通过一个多阶段、系统化的方法来优化RAG流程，其核心由三个关键组件构成：<strong>Mastery-Score与语料库修剪</strong>、<strong>查询路由器（Query Router）</strong> 和 <strong>噪声容忍调优（Noise-Tolerant Tuning）</strong>。</p>
+
+<hr />
+
+<h4><strong>第一步：通过Mastery-Score识别并修剪冗余知识 (Corpus Pruning)</strong></h4>
+
+<p>这是Zero-RAG框架的基础。该步骤的目标是主动识别并从外部知识库（如维基百科）中移除LLM已经“掌握”的知识，从而创建一个更精简、高效的知识库。</p>
+
+<p><strong>1. 核心度量：Mastery-Score（掌握分数）</strong>
+为了量化LLM对某段知识的掌握程度，框架引入了一个新的度量标准——<strong>Mastery-Score</strong>。这个分数评估的不仅仅是LLM是否“记住”了信息，更是其能否灵活理解和运用这些知识。</p>
+
+<p><strong>2. Mastery-Score的计算过程：</strong>
+*   <strong>构建问答对：</strong> 首先，从原始知识库（如维基百科）中提取句子或段落。然后，使用一个强大的LLM（如GPT-4o-mini）为每个知识片段生成多个能够被该片段直接回答的问答（QA）对。
+*   <strong>评估掌握程度：</strong> 让目标LLM回答这些生成的QA对。通过计算其回答的<strong>平均准确匹配（Exact Match, EM）得分</strong>，得到该知识片段的Mastery-Score。分数范围在0到1之间，高分表示LLM已熟练掌握该知识，其在外部知识库中属于冗余信息。
+*   <strong>模型预测与应用：</strong> 为了高效地为整个庞大的语料库打分，研究者训练了一个回归模型（例如，一个7B参数的模型），用以预测更大模型（如70B参数模型）的Mastery-Score。</p>
+
+<p><strong>3. 实施语料库修剪：</strong>
+*   <strong>动态阈值设定：</strong> 设定一个动态的、基于百分位的阈值，而不是一个固定的分数线。例如，移除Mastery-Score排名前30%的句子。
+*   <strong>生成精简知识库：</strong> 将分数高于阈值的句子从语料库中删除，从而生成一个经过修剪的、非冗余的知识子集。实验表明，修剪高达30%的语料库，对最终性能的影响微乎其微，但能显著提升效率。</p>
+
+<hr />
+
+<h4><strong>第二步：通过查询路由器智能分配任务 (Query Router)</strong></h4>
+
+<p>在知识库被修剪后，下一个挑战是如何智能地处理用户查询。查询路由器的作用就像一个智能调度中心，判断每个问题是否需要进行外部知识检索。</p>
+
+<p><strong>1. 目的：</strong>
+*   避免对LLM已知晓答案的问题进行不必要的、耗时的检索操作。
+*   防止因检索到不相关或噪声文档而干扰LLM的回答。</p>
+
+<p><strong>2. 工作流程：</strong>
+*   <strong>查询判断：</strong> 当一个新查询输入时，查询路由器首先会判断LLM是否能仅凭其内部知识自信地回答该问题。这个路由器本身通过二元分类方法进行训练，以识别查询的“熟悉度”。
+*   <strong>动态路由：</strong>
+    *   <strong>如果LLM已掌握：</strong> 路由器将跳过检索步骤，直接让LLM生成答案。
+    *   <strong>如果LLM未掌握：</strong> 路由器会将查询传递给检索器，在<strong>修剪后的精简知识库</strong>中搜索相关文档，并将这些文档作为上下文提供给LLM。</p>
+
+<hr />
+
+<h4><strong>第三步：通过噪声容忍调优增强模型鲁棒性 (Noise-Tolerant Tuning)</strong></h4>
+
+<p>即使经过修剪和智能路由，检索过程仍有可能引入不相关或误导性的“噪声”文档。为了让LLM在这种情况下依然能保持出色的表现，Zero-RAG引入了噪声容忍调优。</p>
+
+<p><strong>1. 目的：</strong>
+*   训练LLM忽略无关的上下文信息。
+*   增强LLM在面对不完美检索结果时，依然能够优先利用其内部知识生成准确答案的能力。</p>
+
+<p><strong>2. 训练过程：</strong>
+*   <strong>设计多样化训练样本：</strong> 使用三种格式的样本对LLM进行微调（SFT），例如使用LoRA技术：
+    1.  <strong>相关文档：</strong> 查询 + 相关的上下文。
+    2.  <strong>噪声文档：</strong> 查询 + 不相关的上下文。
+    3.  <strong>无RAG：</strong> 仅有查询，无外部上下文。
+*   <strong>学习忽略噪声：</strong> 通过这种混合训练，模型学会了如何辨别和降低无关文档的权重，从而在真实应用中表现得更加鲁棒和可靠。</p>
+
+<hr />
+
+<h3><strong>完整的Zero-RAG推理流程</strong></h3>
+
+<p>结合以上三个组件，Zero-RAG在实际工作时的推理流程如下：</p>
+
+<ol>
+<li><strong>（离线）准备阶段：</strong> 使用Mastery-Score对原始知识库（如维基百科）进行评估和修剪，生成一个精简的、非冗余的知识子集。</li>
+<li><strong>（在线）查询处理：</strong>
+a. 用户输入一个查询。
+b. <strong>查询路由器</strong>介入，判断LLM是否已掌握该查询的相关知识。
+c. <strong>路径一（已掌握）：</strong> LLM直接利用其内部知识生成答案，过程快速高效。
+d. <strong>路径二（未掌握）：</strong> 检索器在修剪后的知识库中查找相关文档。
+e. LLM结合检索到的文档生成答案。得益于<strong>噪声容忍调优</strong>，即使检索到的文档包含噪声，LLM也能生成高质量的回答。</li>
+</ol>
+
+<h3><strong>核心效果与优势</strong></h3>
+
+<p>实验结果证明，Zero-RAG框架取得了显著成效：</p>
+
+<ul>
+<li><strong>提升效率：</strong> 能够将外部知识库的规模<strong>减少约30%</strong>，从而使检索阶段的速度<strong>提升约22%</strong>（检索延迟从12.28秒降至9.66秒）。</li>
+<li><strong>保持性能：</strong> 在大幅减少知识库规模和计算开销的同时，RAG系统的问答准确率几乎不受影响，甚至在应用噪声容忍调优后，性能超越了原始基线。</li>
+<li><strong>增强鲁棒性：</strong> 模型在面对无关或误导性信息时表现更佳，确保了答案的可靠性。</li>
+<li><strong>动态适应性：</strong> 整个框架具有良好的适应性，能够灵活应用于不同的数据集和LLM。</li>
+</ul>
+
+<p><strong>总结而言，Zero-RAG通过一种“先剪枝、再路由、后加固”的系统化策略，精准地解决了RAG系统中的知识冗余问题，最终实现了一个更高效、更鲁棒、更智能的知识问答解决方案。</strong></p>
+
+<h3>实验设计</h3>
+
+<p>实验在一系列以事实为导向的标准问答基准数据集上进行，主要设计如下：
+-   <strong>对比实验</strong>：比较Zero-RAG（使用裁剪后的语料库）与标准RAG模型（使用完整语料库）在回答准确率和检索延迟方面的表现。
+-   <strong>评估不同裁剪比例</strong>：测试不同程度（例如30%）的语料库裁剪对模型性能的影响。
+-   <strong>消融研究</strong>：分析框架中各个组件（如查询路由器、噪声容忍调优）对整体性能的贡献。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验主要在 <strong>Wikipedia</strong> 语料库上进行裁剪，并在多个标准问答数据集上进行评估，包括 <strong>PopQA、TriviaQA、HotpotQA</strong> 和 <strong>EntityQuestions</strong>。</li>
+<li><strong>代码</strong>：论文片段中提到，代码、模型和裁剪后的语料库将被公开发布，但未提供具体的链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+-   <strong>效率提升</strong>：Zero-RAG能够成功裁剪 <strong>30%</strong> 的维基百科语料库，同时将平均检索延迟降低 <strong>20-22%</strong>。
+-   <strong>性能保持</strong>：在显著提升效率的同时，模型的问答准确率在多个基准测试中保持稳定，甚至在应用噪声容忍调优后有所提升，超过了基线水平。
+-   <strong>鲁棒性</strong>：结果表明，即使在裁剪了大量知识后，模型的性能也未受损害，验证了原始语料库中存在大量冗余。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出Zero-RAG框架</strong>：首次系统性地提出了一个面向RAG的语料库修剪框架，旨在解决LLM与外部知识库之间的知识冗余问题。</li>
+<li><strong>引入创新机制</strong>：引入了如<strong>Mastery-Score</strong>、<strong>Query Router</strong>等创新组件，为优化RAG系统提供了具体可行的方法。</li>
+<li><strong>实证有效性</strong>：通过在多个标准数据集上的大量实验，证明了该框架在显著提升检索效率的同时能够保持甚至超越原始RAG的性能。</li>
+<li><strong>提供新视角</strong>：为RAG领域的研究提供了新的方向，即从优化外部知识库本身入手来提升整个系统的效率和性能。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.00505v2" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-05 20:41:30</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
