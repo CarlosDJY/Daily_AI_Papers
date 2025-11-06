@@ -193,17 +193,17 @@
                 // 构建 lunr 索引
                 lunrIndex = lunr(function() {
                     this.ref('id');
-                    this.field('title', { boost: 10 });
-                    this.field('abstract', { boost: 5 });
-                    this.field('summary', { boost: 3 });
+                    this.field('metadata', { boost: 15 });  // metadata 权重最高
+                    this.field('abstract', { boost: 10 });  // short_summary 权重中等
+                    this.field('summary', { boost: 3 });    // 详细总结权重最低
                     
                     // 添加所有论文到索引
                     paperDatabase.forEach(function(paper) {
                         this.add({
                             id: paper.id,
-                            title: paper.title || '',
-                            abstract: paper.abstract || '',
-                            summary: (paper.summary || '')
+                            metadata: (paper.metadata || paper.title || ''),  // 优先使用 metadata
+                            abstract: (paper.abstract || ''),  // short_summary
+                            summary: (paper.summary || '')     // 详细总结
                         });
                     }, this);
                 });
@@ -248,14 +248,65 @@
                 // 执行搜索
                 const results = lunrIndex.search(query);
                 
+                // 自定义排序：同分时按关键词出现次数，再按 total_score
+                const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 0);
+                const sortedResults = sortSearchResults(results, keywords);
+                
                 // 显示结果
-                displayResults(results, query);
+                displayResults(sortedResults, query);
                 
             } catch (error) {
                 console.error('搜索失败:', error);
                 updateSearchStatus('error', '搜索失败，请检查关键词是否正确。');
                 document.getElementById('results-container').innerHTML = '';
             }
+        }
+        
+        // 排序搜索结果（同分时按关键词出现次数，再按 total_score）
+        function sortSearchResults(results, keywords) {
+            // 为每个结果添加额外的排序信息
+            const enrichedResults = results.map(result => {
+                const paper = paperDatabase.find(p => p.id === result.ref);
+                if (!paper) return null;
+                
+                // 计算关键词出现次数
+                const searchText = (
+                    (paper.metadata || paper.title || '') + ' ' +
+                    (paper.abstract || '') + ' ' +
+                    (paper.summary || '')
+                ).toLowerCase();
+                
+                let keywordCount = 0;
+                keywords.forEach(keyword => {
+                    const regex = new RegExp(escapeRegExp(keyword), 'gi');
+                    const matches = searchText.match(regex);
+                    if (matches) {
+                        keywordCount += matches.length;
+                    }
+                });
+                
+                return {
+                    ...result,
+                    keywordCount: keywordCount,
+                    totalScore: paper.total_score || 0
+                };
+            }).filter(r => r !== null);
+            
+            // 排序：先按 lunr 分数（降序），再按关键词出现次数（降序），再按 total_score（降序）
+            enrichedResults.sort((a, b) => {
+                // 首先按 lunr 相关性分数（已包含在 result.score 中）
+                if (Math.abs(a.score - b.score) > 0.0001) {
+                    return b.score - a.score;
+                }
+                // 同分时按关键词出现次数
+                if (a.keywordCount !== b.keywordCount) {
+                    return b.keywordCount - a.keywordCount;
+                }
+                // 仍然同分时按 total_score
+                return b.totalScore - a.totalScore;
+            });
+            
+            return enrichedResults;
         }
         
         // 显示搜索结果
@@ -282,12 +333,13 @@
                 const paper = paperDatabase.find(p => p.id === result.ref);
                 if (!paper) return;
                 
-                // 高亮关键词
-                const highlightedTitle = highlightKeywords(paper.title, keywords);
-                const highlightedSummary = highlightKeywords(
-                    (paper.summary || paper.abstract || '').substring(0, 200),
-                    keywords
-                );
+                // 标题：优先使用 metadata，如果没有则使用 title
+                const displayTitle = paper.metadata || paper.title || '无标题';
+                const highlightedTitle = highlightKeywords(displayTitle, keywords);
+                
+                // 摘要：优先使用 short_summary（即 abstract）
+                const summaryText = (paper.abstract || '').substring(0, 200);
+                const highlightedSummary = highlightKeywords(summaryText, keywords);
                 
                 html += `
                     <div class="result-item">
@@ -295,7 +347,7 @@
                             <a href="${paper.report_url}">${highlightedTitle}</a>
                         </div>
                         <div class="result-summary">
-                            ${highlightedSummary}${(paper.summary || paper.abstract || '').length > 200 ? '...' : ''}
+                            ${highlightedSummary}${(paper.abstract || '').length > 200 ? '...' : ''}
                         </div>
                         <div class="result-date">日期: ${paper.date}</div>
                     </div>
