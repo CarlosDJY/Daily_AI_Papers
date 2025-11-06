@@ -223,13 +223,11 @@
             <h1>Comparing the Performance of LLMs in RAG-based Question-Answering: A Case Study in Computer Science Literature</h1>
             
             
+            <div class="paper-meta"><strong>作者单位:</strong> University of Moratuwa</div>
+            
             <div>
                 <span class="paper-score">推荐分数: 0.495</span>
                 <span class="paper-id">arXiv ID: 2511.03261v1</span>
-            </div>
-            
-            <div class="paper-warning">
-                <strong>[WARNING]</strong> 内容已回退至原始摘要/解读：enrich failed, fallback to abstract
             </div>
             
         </div>
@@ -251,7 +249,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                检索增强生成（RAG）作为一种强大的技术，正在通过减少幻觉现象来增强生成式人工智能模型的能力。因此，RAG与大型语言模型（LLMs）日益显著的结合，引发了对不同LLMs在各个领域问答（QA）性能比较的兴趣。本研究比较了四个开源LLMs——Mistral-7b-instruct、LLaMa2-7b-chat、Falcon-7b-instruct和Orca-mini-v3-7b，以及OpenAI的热门模型GPT-3.5在计算机科学文献中的QA任务表现，利用RAG支持。研究中采用的评估指标包括二元问题的准确性和精确度，以及由人类专家和谷歌的AI模型Gemini进行的排名，此外还包括长答案问题的余弦相似度。
+                本文提出了一种基于检索增强生成（RAG）技术的问答系统，旨在提高大型语言模型（LLMs）在计算机科学文献问答中的准确性和效率。通过比较多种开源和商业LLMs，研究发现结合RAG的GPT-3.5和Mistral-7b-instruct在回答准确性上表现优越，显著减少了信息幻觉，提供了有效的解决方案。
             </div>
         </div>
         
@@ -652,38 +650,187 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
-                        <p>论文标题: Comparing the Performance of LLMs in RAG-based Question-Answering: A Case Study in Computer Science Literature</p>
+                        <h3>现有问题</h3>
 
-<p>摘要:
-Retrieval Augmented Generation (RAG) is emerging as a powerful technique to
-enhance the capabilities of Generative AI models by reducing hallucination.
-Thus, the increasing prominence of RAG alongside Large Language Models (LLMs)
-has sparked interest in comparing the performance of different LLMs in
-question-answering (QA) in diverse domains. This study compares the performance
-of four open-source LLMs, Mistral-7b-instruct, LLaMa2-7b-chat,
-Falcon-7b-instruct and Orca-mini-v3-7b, and OpenAI's trending GPT-3.5 over QA
-tasks within the computer science literature leveraging RAG support. Evaluation
-metrics employed in the study include accuracy and precision for binary
-questions and ranking by a human expert, ranking by Google's AI model Gemini,
-alongside cosine similarity for long-answer questions. GPT-3.5, when paired
-with RAG, effectively answers binary and long-answer questions, reaffirming its
-status as an advanced LLM. Regarding open-source LLMs, Mistral AI's
-Mistral-7b-instruct paired with RAG surpasses the rest in answering both binary
-and long-answer questions. However, among the open-source LLMs, Orca-mini-v3-7b
-reports the shortest average latency in generating responses, whereas
-LLaMa2-7b-chat by Meta reports the highest average latency. This research
-underscores the fact that open-source LLMs, too, can go hand in hand with
-proprietary models like GPT-3.5 with better infrastructure.</p>
+<p>本文旨在解决大型语言模型（LLMs）在处理快速发展的计算机科学领域文献时，因训练数据过时而导致回答不准确、产生“幻觉”的问题。随着学术文献的爆炸式增长，研究人员需要一个能够快速、准确获取最新知识的工具。因此，如何利用检索增强生成（RAG）技术，有效结合外部知识库来提升LLMs在专业领域问答（QA）任务中的准确性、效率和可靠性，是一个至关重要且亟待解决的问题。</p>
 
-<p>作者: Ranul Dayarathne, Uvini Ranaweera, Upeksha Ganegoda</p>
+<h3>Hypothesis</h3>
 
-<p>分类: cs.CL, cs.AI, I.2.1; I.2.7</p>
+<p>核心假设是，通过将检索增强生成（RAG）框架与LLMs相结合，可以显著提升模型在计算机科学文献问答任务中的表现。具体来说，该方法能够让LLMs访问最新的外部知识，从而有效减少信息幻觉，提高答案的准确性和时效性。研究还假设，像GPT-3.5这样的先进模型在RAG框架下会表现出优越的性能，并且特定的技术（如SPECTER嵌入和FAISS向量存储）是构建高效检索系统的关键。</p>
 
-<p>发表时间: 2025-11-05</p>
+<h3>相关研究</h3>
 
-<p>推荐理由: 该论文与您的兴趣领域高度相关，推荐分数为 0.495。</p>
+<p>本研究建立在以下相关工作的基础上：
+- <strong>RAG foundational work</strong>: Patrick Lewis等人提出的原始RAG方法。
+- <strong>Domain-specific RAG applications</strong>: 针对特定领域的问答系统，如Lála等人的PaperQA（生物医学文献）和Y. Hicke等人的AI-TA。
+- <strong>Enabling technologies</strong>: 用于构建RAG管道的关键技术，包括专门用于科学文档的SPECTER文本嵌入模型和用于高效相似性搜索的FAISS向量存储库。
+- <strong>Frameworks</strong>: LangChain等用于设计和实现RAG应用的架构。</p>
 
-<p>原文链接: http://arxiv.org/abs/2511.03261v1</p>
+<h3>解决方案</h3>
+
+<h3><strong>面向计算机科学文献的检索增强生成（RAG）问答系统：完整解决方案</strong></h3>
+
+<p>本研究提出并实现了一种基于<strong>检索增强生成（Retrieval Augmented Generation, RAG）</strong> 的先进问答（QA）系统，旨在显著提升大型语言模型（LLMs）在处理和回答计算机科学领域专业问题时的表现。该解决方案的核心在于将LLMs强大的生成能力与外部知识库的实时检索能力相结合，从而有效克服传统LLM知识陈旧、易产生“幻觉”（生成不准确信息）等局限性，为科研人员提供一个准确、高效、与时俱进的知识获取工具。</p>
+
+<h4><strong>一、 概念框架与核心目标</strong></h4>
+
+<p>该解决方案构建了一个完整的概念框架，用于实现、评估和优化基于RAG的问答系统。</p>
+
+<ul>
+<li><strong>核心问题：</strong> 传统的LLMs（如未接入外部知识的ChatGPT）其知识库截止于训练日期，无法获取最新的学术进展，导致在回答前沿科技问题时准确性不足。</li>
+<li><strong>核心思想：</strong> 采用RAG技术，使LLM能够从一个专门构建的、包含最新计算机科学文献的外部数据库中检索信息，并基于这些信息生成答案。</li>
+<li><strong>主要目标：</strong>
+<ol>
+<li><strong>提升准确性与时效性：</strong> 确保答案基于最新的研究成果，减少信息滞后。</li>
+<li><strong>减少幻觉现象：</strong> 通过引用有据可查的文献，大幅降低模型生成错误信息的概率。</li>
+<li><strong>提高研究效率：</strong> 使研究人员能通过自然语言查询，快速获取特定领域的最新信息。</li>
+</ol></li>
+</ul>
+
+<h4><strong>二、 数据准备与预处理</strong></h4>
+
+<p>为了确保系统的知识库紧跟学术前沿，研究团队构建了一个高质量的、定制化的数据集。</p>
+
+<ol>
+<li><strong>数据源选择：</strong> 收集了<strong>4929篇</strong>于<strong>2023年至2024年</strong>间发表在高质量期刊（如Springer和IEEE）上的计算机科学论文摘要。</li>
+<li><strong>主题覆盖：</strong> 数据集聚焦于三个前沿领域：<strong>大型语言模型（1121篇）</strong>、<strong>量子计算（1998篇）</strong>和<strong>边缘计算（1810篇）</strong>。</li>
+<li><strong>数据预处理：</strong>
+<ul>
+<li>使用Python的正则表达式库对摘要文本进行清理，移除了HTML标签、重复记录、空值以及多余的标点符号和空格。</li>
+<li>经过清洗后，所有摘要被格式化为无噪声的标准化文本，并存储为独立的JSON文件，为后续的向量化处理做好准备。</li>
+</ul></li>
+</ol>
+
+<h4><strong>三、 技术实现与系统架构</strong></h4>
+
+<p>系统的技术核心在于构建一个高效的数据向量化流程和智能的问答管道。</p>
+
+<h5><strong>1. 数据向量化</strong></h5>
+
+<p>为了让LLM能够理解和检索文本数据，需要将文本摘要转换为数值向量（Text Embedding）。</p>
+
+<ul>
+<li><strong>文本分块（Chunking）：</strong> 使用LangChain框架的<code>RecursiveCharacterTextSplitter</code>，将每个摘要分割成最大长度为<strong>1024个字符</strong>的块。为了保证上下文的连续性，块与块之间设置了<strong>200个字符</strong>的重叠。</li>
+<li><strong>嵌入模型（Embedding Model）：</strong> 采用专门为科学文献设计的预训练句子变换器模型 <strong>SPECTER</strong>。该模型能生成高质量的文档嵌入，非常适合学术领域的语义检索。</li>
+<li><strong>向量存储（Vector Store）：</strong> 所有生成的文本块向量被存储在 <strong>FAISS (Facebook AI Similarity Search)</strong> 向量数据库中。FAISS支持高效的相似性搜索，是实现快速检索的关键。</li>
+</ul>
+
+<h5><strong>2. 问答（QA）管道与系统架构</strong></h5>
+
+<p>当用户输入查询后，系统通过一个精心设计的管道来处理请求并生成答案。该系统由三个核心链（Chain）组成：</p>
+
+<ul>
+<li><p><strong>历史链 (History Chain):</strong></p>
+
+<ul>
+<li><strong>功能：</strong> 使用LangChain的<code>create_history_aware_retriever</code>，该链会分析用户的当前问题和之前的对话历史。</li>
+<li><strong>作用：</strong> 如果存在对话历史，它会生成一个综合上下文的、更精确的搜索查询，以提高检索的相关性，支持多轮对话。</li>
+</ul></li>
+<li><p><strong>问答链 (QA Chain):</strong></p>
+
+<ul>
+<li><strong>功能：</strong> 这是系统的核心执行部分，使用<code>create_retrieval_chain</code>。</li>
+<li><strong>工作流程：</strong>
+<ol>
+<li><strong>检索 (Retrieve):</strong> 将用户查询（或经过历史链优化的查询）通过SPECTER模型嵌入为向量。</li>
+<li>在FAISS向量库中执行相似性搜索，检索出最相关的<strong>前10个 (k=10)</strong> 文本块（相似度阈值设为0.6）。</li>
+<li><strong>生成 (Generate):</strong> 将检索到的文本块与用户的原始问题一同传递给LLM。</li>
+</ol></li>
+</ul></li>
+<li><p><strong>格式链 (Format Chain):</strong></p>
+
+<ul>
+<li><strong>功能：</strong> 使用<code>create_stuff_documents_chain</code>，将所有检索到的文本块整合成一个格式统一的提示（Prompt）。</li>
+<li><strong>作用：</strong> 确保输入给LLM的内容结构清晰、连贯，有助于模型生成高质量的答案。</li>
+</ul></li>
+</ul>
+
+<h4><strong>四、 实验设计与性能评估</strong></h4>
+
+<p>为了验证解决方案的有效性，研究团队设计了全面的评估方案。</p>
+
+<ol>
+<li><p><strong>实验环境与参数：</strong></p>
+
+<ul>
+<li>在M2处理器的MacBook Pro上进行实验。</li>
+<li>LLM的<strong>温度（Temperature）</strong> 设置为<strong>0.01</strong>，以确保生成基于事实的、确定性的答案，而非创造性内容。</li>
+<li><strong>最大令牌数（Max Tokens）</strong> 设置为2000。</li>
+</ul></li>
+<li><p><strong>评估模型：</strong> 比较了多个主流LLM，包括商业模型<strong>GPT-3.5</strong>和开源模型<strong>Mistral-7b-instruct</strong>、<strong>LLaMa 2-7b-chat</strong>等。</p></li>
+<li><p><strong>评估数据集：</strong></p>
+
+<ul>
+<li>由两位人类专家手工创建了一个包含<strong>30个问答对</strong>的自定义数据集，覆盖上述三个研究领域。</li>
+<li>问题类型包括<strong>二元问题（是/否）</strong>和需要详细阐述的<strong>长答案问题</strong>。</li>
+</ul></li>
+<li><p><strong>评估指标：</strong></p>
+
+<ul>
+<li><strong>二元问题：</strong> 使用<strong>准确率（Accuracy）</strong>和<strong>精确度（Precision）</strong>进行评估。</li>
+<li><strong>长答案问题：</strong>
+<ul>
+<li><strong>余弦相似度：</strong> 计算生成答案与专家编写的参考答案之间的语义相似度。</li>
+<li><strong>AI评估：</strong> 使用Google的Gemini模型对生成答案的有用性进行排名（差、一般、优秀）。</li>
+<li><strong>人类专家评估：</strong> 由领域专家对答案质量进行评分，以提供最可靠的基准。</li>
+</ul></li>
+<li><strong>效率与成本：</strong> 记录并比较不同模型生成答案的<strong>延迟（Latency）</strong>和<strong>成本（Cost）</strong>。</li>
+</ul></li>
+</ol>
+
+<h4><strong>五、 实验结果与分析</strong></h4>
+
+<ul>
+<li><strong>整体性能：</strong> 结合RAG的<strong>GPT-3.5</strong>在各项指标中表现最佳。在二元问题上，其准确率和精确度均达到了<strong>0.9048</strong>。</li>
+<li><strong>开源模型表现：</strong> <strong>Mistral-7b-instruct</strong>表现突出，在二元问题上的准确率达到<strong>0.857</strong>，且在专家评估中获得了高度认可，证明了其作为开源替代方案的巨大潜力。</li>
+<li><strong>成本与延迟权衡：</strong>
+<ul>
+<li><strong>GPT-3.5：</strong> 成本较低（$0.000643/答案），延迟极短（平均1.74秒）。</li>
+<li><strong>Mistral-7b-instruct：</strong> 完全免费，但延迟较高（平均105.95秒），这主要受本地硬件性能限制。</li>
+</ul></li>
+<li><strong>关键发现：</strong>
+<ul>
+<li><strong>提示工程的重要性：</strong> 结构化的提示（Prompt）能显著提升某些模型（如Mistral）的回答质量。</li>
+<li><strong>AI评估的局限性：</strong> 发现AI评估（如Gemini）的结果可能因指令变化而不稳定，凸显了人类专家评估的不可替代性。</li>
+</ul></li>
+</ul>
+
+<h4><strong>六、 结论与未来展望</strong></h4>
+
+<p>本研究成功展示了通过RAG技术可以显著提升LLM在专业学术领域的问答能力。该解决方案不仅提高了答案的准确性和时效性，还为开源模型的应用提供了有力的数据支持。</p>
+
+<p><strong>未来工作方向包括：</strong>
+*   <strong>扩展评估规模：</strong> 增加更多人类专家参与评分，以减少个体主观偏差。
+*   <strong>深化数据源：</strong> 从仅使用论文摘要扩展到使用<strong>全文</strong>进行检索，以提供更详尽的答案。
+*   <strong>优化技术细节：</strong> 进一步探索更先进的提示工程技术和数据检索机制。
+*   <strong>跨领域应用：</strong> 将此框架扩展到其他学术领域，如医学、法律等，以验证其通用性。</p>
+
+<h3>实验设计</h3>
+
+<p>该研究通过对比实验来评估解决方案的有效性。
+- <strong>模型</strong>: 比较了多种LLM，包括OpenAI的GPT-3.5以及四种开源模型（Mistral-7b-instruct, LLaMa2-7b-chat, Falcon-7b-instruct, Orca-mini-v3-7b）。
+- <strong>任务</strong>: 评估模型在回答二元问题（Yes/No）和长答案问题上的表现。
+- <strong>数据集</strong>: 使用了一个包含4929篇最新计算机科学期刊论文摘要的语料库，并创建了一个包含30个问题-答案对的定制评估集，涵盖量子计算、LLMs和边缘计算等前沿领域。
+- <strong>评估指标</strong>: 采用多维度评估方法，包括准确率、精确度、答案与标准答案的余弦相似度，以及来自人类专家和Google Gemini模型的排名。</p>
+
+<h3>数据集和代码</h3>
+
+<p>实验使用的数据集来源于最新的计算机科学出版物（如Springer和IEEE），包含4929篇论文摘要。然而，论文片段中并未提供数据集和相关代码的公开访问链接。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设。
+- <strong>性能提升</strong>: 结合RAG的LLMs在准确性和实用性上均显著优于未使用RAG的基础模型（一项结果显示准确性提升107%）。
+- <strong>模型对比</strong>: GPT-3.5在RAG框架下的综合表现最佳，尤其是在二元问题的准确性和精确度上。在开源模型中，Mistral-7b-instruct表现最为出色。
+- <strong>效率权衡</strong>: 实验也揭示了不同模型在性能、成本和响应延迟之间的权衡，例如Mistral模型虽然表现好，但生成时间相对较长。</p>
+
+<h3>论文贡献</h3>
+
+<p>本研究的主要贡献如下：
+1.  <strong>填补研究空白</strong>: 系统性地评估和比较了多种主流LLMs在计算机科学文献领域结合RAG技术的性能，为该特定应用场景提供了实证依据。
+2.  <strong>提出高效管道</strong>: 设计并验证了一个完整的问答系统管道，该管道结合了先进的文本嵌入和向量检索技术，为处理专业文献提供了有效方案。
+3.  <strong>提供实践见解</strong>: 详细分析了不同LLMs在准确性、效率和成本方面的表现，为开发者和研究人员在选择和应用模型时提供了有价值的参考。
+4.  <strong>推动未来研究</strong>: 为未来改进科学文献问答系统奠定了基础，并强调了采用多元化评估方法（如多位人类专家）以减少偏见的重要性。</p>
 
                     </div>
                 
@@ -698,7 +845,7 @@ proprietary models like GPT-3.5 with better infrastructure.</p>
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-06 19:59:55</p>
+            <p>生成时间: 2025-11-06 20:06:16</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
