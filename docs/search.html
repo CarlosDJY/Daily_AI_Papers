@@ -141,6 +141,24 @@
             font-size: 12px;
             margin-top: 5px;
         }
+        .keywords-container {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +213,7 @@
                     this.ref('id');
                     this.field('metadata', { boost: 15 });  // metadata 权重最高
                     this.field('abstract', { boost: 10 });  // short_summary 权重中等
+                    this.field('keywords', { boost: 8 });   // keywords 权重中等（介于 abstract 和 summary 之间）
                     this.field('summary', { boost: 3 });    // 详细总结权重最低
                     
                     // 添加所有论文到索引
@@ -203,7 +222,8 @@
                             id: paper.id,
                             metadata: (paper.metadata || paper.title || ''),  // 优先使用 metadata
                             abstract: (paper.abstract || ''),  // short_summary
-                            summary: (paper.summary || '')     // 详细总结
+                            keywords: (paper.keywords || ''),   // keywords（空格分隔的字符串）
+                            summary: (paper.summary || '')      // 详细总结
                         });
                     }, this);
                 });
@@ -337,6 +357,17 @@
                 const displayTitle = paper.metadata || paper.title || '无标题';
                 const highlightedTitle = highlightKeywords(displayTitle, keywords);
                 
+                // Keywords 展示
+                let keywordsHTML = '';
+                if (paper.keywords_list && paper.keywords_list.length > 0) {
+                    keywordsHTML = '<div class="keywords-container">';
+                    paper.keywords_list.forEach(keyword => {
+                        const highlightedKeyword = highlightKeywords(keyword, keywords);
+                        keywordsHTML += `<span class="keyword-badge">${highlightedKeyword}</span>`;
+                    });
+                    keywordsHTML += '</div>';
+                }
+                
                 // 摘要：优先使用 short_summary（即 abstract）
                 const summaryText = (paper.abstract || '').substring(0, 200);
                 const highlightedSummary = highlightKeywords(summaryText, keywords);
@@ -346,6 +377,7 @@
                         <div class="result-title">
                             <a href="${paper.report_url}">${highlightedTitle}</a>
                         </div>
+                        ${keywordsHTML}
                         <div class="result-summary">
                             ${highlightedSummary}${(paper.abstract || '').length > 200 ? '...' : ''}
                         </div>
