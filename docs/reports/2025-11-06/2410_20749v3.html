@@ -222,6 +222,20 @@
         <div class="header">
             <h1>Matryoshka Pilot: Learning to Drive Black-Box LLMs with LLMs</h1>
             
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">Matryoshka Pilot</span>
+                
+                <span class="keyword-badge">黑箱大型语言模型</span>
+                
+                <span class="keyword-badge">轻量级控制器</span>
+                
+                <span class="keyword-badge">任务分解</span>
+                
+                <span class="keyword-badge">环境反馈</span>
+                
+            </div>
+            
             
             <div class="paper-meta"><strong>作者单位:</strong> Georgia Institute of Technology, Precur AI</div>
             
@@ -249,7 +263,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了Matryoshka Pilot (M-Pilot)框架，通过一个轻量级的白箱LLM控制器引导黑箱LLM，解决了黑箱模型在复杂任务中的能力限制。M-Pilot通过任务分解和迭代优化，提升了推理、规划和个性化等长时程任务的成功率，显著增强了黑箱LLM的表现。
+                本文提出了Matryoshka Pilot (M-Pilot)框架，作为一种轻量级白箱LLM控制器，旨在解决黑箱大型语言模型在复杂任务中的能力提升问题。M-Pilot通过将复杂任务分解为中间指导，并利用环境反馈进行迭代优化，从而有效增强黑箱LLM在推理、规划和个性化任务中的表现。实验结果显示，该方法显著优于现有基线。
             </div>
         </div>
         
@@ -652,128 +666,152 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决黑箱大语言模型（LLMs）在处理推理、规划和个性化等高级、长时程复杂任务时能力有限的问题。尽管LLMs在许多领域表现出色，但由于其模型参数不可访问，传统的微调等改进方法并不可行。现有方法（如上下文学习或提示工程）在面对复杂任务时往往效率不高、缺乏透明度或需要大量人力投入。因此，如何有效引导和优化黑箱LLM，以提升其在复杂任务中的规划、推理和决策能力，是一个重要且亟待解决的挑战。</p>
+<p>本文旨在解决黑箱大型语言模型（LLMs）在处理复杂、长远任务（如推理、规划和个性化）时，因其内部参数不可访问而导致的透明度缺失和能力提升困难的挑战。随着LLMs的广泛应用，如何有效引导和增强这些模型以应对日益复杂的任务需求，成为一个长期存在且愈发重要的问题。现有方法（如提示工程）往往效率低下，难以适应多变的任务需求。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：<strong>通过引入一个轻量级的、可控的白箱LLM作为“控制器”（Pilot），可以生成一系列中间指导（如任务分解、计划、摘要），从而有效引导和增强一个强大的黑箱LLM（作为“执行者”）在复杂任务中的表现。</strong> 这种“套娃式”（Matryoshka）框架能够结合白箱模型的灵活性和黑箱模型的强大能力。通过环境反馈和迭代优化（如迭代直接偏好优化，IDPO），可以持续改进控制器生成的指导质量，从而在不访问黑箱模型参数的情况下，显著提升其任务解决的准确率和成功率。</p>
+<p>核心假设是：一个轻量级的白箱LLM可以作为“控制器”（Controller），通过生成中间指导（Intermediate Guidance），有效引导和提升黑箱LLM在复杂任务中的表现，而无需访问其内部参数。
+- <strong>关键发现</strong>: M-Pilot框架通过生成中间指导（如任务分解、高层计划、用户历史摘要）并利用环境反馈进行迭代优化，能够显著提升黑箱LLM的性能。
+- <strong>实验验证</strong>: 在推理、规划和个性化三类复杂任务上的实验证明，M-Pilot相比基线方法取得了显著的性能提升，例如在推理任务上提升3.19%-15.7%，规划任务上提升7.46%，个性化任务上提升5.82%。</p>
 
 <h3>相关研究</h3>
 
 <ul>
-<li><strong>黑箱LLM改进方法</strong>: 上下文学习（ICL）、适配器方法（Adapter-based methods）。</li>
-<li><strong>推理与规划方法</strong>: 思维链（CoT）、程序辅助语言模型（PAL）、ReAct、Reflexion、AdaPlanner、BUTLER。</li>
-<li><strong>个性化模型</strong>: Profile-Augmented Generation (PAG)、Retrieval-Augmented Generation (RAG)。</li>
-<li><strong>提示与策略优化</strong>: 基于强化学习的提示优化（如RLPrompt）、直接偏好优化（DPO）及其迭代版本（IDPO）。</li>
-<li><strong>控制器-生成器框架</strong>: 相关的自我改进和分层规划框架。</li>
+<li><strong>提升黑箱LLM能力的方法</strong>: 主要包括基于上下文学习（In-Context Learning, ICL）和适配器（Adapter）方法。</li>
+<li><strong>强化学习与提示优化</strong>: 如RLHF、RLPrompt、TEMPERA等，利用环境反馈优化模型。</li>
+<li><strong>任务相关基线</strong>:
+<ul>
+<li><strong>推理</strong>: Chain-of-Thought (CoT), Program-Aided Language Models (PAL)。</li>
+<li><strong>规划</strong>: BUTLER, ReAct, Reflexion, AdaPlanner。</li>
+<li><strong>个性化</strong>: Profile-Augmented Generation (PAG), Retrieval-Augmented Generation (RAG)。</li>
+</ul></li>
 </ul>
 
 <h3>解决方案</h3>
 
-<h4><strong>一、 核心思想与框架概述</strong></h4>
+<h4><strong>一、 方案概述：M-Pilot 的核心思想</strong></h4>
 
-<p>论文提出的核心解决方案是一个名为 <strong>Matryoshka Pilot (M-Pilot)</strong> 的轻量级、模块化框架。其根本目标是解决大型黑盒语言模型（如GPT-4）在处理推理、规划、个性化等复杂长时程任务时能力不足的问题。</p>
+<p>论文提出了一种名为 <strong>Matryoshka Pilot (M-Pilot)</strong> 的创新模块化框架，旨在解决大型黑箱语言模型（Black-Box LLMs，如GPT-4）在处理复杂、长时程（long-horizon）任务时面临的挑战。其核心思想是引入一个轻量级、可控的<strong>白箱语言模型（White-Box LLM）作为“控制器”</strong>，通过任务分解和生成中间指导（intermediate guidance），来引导和增强黑箱LLM（作为“生成器”）在推理、规划和个性化等高级任务中的表现。</p>
 
-<p>M-Pilot的创新之处在于它不直接修改黑盒模型，而是引入一个<strong>白盒LLM（如LLaMA-3-8B）作为“控制器”</strong>，来引导和优化<strong>黑盒LLM（如GPT-4o-mini）作为“生成器”</strong>的行为。通过这种“控制器-生成器”架构，M-Pilot能够将复杂任务分解，生成中间指导，并通过与环境的持续交互和反馈进行自我改进。</p>
+<p>该框架的关键优势在于，它<strong>无需访问黑箱LLM的内部参数或权重</strong>，使其能够以“即插即用”的方式与任何现有的LLM API无缝集成，从而在提升性能的同时，兼具极高的灵活性和实用性。</p>
 
-<p>该框架的主要组成部分如下：
-*   <strong>控制器 (Controller)</strong>：一个可访问、可训练的白盒LLM，负责接收原始任务输入，并生成一系列中间指导（Intermediate Guidance）。
-*   <strong>生成器 (Generator)</strong>：一个功能强大但参数不可访问的黑盒LLM，负责接收原始任务和控制器生成的指导，并执行最终的生成任务。
-*   <strong>环境 (Environment)</strong>：任务执行的外部系统，它提供反馈信号（如成功、失败、错误信息），用于评估生成器的输出质量。</p>
+<h4><strong>二、 M-Pilot 框架的架构与工作流程</strong></h4>
 
-<h4><strong>二、 M-Pilot的工作机制与流程</strong></h4>
+<p>M-Pilot 框架由两个核心组件构成，并通过一个动态的交互与优化循环来运作。</p>
 
-<p>M-Pilot的运行流程是一个结构化的多轮交互过程，旨在通过精细化的引导来提升最终输出的质量。</p>
+<p><strong>1. 核心组件：</strong>
+*   <strong>白箱LLM控制器 (White-Box LLM Controller):</strong> 一个较小的、可完全访问和微调的模型（如 Llama-3-8B）。其主要职责是分析复杂任务，将其分解为可管理的子任务，并生成高质量的中间指导信息。
+*   <strong>黑箱LLM生成器 (Black-Box LLM Generator):</strong> 一个功能强大但参数不可访问的商业模型（如 GPT-4o）。它被视为环境的一部分，接收来自控制器的指导，并执行最终的文本生成或任务执行。</p>
 
-<p><strong>1. 任务输入与分解：</strong>
-控制器接收用户的复杂任务描述作为初始输入（x）。它的首要职责是根据任务类型，将这个复杂问题分解为一系列更简单、更易于管理的子任务或高层计划。</p>
+<p><strong>2. 详细工作流程：</strong>
+1.  <strong>任务输入与分解 (Input &amp; Decomposition):</strong>
+    *   用户向系统提供一个复杂的任务描述（例如，一个多步数学问题、一个在模拟环境中的规划任务，或一个个性化内容生成请求）。
+    *   白箱控制器接收此输入，并将其分解为一系列更简单、更具体的高层子任务或步骤。</p>
 
-<p><strong>2. 生成任务专属的中间指导：</strong>
-控制器的核心功能是生成不同形式的“中间指导”（{gt}），这些指导根据具体任务量身定制，以增强黑盒生成器的能力：
-*   <strong>对于推理任务 (如数学问题GSM8K)</strong>：控制器会将一个复杂问题分解为一系列逻辑清晰的推理步骤或子问题。例如，将一个多步计算的数学题分解为“第一步计算总花费”、“第二步计算剩余金额”等。
-*   <strong>对于规划任务 (如环境交互ALFWorld)</strong>：控制器会生成一个高层次的行动计划。例如，对于“找到书并用台灯检查”的任务，计划可能是“[步骤1] 获取可能存放书籍的容器列表”、“[步骤2] 逐个检查容器直到找到书”、“[步骤3] 找到台灯并打开”等。
-*   <strong>对于个性化任务 (如内容推荐LaMP)</strong>：控制器会分析用户的历史交互数据（如浏览记录、评分），并生成一个简洁的用户偏好摘要。这个摘要能帮助生成器更好地理解用户，从而产出更具个性化的内容，如定制化的新闻标题。</p>
+<ol start="2">
+<li><p><strong>中间指导生成 (Intermediate Guidance Generation):</strong></p>
 
-<p><strong>3. 引导黑盒模型生成输出：</strong>
-控制器将生成的中间指导与原始任务描述相结合，形成一个增强的提示（Augmented Prompt），然后将其发送给黑盒生成器。生成器根据这个更具体、更结构化的提示来执行任务，并产出最终的预测或行动（ŷ）。</p>
+<ul>
+<li>基于任务分解，控制器生成结构化的中间指导。这些指导根据任务类型有不同的形式：
+<ul>
+<li><strong>推理任务 (如GSM8K):</strong> 生成一系列逻辑推理步骤或思考链（Chain-of-Thought）。</li>
+<li><strong>规划任务 (如ALFWorld):</strong> 生成一个高层次的行动计划（例如，“1. 找到书；2. 找到台灯；3. 用台灯检查书”）。</li>
+<li><strong>个性化任务 (如LaMP):</strong> 总结用户的历史交互数据，生成一个简明的用户画像或内容模板。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>环境交互与执行 (Interaction &amp; Execution):</strong></p>
 
-<p><strong>4. 多轮交互与环境反馈：</strong>
-对于需要持续交互的长时程任务，上述过程会重复进行。整个交互过程被建模为一个<strong>马尔可夫决策过程（MDP）</strong>：
-*   在每一轮，控制器根据当前状态生成指导。
-*   生成器根据指导执行动作，与环境交互。
-*   环境返回一个观察结果和反馈信号（正面或负面）。
-*   如果反馈是负面的（例如，代码执行错误、任务失败），控制器会接收到这个信号，反思之前的指导，并生成修正后的新指导，直到任务成功或达到最大尝试次数。</p>
+<ul>
+<li>将控制器生成的中间指导与原始任务输入相结合，形成一个增强的、更具结构化的提示（prompt）。</li>
+<li>这个增强提示被发送给黑箱LLM生成器。</li>
+<li>黑箱LLM根据这个清晰的指导，生成最终的答案、代码或执行相应的低级操作。</li>
+</ul></li>
+<li><p><strong>反馈收集与评估 (Feedback &amp; Evaluation):</strong></p>
 
-<h4><strong>三、 自我改进：迭代直接偏好优化 (IDPO)</strong></h4>
+<ul>
+<li>系统收集来自环境的反馈来评估黑箱LLM输出的质量。这可以是：
+<ul>
+<li>数学问题的最终答案是否正确。</li>
+<li>规划任务在模拟环境中是否成功完成。</li>
+<li>生成的内容是否符合个性化要求。</li>
+</ul></li>
+<li>这个反馈信号被用来评估控制器生成的中间指导的有效性。</li>
+</ul></li>
+</ol>
 
-<p>M-Pilot最关键的特性是其<strong>自我改进</strong>能力。由于无法通过反向传播直接训练黑盒模型，M-Pilot采用了一种基于强化学习思想的优化方法——<strong>迭代直接偏好优化 (Iterative Direct Preference Optimization, IDPO)</strong>来训练白盒控制器。</p>
+<h4><strong>三、 核心机制：自我改进与迭代优化</strong></h4>
 
-<p><strong>1. 收集偏好数据：</strong>
-在多轮交互中，系统会收集大量的轨迹 <strong>τ := (x, {gt}, ŷ)</strong>。根据环境反馈，这些轨迹被分为“高质量”（τ+，即成功的指导）和“低质量”（τ−，即失败的指导）。这些成对的数据 <strong>(g+, g−)</strong> 构成了偏好数据集。</p>
+<p>M-Pilot 的强大之处在于其自我改进的能力。它通过一个闭环反馈机制，不断优化白箱控制器的指导能力，这个过程被称为<strong>迭代直接偏好优化 (Iterative Direct Preference Optimization, IDPO)</strong>。</p>
 
-<p><strong>2. 优化控制器策略：</strong>
-IDPO利用这些偏好对来微调白盒控制器。其目标是最大化控制器生成“好”指导的概率，同时最小化生成“坏”指导的概率。该过程通过一个基于Bradley-Terry模型的损失函数来实现，该函数旨在拉大高质量轨迹与低质量轨迹之间的似然差距。</p>
+<ol>
+<li><p><strong>数据收集与偏好对构建:</strong></p>
 
-<p><strong>3. 迭代与进化：</strong>
-这个优化过程是迭代进行的。在每一轮优化结束后，更新后的控制器（π(m)）将成为下一轮交互的参考策略（πref）。通过不断地与环境交互、收集新的偏好数据并进行优化，控制器生成指导的能力会持续进化，变得越来越高效和准确。</p>
+<ul>
+<li>系统通过多次与环境的交互，收集大量的执行轨迹（trajectory）。</li>
+<li>基于环境反馈，系统将这些轨迹分为“成功”和“失败”两类。</li>
+<li>对于同一个初始任务，将导致成功的中间指导标记为<strong>正面示例 (g+)</strong>，将导致失败的指导标记为<strong>负面示例 (g-)</strong>，从而构建出大量的偏好数据对 <code>(g+, g-)</code>。</li>
+</ul></li>
+<li><p><strong>偏好学习与模型优化:</strong></p>
 
-<h4><strong>四、 核心优势与实验成果</strong></h4>
+<ul>
+<li>M-Pilot 使用 <strong>直接偏好优化 (DPO)</strong> 算法来训练白箱控制器。其目标是调整控制器参数，使其最大化生成正面指导 <code>g+</code> 的概率，同时最小化生成负面指导 <code>g-</code> 的概率。</li>
+<li>这个训练过程是<strong>迭代进行</strong>的。每一轮优化后，一个更强大的控制器被用来收集更高质量的新数据，从而进入下一轮优化，形成一个持续自我改进的良性循环。</li>
+<li>为了提高训练效率，通常采用 <strong>LoRA (Low-Rank Adaptation)</strong> 等参数高效微调技术。</li>
+</ul></li>
+</ol>
 
-<p>M-Pilot框架展现出多方面的显著优势：
-*   <strong>黑盒模型兼容性</strong>：无需访问黑盒LLM的内部参数或权重，使其能够与任何商业API（如GPT系列、Gemini系列）无缝集成，具备“即插即用”（Plug-and-Play）的特性。
-*   <strong>自我改进能力</strong>：通过IDPO和环境反馈闭环，控制器能够持续学习和优化，从而不断提升黑盒模型的表现。
-*   <strong>任务分解与引导</strong>：将复杂问题结构化的能力显著提升了模型在推理和规划任务中的表现，减少了错误。
-*   <strong>成本与效率</strong>：通过优化指导，M-Pilot能有效减少与黑盒模型API的不必要交互次数，从而降低了计算成本和API调用费用。
-*   <strong>灵活性与适应性</strong>：模块化设计允许灵活替换控制器或生成器模型，以适应不同任务的需求。</p>
+<h4><strong>四、 应用场景与实验表现</strong></h4>
 
-<p><strong>实验结果</strong>也充分验证了M-Pilot的有效性。在三类复杂的基准测试中，M-Pilot相较于其他先进基线模型取得了显著的性能提升：
-*   <strong>推理任务 (GSM8K)</strong>：准确率平均提高 <strong>3.19%</strong>。
-*   <strong>规划任务 (ALFWorld)</strong>：成功率平均提高 <strong>7.46%</strong>，最高达到 <strong>96.27%</strong>。
-*   <strong>个性化任务 (LaMP)</strong>：准确率平均提高 <strong>5.82%</strong>。</p>
+<p>M-Pilot 在多个复杂的基准测试中展示了其卓越的性能和效率。</p>
 
-<h4><strong>五、 总结</strong></h4>
+<ul>
+<li><strong>复杂推理 (GSM8K):</strong> 通过将数学问题分解为子问题并生成代码，M-Pilot 显著提高了黑箱LLM的解题准确率（平均提升 <strong>3.19%</strong>），同时相比传统方法（如自洽性）大幅降低了API调用成本（高达 <strong>65%</strong>）。</li>
+<li><strong>动态规划 (ALFWorld):</strong> 在需要与环境交互的规划任务中，M-Pilot 通过生成高层计划并利用闭环反馈进行反思和修正，成功率达到了 <strong>96.27%</strong>，显著优于基线模型（平均提升 <strong>7.46%</strong>），并将API成本降低了 <strong>30%</strong>。</li>
+<li><strong>个性化生成 (LaMP):</strong> 通过总结用户历史来生成个性化摘要，M-Pilot 在个性化分类和生成任务上的准确率平均提升了 <strong>5.82%</strong>，表现出强大的用户理解和内容定制能力。</li>
+</ul>
 
-<p>M-Pilot通过创新的“白盒控制器+黑盒生成器”架构，为提升现有强大黑盒LLM的能力提供了一条有效且实用的路径。它将复杂的任务分解、结构化的中间指导与基于反馈的自我改进机制相结合，成功克服了黑盒模型在长时程、多步骤任务中的固有局限。该解决方案不仅在实验中证明了其卓越性能，也为未来如何更智能、更高效地利用和控制大型语言模型提供了重要的启示。</p>
+<h4><strong>五、 总结与贡献</strong></h4>
+
+<p>M-Pilot 框架提供了一个通用且高效的解决方案，用于增强现有黑箱大语言模型的能力。其主要贡献如下：</p>
+
+<ol>
+<li><strong>首创的控制器-生成器架构:</strong> 首次提出使用一个轻量级白箱LLM来驱动和引导大型黑箱LLM，实现了对复杂任务的有效分解和控制。</li>
+<li><strong>无需访问模型内部:</strong> 整个框架不依赖于对黑箱模型参数的访问，使其具有极强的通用性和可扩展性。</li>
+<li><strong>高效的自我改进机制:</strong> 通过迭代直接偏好优化（IDPO），框架能够从环境反馈中持续学习，不断提升其指导质量和任务解决能力。</li>
+<li><strong>显著的成本与效率优势:</strong> 在提升任务成功率的同时，M-Pilot 通过更优的指导减少了不必要的API调用和对大量专家标注数据的依赖，展现出卓越的成本效益和样本效率。</li>
+</ol>
+
+<p>综上所述，M-Pilot 为如何驾驭和增强强大的黑箱AI系统提供了一条清晰、可行的路径，推动了AI在解决现实世界复杂问题上的能力边界。</p>
 
 <h3>实验设计</h3>
 
-<p>实验在三个典型的复杂任务领域进行，以全面评估M-Pilot框架的有效性：
-1.  <strong>数学推理</strong>: 评估模型的问题分解和代码生成能力。
-2.  <strong>任务规划</strong>: 评估模型在交互式环境中进行多步骤规划和执行的能力。
-3.  <strong>个性化</strong>: 评估模型根据用户历史数据生成个性化内容的能力。</p>
-
-<p>实验将M-Pilot与多种先进的基线方法（如CoT, PaL, ReAct, AdaPlanner, PAG等）进行对比。评估指标包括任务成功率、准确率、F1分数和BLEU分数等。此外，还进行了消融研究以验证框架关键组件（如IDPO）的有效性。</p>
+<p>实验在三类复杂的基准任务上进行，以全面评估M-Pilot的性能：
+- <strong>推理任务</strong>: 使用<strong>GSM8K</strong>数据集，评估模型解决数学问题的能力。
+- <strong>规划任务</strong>: 使用<strong>ALFWorld</strong>数据集，评估智能体在模拟环境中执行多步骤任务的能力。
+- <strong>个性化任务</strong>: 使用<strong>LaMP</strong>数据集，评估模型根据用户历史生成个性化内容的能力。
+实验将M-Pilot与多种先进的基线方法进行对比，评估指标包括准确率（Accuracy）、F1分数、成功率（Success Rate）和BLEU分数等。</p>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>:
-<ul>
-<li><strong>推理</strong>: GSM8K</li>
-<li><strong>规划</strong>: ALFWorld</li>
-<li><strong>个性化</strong>: LaMP</li>
-</ul></li>
-<li><strong>代码</strong>:
-<ul>
-<li>代码已在GitHub上公开：<a href="https://github.com/lichangh20/Matryoshka">https://github.com/lichangh20/Matryoshka</a></li>
-</ul></li>
+<li><strong>数据集</strong>: LaMP, GSM8K, ALFWorld。</li>
+<li><strong>代码</strong>: 已在GitHub上公开: https://github.com/lichangh20/Matryoshka</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<p>实验结果有力地支持了M-Pilot框架的有效性，表明其在所有测试任务上均显著优于现有的基线方法。
-- <strong>推理任务 (GSM8K)</strong>: 准确率平均提升<strong>3.19%</strong>，最高达到<strong>96.4%</strong>。
-- <strong>规划任务 (ALFWorld)</strong>: 成功率平均提升<strong>7.46%</strong>，最高达到<strong>96.27%</strong>。
-- <strong>个性化任务 (LaMP)</strong>: 性能平均提升<strong>5.82%</strong>，在部分任务上BLEU分数提升超过<strong>25%</strong>。</p>
-
-<p>结果证明，M-Pilot能够有效引导黑箱LLM高质量地完成复杂任务，验证了其核心假设。</p>
+<p>实验结果有力地支持了M-Pilot的有效性，表明其在各项任务中均优于所有基线方法：
+- <strong>推理 (GSM8K)</strong>: 准确率提升高达15.7%。
+- <strong>规划 (ALFWorld)</strong>: 整体成功率达到96.27%，显著超越之前的方法。
+- <strong>个性化 (LaMP)</strong>: 在分类任务上准确率提升9.2%，在生成任务上BLEU分数提升超过25%。
+这些结果证明，M-Pilot通过中间指导和反馈优化，能够有效增强黑箱LLM解决复杂问题的能力。</p>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出了M-Pilot框架</strong>：一个新颖、通用且有效的框架，通过轻量级白箱LLM控制器来增强黑箱LLM在复杂任务中的能力。</li>
-<li><strong>验证了闭环优化机制的有效性</strong>：展示了如何利用环境反馈和迭代直接偏好优化（IDPO）来持续改进控制器的指导能力，而无需访问黑箱模型参数。</li>
-<li><strong>在多个基准上取得SOTA性能</strong>：通过在推理、规划和个性化三个领域的广泛实验，证明了M-Pilot相比现有方法的优越性，为提升黑箱LLM的实际应用能力提供了新的思路和强大的解决方案。</li>
+<li><strong>提出了M-Pilot框架</strong>: 一种创新的、模块化的方法，利用轻量级白箱LLM控制器来引导和增强黑箱LLM，解决了黑箱模型能力提升的难题。</li>
+<li><strong>引入了中间指导与反馈优化机制</strong>: 通过任务分解生成中间指导，并结合环境反馈（如IDPO）进行迭代优化，实现了模型的自我改进，且无需访问黑箱模型参数。</li>
+<li><strong>验证了框架的广泛有效性</strong>: 在推理、规划和个性化三大类复杂任务上进行了充分实验，证明了M-Pilot相较于现有先进方法的显著优势，为控制和优化黑箱LLM提供了新的思路。</li>
 </ol>
 
                     </div>
@@ -789,7 +827,7 @@ IDPO利用这些偏好对来微调白盒控制器。其目标是最大化控制�
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-06 20:06:16</p>
+            <p>生成时间: 2025-11-06 20:07:39</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>

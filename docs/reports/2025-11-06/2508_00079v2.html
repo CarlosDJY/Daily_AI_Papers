@@ -222,8 +222,22 @@
         <div class="header">
             <h1>PhysicsEval: Inference-Time Techniques to Improve the Reasoning Proficiency of Large Language Models on Physics Problems</h1>
             
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">推理能力</span>
+                
+                <span class="keyword-badge">物理问题</span>
+                
+                <span class="keyword-badge">解答验证</span>
+                
+                <span class="keyword-badge">数学准确性</span>
+                
+            </div>
             
-            <div class="paper-meta"><strong>作者单位:</strong> Islamic University of Technology, Dhaka, Bangladesh</div>
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Systems and Software Lab (SSL), Department of Computer Science and Engineering, Islamic University of Technology, Dhaka, Bangladesh</div>
             
             <div>
                 <span class="paper-score">推荐分数: 0.474</span>
@@ -249,7 +263,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了一种多代理审查框架，旨在提升大型语言模型（LLMs）在解决物理问题时的推理能力和准确性。通过构建新评估基准PHYSICSEVAL，包含19,609个物理问题，结合多个模型的协作验证，显著改善了模型在复杂问题上的表现，解决了现有LLMs推理不足的问题。
+                本文提出了一种多代理审核框架和新的物理问题评估基准PHYSICSEVAL，旨在提升大型语言模型（LLMs）在解决复杂物理问题时的推理能力。通过引入多个独立LLM代理进行解答验证，显著改善了模型的数学准确性和逻辑一致性，尤其在难度较高的问题上表现优越。
             </div>
         </div>
         
@@ -652,183 +666,150 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决大型语言模型（LLMs）在解决物理问题时推理能力不足、准确性和鲁棒性欠佳的核心挑战。这是一个长期存在且日益重要的问题，原因如下：
-- <strong>推理缺陷</strong>: 当前的LLMs在处理复杂的数学和描述性物理问题时，常出现计算错误、误解物理情境、逻辑不一致以及无法进行复杂的多步推理等问题。
-- <strong>评估不足</strong>: 现有的数学和科学基准（如MATH、GSM8K）不足以有效评估和挑战前沿模型真正的科学推理能力，它们往往无法区分模式匹配和深层理解。
-- <strong>自我修正局限</strong>: 模型的自我修正能力有限，有时甚至会引入新的错误或破坏解决方案的逻辑连贯性。</p>
+<p>本文旨在解决大型语言模型（LLMs）在解决复杂物理问题时推理能力不足、容易产生逻辑错误和数学不准确的问题。这是一个长期存在但日益重要的问题，因为：
+1.  <strong>评估基准不足</strong>：现有的数学和物理基准（如GSM8K, PhyQA）正逐渐被先进模型攻克，难以区分真实的科学推理能力和模式匹配。
+2.  <strong>推理过程缺陷</strong>：LLMs生成的解答常存在逻辑不连贯、步骤顺序错误、与物理原则相悖等问题，且其自我修正能力有限，有时甚至会引入新的错误。
+3.  <strong>评估方法片面</strong>：现有的评估方法往往只关注最终答案的正确性，缺乏对解题过程的系统性、结构化评估，无法全面反映模型的推理能力。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过结合<strong>新颖的评估基准</strong>和<strong>先进的推理技术</strong>，可以显著提升并准确衡量LLMs解决复杂物理问题的能力。具体假设包括：
-- 一个专门设计的、具有挑战性的物理推理基准（PHYSICSEVAL）能够有效地区分不同模型的真实推理水平。
-- 采用<strong>多代理（multi-agent）审查框架</strong>，通过多个模型间的协作验证和批判性反馈，能够比单一模型的基线推理或自我修正更有效地识别并纠正错误，从而显著提高解决方案的准确性和逻辑性。</p>
+<p>本文的核心假设是：通过<strong>多代理协作框架</strong>和<strong>专门构建的高难度基准</strong>，可以显著提升和更准确地评估LLMs在物理问题求解中的表现。具体来说：
+- 一个精心设计的、包含复杂大学和奥林匹克水平问题的基准（PHYSICSEVAL）能够有效推动LLMs的物理推理能力。
+- 一个由多个独立LLM代理组成的审核框架，通过外部批评和共识驱动的验证，能比单一模型或自我修正更有效地发现并纠正解答中的逻辑和计算缺陷。
+- 随着问题难度的增加，多代理系统的优势会愈发明显。</p>
 
 <h3>相关研究</h3>
 
-<ul>
-<li><strong>数学与物理基准</strong>: 现有的数学基准如MAWPS、SVAMP、MATH、GSM8K，以及物理推理基准如PhyQA和UGPhysics。</li>
-<li><strong>LLM推理技术</strong>: 提升LLM推理能力的研究，包括专门的训练技术、提示启发式方法以及自我修正和多代理系统。</li>
-<li><strong>评估框架</strong>: 用于评估学生物理解决方案的框架，如Minnesota Assessment of Problem Solving (MAPS)。</li>
-</ul>
+<p>本文的相关研究主要涵盖三个方面：
+1.  <strong>数学与物理推理基准</strong>：如MAWPS, GSM8K, MATH等数学基准，以及PhyQA, UGPhysics, PhysBench等现有物理推理基准。
+2.  <strong>LLM推理增强方法</strong>：包括自我修正/反思机制、累积推理（Cumulative Reasoning）以及多代理系统在复杂任务中的应用。
+3.  <strong>教育评估框架</strong>：借鉴了物理教育领域的评估方法，如明尼苏达问题解决评估（MAPS）框架，用于系统性地评估解题能力。</p>
 
 <h3>解决方案</h3>
 
-<h3><strong>面向物理问题推理的增强型大语言模型解决方案</strong></h3>
-
-<p>为了系统性地提升大语言模型（LLM）在解决复杂物理问题时的推理能力和准确性，该论文提出了一套由<strong>多代理评审框架</strong>、<strong>自我校正机制</strong>和<strong>专用评估基准</strong>构成的综合解决方案。该方案的核心思想是通过引入外部协作和批判性反馈，克服单一模型在推理过程中可能出现的盲点和错误。</p>
+<p>论文提出了一套综合性解决方案，旨在通过创新的推理时技术和严格的评估体系，显著提升大型语言模型（LLM）解决复杂物理问题的能力。该方案的核心由三个相互关联的部分组成：<strong>1) 一个专门用于评估物理推理能力的高质量基准数据集PHYSICSEVAL</strong>；<strong>2) 一个基于协作审查的多智能体框架</strong>；以及 <strong>3) 一个用于量化评估模型性能的综合评分体系</strong>。</p>
 
 <hr />
 
-<h4><strong>第一部分：基础建设 - PHYSICSEVAL 物理推理基准</strong></h4>
+<h4><strong>第一部分：基础平台 - PHYSICSEVAL评估基准的构建</strong></h4>
 
-<p>在评估和提升模型能力之前，需要一个高质量、高标准的测试平台。为此，论文首先构建了一个名为 <strong>PHYSICSEVAL</strong> 的全新物理推理基准。</p>
+<p>为了对LLM的物理推理能力进行严格和标准化的评估，论文首先构建了一个名为<strong>PHYSICSEVAL</strong>的新评估基准。</p>
+
+<ul>
+<li><p><strong>数据来源与构建</strong>：</p>
+
+<ul>
+<li>该数据集包含<strong>19,609个物理问题及其详细解决方案</strong>。</li>
+<li>问题来源于20本权威的物理教材，覆盖从高中到大学的多个物理学类别（如力学、热力学、电磁学等）。</li>
+<li>解决方案则源自知名的在线物理论坛和教育网站，确保其内容由人类专家生成。</li>
+</ul></li>
+<li><p><strong>数据清理与精炼</strong>：</p>
+
+<ul>
+<li>为了保证数据集的质量和一致性，研究人员使用Google的Gemini 2.5 Pro模型对收集到的解决方案进行“精炼”。</li>
+<li>此过程<strong>严格限制在编辑层面</strong>，包括：修正语法和拼写错误、统一LATEX方程格式、将解决方案组织成清晰的逐步步骤。</li>
+<li>模型<strong>不涉及任何科学内容的修改或添加</strong>，从而确保数据集的“地面真相”忠实于人类专业知识，避免引入模型偏见。</li>
+</ul></li>
+<li><p><strong>数据集特点与应用</strong>：</p>
+
+<ul>
+<li>每个问题都被标注了元数据，如主题类别、难度等级和关键物理原则。</li>
+<li>数据集按90:10的比例划分为训练集和测试集，其中约1,962个问题用于性能评估，其余可用于未来模型的微调。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>第二部分：核心方法 - 多智能体审查框架 (Multi-Agent Review Framework)</strong></h4>
+
+<p>针对单一LLM在进行自我修正时可能引入新错误或性能下降的问题，论文提出了一种创新的<strong>多智能体审查框架</strong>。该框架通过多个模型的协作验证来提高解决方案的质量和可靠性。</p>
+
+<p>该框架包含三个主要模块：</p>
 
 <ol>
-<li><p><strong>构建过程</strong>：</p>
+<li><p><strong>提案模块 (Proposer Module)</strong>：</p>
 
 <ul>
-<li><strong>内容来源</strong>：基准包含 <strong>19,609</strong> 个物理问题，源自各类权威物理教材和教育网站，涵盖从高中到大学的广泛内容。其详细解决方案则由领域专家和教育工作者提供。</li>
-<li><strong>数据处理与优化</strong>：利用先进的 LLM（如 Gemini 2.5 Pro）对原始文本进行“润色”，包括修正语法、统一 LaTeX 公式格式，并将人类的推理过程结构化为清晰的步骤。此过程仅为编辑和格式化，不改变任何核心科学逻辑。</li>
-<li><strong>结构化数据模型</strong>：每个问题都以结构化的数据模型存储，包含<code>Problem_ID</code>、<code>problem</code>（问题原文）、<code>category</code>（分类）、<code>elaborated_solution_steps</code>（详细解题步骤）、<code>final_answers_in_brief</code>（最终答案）等多个字段，便于系统化管理和分析。</li>
+<li>使用一个强大的LLM（如OpenAI的o4-mini或Gemini 2.5 Pro）作为“提案者”。</li>
+<li>该模型接收一个物理问题，并生成一个初步的、详细的解决方案。</li>
 </ul></li>
-<li><p><strong>基准的创新性</strong>：</p>
+<li><p><strong>验证模块 (Verifier Module)</strong>：</p>
 
 <ul>
-<li>PHYSICSEVAL 专注于评估模型对物理原理的深层理解和多步推理能力，而不仅仅是数学计算。它旨在挑战模型的极限，推动其在科学推理领域的发展。</li>
+<li>为了对初步解决方案进行外部批评和评估，该模块引入了<strong>三个独立的、较小的LLM作为“验证者”</strong>（如Microsoft的Phi-4-reasoning-plus、Qwen3-14B和DeepSeek-R1 14B）。</li>
+<li>每个验证者根据一套预定义的评分标准，独立地对提案进行评估，并识别、记录其中的潜在错误。</li>
+</ul></li>
+<li><p><strong>元验证模块 (Meta-Verifier Module)</strong>：</p>
+
+<ul>
+<li>该模块由一个更强大的模型（如Qwen3-32B）担任“元验证者”。</li>
+<li>其任务是整合来自三个验证者的反馈，<strong>过滤掉无关或错误的错误标记</strong>，并根据预设权重计算出提案解决方案的最终综合得分。</li>
+<li>这个共识驱动的过程确保了反馈的质量和一致性，从而为最终的修正提供可靠指导。</li>
 </ul></li>
 </ol>
 
+<p><strong>该框架的优势在于</strong>：通过外部、多样化的批评取代了单一模型的自我修正，显著增强了错误识别的鲁棒性，尤其是在处理高难度问题时，能够有效提升解决方案的数学准确性和逻辑一致性。</p>
+
 <hr />
 
-<h4><strong>第二部分：核心方法 - 多代理评审框架（Multi-Agent Review Framework）</strong></h4>
+<h4><strong>第三部分：性能评估体系 - 物理能力指数 (Physics Proficiency Score, PPS)</strong></h4>
 
-<p>这是论文提出的核心技术，通过多个不同角色的 LLM 代理协同工作，对物理问题的解决方案进行生成、验证、评审和精炼。</p>
+<p>为了量化和全面地评估不同方法生成的解决方案质量，论文设计了一个名为<strong>物理能力指数（PPS）</strong>的综合评估体系。</p>
 
-<p>该框架主要由以下模块构成：</p>
+<ul>
+<li><p><strong>六大核心评估指标</strong>：
+该体系借鉴了物理教育研究中成熟的<strong>明尼苏达问题解决评估（MAPS）框架</strong>，将解决方案的质量分解为六个关键维度，每个维度在1到5的Likert量表上评分：</p>
 
 <ol>
-<li><p><strong>提出者模块 (Proposer Module)</strong>：</p>
-
-<ul>
-<li><strong>角色</strong>：由一个强大的 LLM（如 OpenAI 的 o4-mini 或 Gemini 2.5 Pro）担任。</li>
-<li><strong>任务</strong>：接收物理问题后，生成一个初步的、零反馈的解决方案。这是整个评审和优化流程的起点。</li>
-</ul></li>
-<li><p><strong>验证者模块 (Verifier Module)</strong>：</p>
-
-<ul>
-<li><strong>角色</strong>：由多个不同的小型 LLM（如 Phi-4-reasoning-plus, Qwen3-14B, DeepSeek-R1 14B）组成独立的验证者团队。</li>
-<li><strong>任务</strong>：每个验证者根据预设的评分标准，独立评估“提出者”生成的解决方案。它们会从数学准确性、逻辑一致性、完整性等多个维度进行打分，并生成一份结构化的错误清单。</li>
-</ul></li>
-<li><p><strong>元验证者模块 (Meta-Verifier Module)</strong>：</p>
-
-<ul>
-<li><strong>角色</strong>：由一个更强大的 LLM（如 Qwen3-32B）担任。</li>
-<li><strong>任务</strong>：汇总所有“验证者”的反馈和错误清单。其核心职责是<strong>过滤</strong>掉无关或错误的反馈，并<strong>整合</strong>有效的批评。它通过加权平均的方式计算出一个最终的综合得分，并生成一个统一、精炼的反馈列表。</li>
-</ul></li>
-<li><p><strong>反馈与精炼循环</strong>：</p>
-
-<ul>
-<li>如果元验证者发现了错误，这份整合后的反馈列表将被送回给“提出者”模块。</li>
-<li>“提出者”在接收到外部的、具体的批判性反馈后，会重新审视问题并生成一个修正后的、更高质量的解决方案。</li>
-</ul></li>
-</ol>
+<li><strong>数学准确性 (SMA)</strong>: 评估计算、单位和最终数值答案的正确性。</li>
+<li><strong>逻辑一致性 (SLC)</strong>: 评估推理步骤是否合理且符合物理原则。</li>
+<li><strong>完整性 (SC)</strong>: 评估问题的所有部分是否都得到了充分解答。</li>
+<li><strong>清晰性和连贯性 (SCC)</strong>: 评估解释的清晰度、组织性和易理解性。</li>
+<li><strong>公式与原理 (SFP)</strong>: 评估是否正确识别并应用了相关的物理公式和原则。</li>
+<li><strong>假设的合理性 (SA)</strong>: 评估所做假设是否清晰、合理且恰当。</li>
+</ol></li>
+<li><p><strong>加权平均计算PPS</strong>：
+PPS是这六个指标得分的加权平均值。权重由经验丰富的物理教师和考试评分专家确定，其中<strong>数学准确性</strong>和<strong>逻辑一致性</strong>被赋予最高权重，反映了“正确的答案源于严谨的推理”这一核心评估理念。
+\[ PPS<em>j = \sum</em>{k=1}^{6} w<em>k \cdot s</em>{j,k} \]</p></li>
+</ul>
 
 <hr />
 
-<h4><strong>第三部分：辅助机制与方法比较</strong></h4>
+<h3><strong>总结与展望</strong></h3>
 
-<p>为了验证多代理框架的优越性，论文还实现并比较了其他几种推理时间技术：</p>
+<p>该论文通过构建高质量的<strong>PHYSICSEVAL基准</strong>、设计创新的<strong>多智能体审查框架</strong>以及建立全面的<strong>PPS评估体系</strong>，形成了一套完整的解决方案。实验结果表明，与基线模型和单一模型的自我修正相比，多智能体框架在总体性能、数学准确性和公式应用等方面均取得了<strong>统计上显著的提升</strong>。</p>
 
-<ol>
-<li><strong>基线推理 (Baseline)</strong>：模型仅依靠自身能力一次性生成答案，无任何反馈。</li>
-<li><strong>自我校正 (Self-Correction/Self-Refining)</strong>：模型在生成答案后，通过元认知提示（如“请检查你的答案是否正确”）对自己进行检查和修正。研究发现，这种方法有时会因缺乏外部指导而加深固有错误，甚至导致性能下降。</li>
-<li><strong>单代理审查 (Single-Agent Review)</strong>：由另一个独立的 LLM 对“提出者”的方案进行评审并提供反馈。</li>
-<li><strong>多代理审查 (Multi-Agent Review)</strong>：即上文详述的核心框架。</li>
-</ol>
-
-<p><strong>关键发现</strong>：实验结果表明，随着方法复杂性的增加（从基线到多代理），模型的性能普遍提升。<strong>外部批判（单代理和多代理）显著优于自我校正</strong>，而<strong>多代理框架在处理复杂问题时表现最佳</strong>，尤其在数学准确性和逻辑一致性方面取得了统计学上显著的提升。</p>
-
-<hr />
-
-<h4><strong>第四部分：科学的评估方法论</strong></h4>
-
-<p>为了客观衡量不同方法的效果，论文设计了一套严谨的多层次评估体系。</p>
-
-<ol>
-<li><strong>评估哲学</strong>：借鉴明尼苏达州问题解决评估（MAPS）框架，评估重点在于<strong>求解过程的质量</strong>，而不仅仅是最终答案的对错。</li>
-<li><strong>评分标准</strong>：
-<ul>
-<li>将解决方案的质量分解为六个核心维度：
-<ul>
-<li><strong>数学准确性 (SMA)</strong></li>
-<li><strong>逻辑一致性 (SLC)</strong></li>
-<li><strong>完整性 (SC)</strong></li>
-<li><strong>清晰性与连贯性 (SCC)</strong></li>
-<li><strong>公式与原则 (SFP)</strong></li>
-<li><strong>假设制定 (SA)</strong></li>
-</ul></li>
-<li>每个维度采用 1-5 分的李克特量表进行评分。</li>
-</ul></li>
-<li><strong>物理能力评分 (Physics Capability Score, PPS)</strong>：
-<ul>
-<li>这是一个综合指标，通过对上述六个维度的得分进行<strong>加权平均</strong>计算得出。权重由咨询经验丰富的物理教师和考试评分专家确定，以确保其与人类评估的优先级保持一致。</li>
-</ul></li>
-<li><strong>评估过程</strong>：
-<ul>
-<li>所有由模型生成的解决方案都会与 PHYSICSEVAL 基准中的“真相解决方案”（ground-truth solution）进行对比。</li>
-<li>评估过程由一个强大的 LLM（Gemini 2.5 Pro）执行，该模型被提供了详细的评分标准和真相解决方案，以确保评估的客观性和一致性。</li>
-</ul></li>
-</ol>
-
-<hr />
-
-<h3><strong>总结与应用</strong></h3>
-
-<p>该论文通过构建 <strong>PHYSICSEVAL 基准</strong>，提出并验证了<strong>多代理评审框架</strong>的有效性。该框架通过协作性批判和系统性反馈，显著提升了 LLM 在解决物理问题时的准确性、逻辑性和可靠性，并证明了外部集体智慧在复杂科学推理任务中优于单一模型的自我修正。</p>
-
-<p><strong>主要应用场景包括</strong>：
-*   <strong>教育领域</strong>：为学生提供更精准的物理问题解答和智能辅导。
-*   <strong>科学研究</strong>：辅助研究人员快速处理和验证复杂的物理计算与推理。
-*   <strong>自动化问答系统</strong>：为在线平台提供高质量、高可靠性的物理问题解答服务。</p>
-
-<p><strong>主要局限性</strong>：
-*   <strong>计算成本</strong>：多代理框架需要多个模型同时运行，计算开销较大。
-*   <strong>数据集依赖</strong>：模型的性能依赖于基准数据集的质量，尽管已经过优化，但仍可能存在未被发现的错误。</p>
+<p>该方法不仅为提升LLM在物理领域的推理能力提供了有效途径，也为其他需要深度知识和复杂推理的STEM领域提供了宝贵的借鉴。尽管多智能体方法带来了更高的计算成本，但其在增强推理可靠性方面的巨大潜力，为未来人工智能在科学探索中的应用奠定了坚实的基础。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>数据集</strong>: 使用新构建的PHYSICSEVAL基准，该基准共包含19,609个物理问题。实验从中随机抽取了1,962个问题作为测试集。</li>
-<li><strong>评估方法</strong>: 比较了前沿LLMs在四种不同推理技术下的表现：
-<ol>
-<li>基线推理（直接生成答案）。</li>
-<li>自我修正（模型自己检查并修正答案）。</li>
-<li>单个验证者累积推理。</li>
-<li>多代理审查框架。</li>
-</ol></li>
-<li><strong>评估指标</strong>: 使用基于六个维度的详细评分系统，并结合整体表现评分（PPS）来量化和比较不同方法的性能。</li>
+<li><strong>数据集划分</strong>：将PHYSICSEVAL数据集按90:10的比例划分为训练集和测试集。</li>
+<li><strong>模型评估</strong>：选取了六个前沿的LLMs，在测试集的1,962个问题上进行评估。</li>
+<li><strong>方法对比</strong>：系统比较了四种不同的推理策略：基线（直接生成）、自我修正、单代理审核和本文提出的多代理审核框架。</li>
+<li><strong>评估方法</strong>：使用PHYSICSEVAL的六维评分系统和Likert量表（1到5分）对每个生成的解决方案进行打分，并采用配对t检验等统计方法分析结果的显著性。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>数据集</strong>: PHYSICSEVAL数据集，包含19,609个物理问题及其解决方案。</li>
-<li><strong>代码和数据</strong>: 可在以下地址获取：https://github.com/areebuzair/PhysicsEval</li>
+<li><strong>数据集</strong>：PHYSICSEVAL数据集，包含19,609个物理问题和解决方案。</li>
+<li><strong>代码和数据</strong>：在GitHub上公开可用：<a href="https://github.com/areebuzair/PhysicsEval">https://github.com/areebuzair/PhysicsEval</a></li>
 </ul>
 
 <h3>实验结果</h3>
 
 <p>实验结果有力地支持了核心假设：
-- <strong>性能显著提升</strong>: 多代理审查框架在所有模型和问题难度上都显著优于基线和自我修正方法，尤其是在处理难题时优势更为明显。
-- <strong>关键指标改进</strong>: 该框架在<strong>数学准确性</strong>和<strong>逻辑一致性</strong>等关键指标上取得了统计学上的显著提升（例如，o4-mini模型在PPS上p=0.0405，数学准确性上p=0.0057）。
-- <strong>基准有效性</strong>: PHYSICSEVAL基准成功地区分了不同推理策略的有效性，证明了其作为评估工具的价值。</p>
+- <strong>性能提升</strong>：多代理审核框架在整体表现上显著优于基线、自我修正和单代理审核方法，尤其在<strong>数学准确性</strong>和<strong>逻辑一致性</strong>方面取得了统计上显著的改进。
+- <strong>难度相关性</strong>：随着问题难度的增加，多代理框架相较于其他方法的性能优势愈发明显。
+- <strong>自我修正的局限性</strong>：实验发现，简单的自我修正有时甚至会因引入新错误而导致性能下降，凸显了外部、多方验证的必要性。</p>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>引入PHYSICSEVAL基准</strong>: 提出了一个大规模、高质量的物理问题求解基准，为社区提供了一个评估和推动LLMs科学推理能力的重要资源。</li>
-<li><strong>提出并验证多代理框架</strong>: 设计并实验证明了一个有效的多代理审查框架，该框架能显著提升LLMs在复杂科学问题上的准确性和可靠性。</li>
-<li><strong>建立综合评估体系</strong>: 开发了一套基于专家标准的、多维度的评估方法，为系统性地评价AI生成的科学解决方案质量提供了新的范式。</li>
+<li><strong>提出了PHYSICSEVAL</strong>：一个全新的、大规模、高质量的物理推理基准，为评估和推动LLMs在高级科学推理领域的发展提供了重要工具。</li>
+<li><strong>提出了多代理审核框架</strong>：设计并验证了一种新颖的、通过协作批评来提升LLM解题质量的有效方法，为增强LLM在技术性强领域的可靠性提供了实用方案。</li>
+<li><strong>提供了深入的实证分析</strong>：通过全面的实验，不仅证明了多代理方法的优越性，还揭示了现有LLMs在物理推理中的具体局限以及自我修正等方法的潜在风险。</li>
 </ol>
 
                     </div>
@@ -844,7 +825,7 @@ pre[class*=language-] {
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-06 20:06:16</p>
+            <p>生成时间: 2025-11-06 20:07:39</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>

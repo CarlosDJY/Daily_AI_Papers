@@ -222,6 +222,20 @@
         <div class="header">
             <h1>s3: You Don't Need That Much Data to Train a Search Agent via RL</h1>
             
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">检索代理</span>
+                
+                <span class="keyword-badge">强化学习</span>
+                
+                <span class="keyword-badge">检索增强生成</span>
+                
+                <span class="keyword-badge">数据效率</span>
+                
+                <span class="keyword-badge">奖励信号</span>
+                
+            </div>
+            
             
             <div class="paper-meta"><strong>作者单位:</strong> University of Illinois Urbana Champaign, Amazon</div>
             
@@ -249,7 +263,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了s3框架，解耦检索与生成过程，通过引入“Gain Beyond RAG”奖励信号优化检索策略，显著提升了检索增强生成系统的性能和数据效率。s3在仅使用2.4k训练样本的情况下，超越了基于70倍数据的现有方法，并提出了新的“生成准确性”评估指标，确保生成答案的语义质量。
+                本文提出了s3框架，通过解耦检索与生成过程，独立优化检索代理，显著提升了检索增强生成（RAG）系统的性能和数据效率。引入的Gain Beyond RAG奖励信号和Generation Accuracy评估指标，分别提高了检索质量和评估准确性，使得s3在仅用2.4k样本的情况下超越了基线模型，展现出卓越的性能。
             </div>
         </div>
         
@@ -652,161 +666,146 @@ pre[class*=language-] {
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
                         <h3>现有问题</h3>
 
-<p>本文旨在解决现有检索增强生成（RAG）系统中的几个核心问题：
-1.  <strong>紧密耦合</strong>：检索器和生成器通常被紧密耦合地联合训练，这使得独立优化检索质量变得困难，并且限制了与冻结或专有模型的兼容性。
-2.  <strong>次优优化</strong>：许多方法仅使用搜索指标（如NDCG）来优化检索器，这并不能保证下游生成任务的最终效果。
-3.  <strong>数据和计算效率</strong>：现有方法通常需要大量的训练数据和计算资源，这限制了它们的可扩展性和在低资源环境中的应用。
-4.  <strong>评估不准确</strong>：传统的评估指标（如精确匹配，EM）无法有效评估答案的语义正确性，尤其是在处理表述不同但含义相同的答案时，导致评估结果与人类判断存在偏差。</p>
+<p>本文旨在解决现有检索增强生成（RAG）系统中的几个核心挑战：
+1.  <strong>训练过程耦合</strong>：传统RAG方法在训练时将检索和生成过程紧密耦合，导致难以独立且有效地优化检索器的质量，使其真正服务于下游的生成任务。
+2.  <strong>数据和计算效率低下</strong>：现有的强化学习方法通常需要大量的训练数据和昂贵的计算资源（例如，在训练循环中频繁调用大语言模型进行推理），这限制了其在资源有限环境下的应用和可扩展性。
+3.  <strong>评估指标不准确</strong>：普遍使用的评估指标（如精确匹配 Exact Match）过于依赖表层字符串匹配，无法准确评估生成答案的语义正确性，尤其是在处理自由形式或抽象性回答时，这导致评估结果与人类判断存在巨大偏差。
+这些问题在处理复杂、知识密集型任务（如医学问答）时尤为突出，因为这些场景对答案的准确性和可靠性要求极高。</p>
 
 <h3>Hypothesis</h3>
 
-<p>核心假设是：通过将检索与生成过程解耦，并仅使用一个为下游任务量身定制的奖励信号来优化检索器，可以显著提升RAG系统的整体性能和数据效率。具体假设包括：
-- 模块化的s3框架能够在使用极少量训练数据（例如，比基线少70倍）的情况下，超越现有最先进的RAG方法。
-- “Gain Beyond RAG”（GBR）可以作为一个有效的奖励信号，指导强化学习过程，以优化检索策略。
-- 新提出的“生成准确性”（Generation Accuracy, GenAcc）评估指标，能够比传统指标更准确地反映生成答案的语义质量，并与人类判断高度对齐。</p>
+<p>本文的核心假设是：通过<strong>解耦检索与生成过程</strong>，可以更有效地优化RAG系统。具体而言：
+- 专注于独立优化检索代理（Retriever），而不是对整个系统进行端到端微调，能够以更高的<strong>数据效率</strong>和<strong>计算效率</strong>提升系统性能。
+- 设计一个更优的<strong>奖励信号</strong>（Gain Beyond RAG, GBR），直接衡量检索到的文档对最终生成答案质量的提升程度，可以更精确地指导检索代理的学习。
+- 采用一个更符合人类判断的<strong>评估指标</strong>（Generation Accuracy, GenAcc），能够更准确地衡量并优化模型的真实性能。</p>
 
 <h3>相关研究</h3>
 
+<p>本文的相关研究主要涵盖了以下几个方面：
+- <strong>检索增强生成（RAG）系统</strong>：包括其基础架构和多种变体，如静态检索、主动检索（Active RAG）和自我反思（Self-RAG）等。
+- <strong>基于强化学习（RL）的检索方法</strong>：特别是将RL用于优化检索策略的工作，代表性模型如 DeepRetrieval 和 Search-R1。
+- <strong>大语言模型（LLM）的评估方法</strong>：研究如何设计更可靠的评估指标，以及利用LLM本身进行自动化评估，以替代依赖人类反馈的昂贵方法。
+- <strong>推理技术</strong>：如思维链（Chain-of-Thought, CoT）等，用于增强模型的推理能力。</p>
+
+<h3>解决方案</h3>
+
+<p>本文提出的核心解决方案是一个名为 <strong>s3 (Search-Select-Serve)</strong> 的轻量级、模型无关的框架。该框架旨在通过优化检索过程来显著提升检索增强生成（RAG）系统的性能和效率。其核心思想是<strong>将搜索过程与生成过程解耦</strong>，通过强化学习（RL）专门训练一个<strong>搜索代理（Search Agent）</strong>，使其学会如何进行结构化、多轮次的外部知识访问，从而为固定的生成大语言模型（Generator LLM）提供最优质的上下文信息。</p>
+
+<h4><strong>1. s3框架的核心组成部分</strong></h4>
+
+<p>s3框架主要由以下三个模块构成：</p>
+
 <ul>
-<li><strong>传统RAG系统</strong>：包括经典RAG、主动RAG（Active RAG）和自我RAG（Self-RAG）等。</li>
-<li><strong>基于强化学习的检索方法</strong>：如DeepRetrieval和Search-R1，它们也尝试优化检索，但未能有效分离检索与生成。</li>
-<li><strong>其他相关方法</strong>：如结合链式推理的IRCoT和监督查询重写技术。</li>
+<li><strong>搜索代理 (Search Agent)</strong>：这是框架的核心训练对象。它是一个通过强化学习训练的策略模型，负责与搜索引擎交互，并执行整个检索流程，包括：生成搜索查询、从检索结果中选择有用的文档，以及决定何时停止搜索。</li>
+<li><strong>搜索引擎 (Search Engine)</strong>：一个标准的外部知识库接口，负责根据搜索代理生成的查询返回相关文档。</li>
+<li><strong>固定的生成LLM (Fixed Generator LLM)</strong>：一个大型语言模型（如Claude-3-Haiku），它在整个训练和推理过程中保持<strong>冻结</strong>状态，不进行任何微调。它的唯一任务是接收由搜索代理最终整合的上下文信息，并生成最终答案。</li>
 </ul>
 
-<h3><strong>完整解决方案：s3框架——通过解耦与强化学习优化检索增强生成</strong></h3>
+<p>这种解耦设计是s3框架的关键优势，它允许系统专注于优化检索质量，而不会因微调生成器而导致其通用能力下降或产生过拟合。</p>
 
-<p>这篇论文提出了一种名为 <strong>s3 (Search-Select-Synthesize)</strong> 的创新框架，旨在通过优化信息检索过程，显著提升检索增强生成（RAG）系统在问答（QA）任务中的性能。s3的核心思想是将<strong>搜索（Search）</strong>与<strong>生成（Generation）</strong>过程解耦，并利用强化学习（RL）训练一个专门的“搜索代理”（Search Agent），使其能够进行多轮次的、更智能的文档检索与筛选，从而为生成模型提供更高质量的上下文信息。</p>
+<h4><strong>2. 核心机制：基于强化学习的训练流程</strong></h4>
 
-<h4><strong>一、 s3框架的核心架构与理念</strong></h4>
+<p>s3框架通过强化学习来训练搜索代理，其训练流程包含几个关键创新点：</p>
 
-<p>s3框架是一个轻量级、模型无关的系统，由三个主要组件构成：</p>
+<h5><strong>a. 奖励信号：超越RAG的增益 (Gain Beyond RAG, GBR)</strong></h5>
+
+<p>为了给搜索代理提供一个清晰的优化目标，论文引入了一个新颖的奖励信号——<strong>GBR</strong>。GBR量化了使用s3框架精心检索的上下文（D<em>s3）相比于传统“朴素RAG”（即直接使用原始问题检索的前k个文档，D</em>RAG）所带来的生成准确性提升。其计算公式如下：</p>
+
+<p>[ \text{GBR}(Q) = \text{Acc}(G(Q, D<em>{s3}), A) - \text{Acc}(G(Q, D</em>{RAG}), A) ]</p>
+
+<ul>
+<li><code>G</code> 是固定的生成LLM。</li>
+<li><code>Q</code> 是用户问题，<code>A</code> 是标准答案。</li>
+<li><code>Acc(·)</code> 是一个衡量生成答案准确性的函数。</li>
+</ul>
+
+<p>这个奖励信号激励搜索代理去寻找那些<strong>真正能帮助生成器从错误走向正确</strong>的文档，而不仅仅是与问题或答案表面相关的文档。</p>
+
+<h5><strong>b. 关键评估指标：生成准确性 (Generation Accuracy, GenAcc)</strong></h5>
+
+<p>为了让<code>Acc(·)</code>函数能够准确评估语义正确性，论文设计了一个名为<strong>GenAcc</strong>的复合评估指标。它结合了效率和鲁棒性，分两步进行：</p>
 
 <ol>
-<li><strong>搜索代理 (Search Agent)</strong>：这是一个基于大型语言模型（LLM）的策略模块，是s3框架的核心。它负责与搜索引擎交互，通过多轮循环迭代地生成搜索查询、检索文档，并从中选择最关键的证据。该代理是唯一在训练中被优化的部分。</li>
-<li><strong>搜索引擎 (Search Engine)</strong>：一个标准的外部知识库接口，如BM25或基于嵌入的稠密检索器，用于根据搜索代理生成的查询返回相关文档。</li>
-<li><strong>生成器 (Generator LLM)</strong>：一个“冻结”的（frozen）或“黑箱”的大型语言模型。它不参与训练过程，仅负责接收由搜索代理最终筛选出的上下文信息，并生成最终答案。</li>
+<li><strong>快速跨度匹配 (Span-Based Matching)</strong>：首先对生成答案和标准答案进行标准化处理（如小写、去标点），然后检查标准答案是否作为生成答案的一个子串存在。这能快速处理简单的匹配情况。</li>
+<li><strong>LLM语义判断 (LLM-Based Semantic Judging)</strong>：如果跨度匹配失败，则调用一个轻量级的“裁判”LLM来判断生成答案在<strong>语义上</strong>是否包含了标准答案。例如，生成答案“二十五”和标准答案“25”虽然字面不同，但会被判定为正确。</li>
 </ol>
 
-<p><strong>核心理念：解耦优化</strong>
-传统RAG系统常常对检索器和生成器进行端到端联合调优，这可能导致生成器对特定训练数据中的答案令牌产生过拟合。s3框架通过将两者解耦，允许<strong>独立且专注地优化搜索过程</strong>，其假设是：只要能为生成器提供更高质量、更相关的上下文，即使生成器本身保持不变，其输出质量也会显著提升。</p>
+<p>实验证明，GenAcc与人类评估的对齐度高达<strong>96.4%</strong>，远超传统精确匹配（EM）指标，使其成为一个可靠的自动化奖励计算工具。</p>
 
-<h4><strong>二、 s3的工作流程：多轮搜索-选择循环</strong></h4>
+<h5><strong>c. 训练效率优化</strong></h5>
 
-<p>s3框架的搜索代理通过一个结构化的多轮循环来收集信息，具体流程如下：</p>
+<p>为了最大化训练效率，s3采用了两个关键策略：</p>
 
 <ol>
-<li><strong>初始化 (Initialization)</strong>：代理以用户的原始问题作为第一个搜索查询，从搜索引擎中检索初始的一批（top-k）文档。</li>
-<li><strong>选择 (Selection)</strong>：代理评估检索到的文档，并选择一个它认为最有用的文档子集，形成初始上下文。这一步至关重要，因为它能过滤掉噪音信息。</li>
-<li><strong>决策 (Decision)</strong>：代理判断当前收集到的信息是否足以回答问题。
+<li><strong>基线准确性预计算</strong>：在训练开始前，系统会预计算所有训练样本在朴素RAG下的准确性。之后，<strong>仅在朴素RAG失败的样本（即基线准确性为0）上进行训练</strong>。这使得模型能集中资源学习如何解决难题。</li>
+<li><strong>高效的强化学习算法</strong>：采用<strong>近端策略优化（PPO）</strong>算法来更新搜索代理的策略。PPO以其训练稳定性和高效性而著称。</li>
+</ol>
+
+<p>得益于此，s3仅需约<strong>2.4k</strong>个训练样本即可达到甚至超越需要超过17万样本训练的基线模型，数据效率提升了约70倍。</p>
+
+<h4><strong>3. s3框架的运行流程：多轮搜索-选择-服务</strong></h4>
+
+<p>在实际运行时，s3框架遵循一个迭代的“搜索-选择-服务”流程：</p>
+
+<ol>
+<li><strong>初始检索</strong>：使用用户问题作为初始查询，检索第一批文档。</li>
+<li><strong>多轮搜索-选择循环</strong>：搜索代理进入一个循环，在每一轮中：
 <ul>
-<li><strong>如果信息充足</strong>，代理输出 <code>&lt;search_complete&gt;True&lt;/search_complete&gt;</code> 标签，结束搜索循环。</li>
-<li><strong>如果信息不足</strong>，代理会生成一个新的、更具针对性的查询，以弥补信息缺口。</li>
+<li><strong>评估信息</strong>：判断当前已收集的文档是否足以回答问题。</li>
+<li><strong>生成新查询</strong>：如果信息不足，则根据已有上下文生成一个更具针对性的新查询。</li>
+<li><strong>检索与选择</strong>：执行新查询，并从返回的文档中选择最有价值的片段，将其标记为“重要信息”。</li>
+<li><strong>停止决策</strong>：代理决定是继续搜索还是终止循环。实验表明，3轮搜索通常能达到最佳性能。</li>
 </ul></li>
-<li><strong>迭代 (Iteration)</strong>：代理带着新生成的查询返回第1步，重复“搜索-选择-决策”的循环，直到达到停止条件（如信息充足或达到最大轮次限制）。</li>
-<li><strong>生成 (Synthesis)</strong>：循环结束后，所有被选中的文档构成的最终上下文（Ds3）被传递给冻结的生成器LLM，以生成最终答案。</li>
+<li><strong>服务 (Serve)</strong>：当搜索循环终止时，代理将所有被选中的“重要信息”整合成最终的上下文，并将其“服务”于固定的生成LLM，以生成最终答案。</li>
 </ol>
 
-<h4><strong>三、 训练策略：基于强化学习与GBR奖励</strong></h4>
-
-<p>为了让搜索代理学会如何进行有效的多轮搜索，s3框架将其视为一个强化学习问题，并引入了两个关键创新：</p>
-
-<p><strong>1. 奖励信号：Gain Beyond RAG (GBR)</strong>
-GBR是s3框架的核心创新之一，它是一个新颖的奖励信号，用于量化s3的动态搜索策略相比于简单的静态RAG基线所带来的性能提升。其定义如下：</p>
-
-<p>\[ GBR(Q) = Acc(G(Q, D<em>{s3}), A) - Acc(G(Q, D</em>{RAG}), A) \]</p>
+<h4><strong>4. 核心优势与成果</strong></h4>
 
 <ul>
-<li>\$ Q \$ 是原始问题。</li>
-<li>\$ A \$ 是标准答案。</li>
-<li>\$ D_{s3} \$ 是s3代理通过多轮搜索选择出的文档集。</li>
-<li>\$ D_{RAG} \$ 是通过简单的top-k检索（基线RAG）获得的文档集。</li>
-<li>\$ Acc \$ 是答案的准确性评分函数（详见评估部分）。</li>
+<li><strong>模块化与模型无关性</strong>：可以轻松替换生成LLM或搜索引擎，适应性强。</li>
+<li><strong>极高的数据与计算效率</strong>：训练所需数据量极少，总训练时间大幅缩短。</li>
+<li><strong>强大的性能</strong>：在多个通用和医疗领域的问答基准测试中，s3的性能超越了所有传统的RAG系统。</li>
+<li><strong>高效的推理</strong>：通过动态选择文档，s3显著减少了输入给生成LLM的Token数量（减少2.6至4.2倍），降低了推理成本。</li>
+<li><strong>良好的泛化能力</strong>：通过学习通用的搜索“技能”而非特定任务的知识，s3在零样本场景（如医疗问答）中也表现出色。</li>
 </ul>
 
-<p>这个奖励信号的巧妙之处在于，它不奖励找到与答案表面相似的文档，而是奖励那些<strong>能够真正帮助生成器生成正确答案</strong>的文档，即使这些文档本身不包含答案的直接字符串。</p>
+<h4><strong>总结</strong></h4>
 
-<p><strong>2. 训练过程与效率优化</strong>
-s3使用<strong>近端策略优化（PPO）</strong>算法来训练搜索代理的策略。</p>
-
-<ul>
-<li><strong>训练目标</strong>：最大化GBR奖励。在训练过程中，只有搜索代理的参数被更新，生成器保持不变。</li>
-<li><strong>效率提升</strong>：为了提高训练效率，框架首先<strong>预计算基线准确性</strong>（即公式中的第二项 \$ Acc(G(Q, D_{RAG}), A) \$）。随后，训练过程<strong>只专注于那些基线准确性为零的“困难”样本</strong>。这意味着s3将计算资源集中在解决那些简单RAG方法无法处理的问题上，从而大大提高了数据和计算效率。</li>
-</ul>
-
-<p>实验证明，s3仅需<strong>2.4k个训练样本</strong>和<strong>20个PPO步骤</strong>即可收敛并超越需要数万甚至数十万样本的强基线模型，展现了其卓越的数据和时间效率。</p>
-
-<h4><strong>四、 评估方法：生成准确率 (GenAcc)</strong></h4>
-
-<p>为了克服传统精确匹配（Exact Match）指标的脆弱性（例如，“爱因斯坦” vs “阿尔伯特·爱因斯坦”会被判为错误），论文提出了一种更稳健的复合评估指标——<strong>生成准确率（GenAcc）</strong>。</p>
-
-<p>GenAcc通过一个两步流程来判断答案是否正确：</p>
-
-<ol>
-<li><strong>跨度匹配检查 (span_check)</strong>：首先，对预测答案和标准答案进行标准化处理（转为小写、移除标点和冠词），然后检查标准答案的标记跨度是否存在于预测答案中。这是一种快速、高效的词汇匹配。</li>
-<li><strong>基于LLM的语义判断 (judge_check)</strong>：如果跨度匹配失败，则调用一个轻量级的、冻结的LLM来判断预测答案在<strong>语义上</strong>是否与标准答案等价。例如，它可以正确判断“25”和“twenty-five”是相同的。</li>
-</ol>
-
-<p>通过结合这两种方法，GenAcc能够更准确地捕捉答案的语义正确性。一项人类评估研究表明，GenAcc与人类判断的<strong>对齐度高达96.4%</strong>，而精确匹配仅为15.8%，证明了其作为评估指标的可靠性。</p>
-
-<h4><strong>五、 优势、应用与局限性</strong></h4>
-
-<p><strong>主要优势：</strong>
-*   <strong>模块化与灵活性</strong>：解耦设计允许独立优化搜索过程，并且可以轻松替换任何搜索代理或生成器LLM。
-*   <strong>卓越的数据效率</strong>：通过GBR奖励和专注于困难样本的训练策略，s3在极少量数据下就能达到优异性能，非常适用于数据稀缺的领域（如医疗）。
-*   <strong>性能领先</strong>：在多个通用和医疗领域的QA基准测试中，s3的表现优于所有静态、零样本和端到端微调的基线方法。
-*   <strong>可解释性</strong>：多轮搜索的轨迹（生成的查询、选择的文档）为模型的推理过程提供了一定的透明度。</p>
-
-<p><strong>应用场景：</strong>
-s3框架适用于任何需要深度信息检索来支持复杂问答的场景，尤其是在专业领域，例如：
-*   <strong>医疗问答系统</strong>：通过检索最新的医学文献和临床指南，为医生提供诊断支持。
-*   <strong>法律咨询</strong>：从庞大的法律条文中检索相关案例和法条。
-*   <strong>科学研究</strong>：帮助研究人员快速整合多篇论文的知识。</p>
-
-<p><strong>局限性：</strong>
-*   <strong>依赖强大的生成器</strong>：s3的性能提升依赖于一个能力足够强的冻结生成器。如果生成器本身能力较弱，即使检索质量再高，也可能无法转化为高质量的最终答案。
-*   <strong>训练开销</strong>：在训练过程中计算GBR奖励需要调用LLM进行生成和评估，这比传统的离线检索优化方法计算成本更高。
-*   <strong>偏见风险</strong>：s3会继承其所使用的检索器和生成器中存在的偏见，可能传播错误信息或社会偏见，需要在敏感领域谨慎部署。</p>
-
-<h4><strong>结论</strong></h4>
-
-<p>s3框架通过将搜索与生成解耦，并引入创新的GBR奖励信号和高效的强化学习训练策略，成功地将优化的重点放在了提升信息检索的质量上。该方法不仅在性能上超越了现有基线，还展现了惊人的数据和计算效率，为构建更强大、更灵活、更适用于低资源环境的RAG系统提供了一条有效的新路径。</p>
+<p>s3框架通过将搜索与生成解耦，并利用基于强化学习的GBR奖励信号和GenAcc评估指标，成功地训练出一个高效的搜索代理。该框架不仅在性能上取得了突破，更重要的是，它为RAG系统的优化提供了一条数据高效、计算可持续的路径，使得构建高性能、资源友好的问答系统成为可能。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>基准评估</strong>：s3框架在六个通用领域QA基准和五个医疗领域QA基准上与多个最先进的RAG基线方法进行了比较。</li>
-<li><strong>数据效率验证</strong>：实验特别强调了s3在低数据量（仅2.4k训练样本）下的性能，以展示其高数据效率。</li>
-<li><strong>生成器固定</strong>：实验中使用了固定的生成器（如Qwen2.5, Claude-3-Haiku），以证明性能提升主要来源于优化的检索策略。</li>
-<li><strong>评估指标验证</strong>：通过一项包含1000个样本的人工标注研究，将GenAcc指标与精确匹配（EM）和人类判断进行比较，以验证其有效性。</li>
+<li><strong>数据集</strong>：实验在11个公开的问答（QA）基准上进行，包括6个通用领域QA数据集（如NQ, HotpotQA, TriviaQA）和5个医学领域QA数据集（MIRAGE基准）。</li>
+<li><strong>基线模型</strong>：将s3框架与多种先进的基线方法进行比较，包括静态RAG、零样本提示方法、端到端微调方法以及其他基于RL的主动检索方法（如DeepRetrieval, Search-R1）。</li>
+<li><strong>评估方法</strong>：使用新提出的Generation Accuracy (GenAcc)作为主要评估指标，并与传统的Exact Match进行对比，以验证其优越性。</li>
+<li><strong>模型配置</strong>：实验中使用了不同的冻结生成器（如Qwen2.5-7B/14B, Claude-3-Haiku），以证明s3框架的通用性和有效性。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
 <ul>
 <li><strong>代码</strong>：<code>https://github.com/pat-jj/s3</code></li>
-<li><strong>数据集</strong>：
-<ul>
-<li><strong>通用领域</strong>：Natural Questions (NQ), TriviaQA, HotpotQA, PopQA, Musique等。数据集可在 <code>https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets</code> 获取。</li>
-<li><strong>医疗领域</strong>：使用了MIRAGE医疗QA基准套件。数据集可在 <code>https://github.com/Teddy-XiongGZ/MIRAGE/blob/main/benchmark.json</code> 获取。</li>
-</ul></li>
+<li><strong>通用领域QA数据集</strong>：<code>https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets</code></li>
+<li><strong>医学领域QA数据集</strong>：<code>https://github.com/Teddy-XiongGZ/MIRAGE/blob/main/benchmark.json</code></li>
 </ul>
 
 <h3>实验结果</h3>
 
 <ul>
-<li><strong>性能优越</strong>：s3在所有11个QA基准上均超越了现有的SOTA方法，尤其在复杂的医疗问答任务上表现突出（例如，在MIRAGE上达到76.6%的准确率）。</li>
-<li><strong>高数据效率</strong>：仅用2.4k个训练样本，s3的表现就超过了使用70倍数据的基线模型。</li>
-<li><strong>评估指标有效性</strong>：GenAcc指标与人类判断的对齐度高达96.4%，而传统精确匹配（EM）仅为15.8%，证明了GenAcc作为评估工具的可靠性和优越性。</li>
-<li><strong>可扩展性</strong>：实验表明，随着训练步骤的增加，s3的性能持续稳定提升。</li>
+<li><strong>性能优越</strong>：s3框架在所有11个QA基准上均显著优于所有基线方法，在通用领域和医学领域的平均准确率分别达到了58.9%和76.6%。</li>
+<li><strong>数据效率极高</strong>：s3仅使用2.4k个训练样本，就超越了在超过70倍数据量上训练的基线模型，展示了其卓越的数据效率。</li>
+<li><strong>评估指标有效</strong>：实验证明，GenAcc指标与人类判断的对齐度高达96.4%，而Exact Match仅为15.8%，证实了GenAcc作为评估标准的可靠性和准确性。</li>
+<li><strong>训练过程稳定</strong>：奖励曲线显示，s3在训练过程中能够稳定地学习和提升，证明了GBR奖励信号的有效性。</li>
 </ul>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出了s3框架</strong>：一个轻量级、模型无关的模块化框架，通过解耦检索与生成，显著提升了RAG系统的性能和数据效率。</li>
-<li><strong>引入了GBR奖励信号</strong>：定义了“Gain Beyond RAG”（GBR）作为一种新颖的奖励信号，使得通过强化学习高效优化检索策略成为可能。</li>
-<li><strong>提出了GenAcc评估指标</strong>：引入了“生成准确性”（GenAcc）作为一种新的评估标准，它能更准确地捕捉答案的语义正确性，并与人类判断高度一致。</li>
-<li><strong>SOTA性能</strong>：在多个通用和医疗领域的QA基准上取得了最先进的成果，为RAG领域提供了新的思路和强大的基线。</li>
+<li><strong>提出了s3框架</strong>：一个新颖的、解耦的RAG训练框架，通过独立优化检索代理，显著提升了系统的性能和数据效率。</li>
+<li><strong>引入了GBR奖励信号</strong>：设计了一种创新的奖励机制，能够更精确地指导检索代理的学习，使其专注于提升下游生成任务的质量。</li>
+<li><strong>提出了GenAcc评估指标</strong>：开发并验证了一种更可靠的自动化评估指标，它能准确捕捉答案的语义正确性，解决了传统指标的缺陷。</li>
+<li><strong>提供了新的发展路径</strong>：通过实验证明，专注于优化检索器是提升RAG系统性能的一条高效且可持续的路径，为未来RAG系统的研究和应用提供了新的方向，尤其是在低资源和高要求的领域。</li>
 </ol>
 
                     </div>
@@ -822,7 +821,7 @@ s3框架适用于任何需要深度信息检索来支持复杂问答的场景，
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-06 20:06:16</p>
+            <p>生成时间: 2025-11-06 20:07:39</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
