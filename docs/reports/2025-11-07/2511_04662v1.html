@@ -224,15 +224,15 @@
             
             <div class="keywords-container">
                 
-                <span class="keyword-badge">神经符号验证</span>
+                <span class="keyword-badge">神经-符号框架</span>
                 
                 <span class="keyword-badge">链式思维推理</span>
                 
-                <span class="keyword-badge">逻辑一致性检查</span>
-                
-                <span class="keyword-badge">大型语言模型</span>
+                <span class="keyword-badge">逻辑有效性</span>
                 
                 <span class="keyword-badge">推理准确性</span>
+                
+                <span class="keyword-badge">自我反思</span>
                 
             </div>
             
@@ -263,7 +263,7 @@
         <div class="section">
             <h2>📖 简介</h2>
             <div class="section-content">
-                本文提出了VERICOT，一个神经符号验证框架，旨在解决大型语言模型（LLMs）在链式思维（CoT）推理中的逻辑验证问题。VERICOT通过将推理步骤形式化为一阶逻辑，自动识别并验证逻辑错误，从而提升推理的可靠性和透明度。实验结果显示，VERICOT显著提高了推理准确性，尤其在高风险领域中具有重要应用潜力。
+                本文提出了VeriCoT，一个神经-符号框架，通过将链式思维推理步骤形式化为一阶逻辑，自动验证其逻辑有效性。VeriCoT有效识别推理中的逻辑缺陷，并利用验证信号促进自我反思，提升大型语言模型的推理准确性和可靠性。实验结果表明，该方法在多个基准数据集上显著提高了推理的有效性和最终答案的正确性。
             </div>
         </div>
         
@@ -664,116 +664,163 @@ pre[class*=language-] {
             <div class="section-content">
                 
                     <div class="markdown-content" style="max-width: 100%; width: 100%;">
-                        <h3>现有问题</h3>
+                        <p>好的，我已经阅读并理解了您提供的所有论文片段。这些片段似乎都围绕着一个名为 <strong>VERICOT</strong> 的框架展开，旨在验证和改进大型语言模型（LLM）的链式思维（Chain-of-Thought, CoT）推理过程。</p>
 
-<p>本文旨在解决大型语言模型（LLMs）在链式思维（CoT）推理中无法可靠验证自身逻辑的根本问题。尽管LLMs能够生成看似合理的推理链，但其中频繁出现逻辑错误、无根据的假设和矛盾，这严重削弱了模型在高风险领域（如生物医学、法律）中的可信度。确保推理过程的透明度和每一步的逻辑有效性，而不仅仅是最终答案的正确性，是一个长期存在且日益重要的问题。</p>
+<p>以下是根据所有片段综合总结的答案：</p>
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）在执行链式思维（CoT）推理时，其逻辑过程缺乏可靠验证的根本问题。尽管LLM能够生成看似合理的推理链，但其中常常包含逻辑错误、未被证实的假设（ungrounded errors）和内部矛盾。这个问题在生物医学、法律等高风险领域尤为关键，因为在这些领域，推理过程的准确性与最终答案同等重要。这是一个长期存在但随着LLM的广泛应用而愈发凸显的挑战。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过将自然语言的推理步骤自动形式化为符号逻辑，并利用自动求解器进行验证，可以有效识别并纠正LLM推理链中的逻辑错误。这个名为VERICOT的神经符号验证框架能够：
-- <strong>关键发现</strong>: 有效提取和验证CoT推理中的逻辑论证，并识别出未定义的、矛盾的或无根据的推理步骤。
-- <strong>初步结论</strong>: VERICOT生成的“验证信号”是最终答案正确性的强预测指标，并能引导模型进行有效的自我反思和修正。
-- <strong>核心假设</strong>: 结合符号验证的自我修正机制，可以显著提升LLM推理的逻辑一致性、可靠性和最终任务的准确性。</p>
+<p>本文的核心假设是：通过一个神经-符号框架（VERICOT）将CoT推理步骤形式化为一阶逻辑并进行自动验证，可以显著提高LLM推理的有效性、可靠性和准确性。
+*   <strong>关键发现</strong>: VERICOT能够有效识别推理链中的逻辑缺陷，并且其验证信号（成功或失败）是最终答案正确性的强预测因子。
+*   <strong>核心思想</strong>: 利用验证信号，模型可以在推理时进行自我反思和修正，从而生成逻辑上更健全的推理路径。
+*   <strong>延伸应用</strong>: 这些验证信号还可以用于监督微调（SFT）和偏好微調（如DPO），以系统性地提升模型的推理能力。</p>
 
 <h3>相关研究</h3>
 
 <ul>
-<li><strong>链式思维（CoT）推理技术</strong>: 如Wei et al. (2022) 的开创性工作。</li>
-<li><strong>自我完善/修正方法</strong>: 包括动态检索、符号检查和通过反馈进行迭代优化的方法。</li>
-<li><strong>神经符号结合方法</strong>: 将LLMs与外部符号求解器（如SMT求解器）结合的研究，例如ProofWriter、Entailer等。</li>
-<li><strong>相关基线方法</strong>:
-<ul>
-<li>解释细化（ER）</li>
-<li>直接SMT基线（DSB）</li>
-</ul></li>
+<li><strong>其他推理验证方法</strong>: 包括自我精炼（self-refinement）、动态检索外部知识库、使用单独的评估模型等。</li>
+<li><strong>神经-符号方法</strong>: 如Logic-LM等框架，探索将LLM与符号求解器结合以增强逻辑推理能力。</li>
+<li><strong>基线模型</strong>: 实验中与解释细化器（ER）、直接SMT基线（DSB）以及一个不生成显式前提的VERICOT变体（VERICOT-NoPrem）进行了比较。</li>
 </ul>
 
-<h3><strong>完整解决方案：VERICOT框架——通过神经符号验证增强链式思维推理</strong></h3>
+<h3>VERICOT：一个用于验证链式思维（CoT）推理的神经符号解决方案</h3>
 
-<h4><strong>一、 引言：VERICOT框架的核心目标</strong></h4>
+<h4><strong>引言：问题与目标</strong></h4>
 
-<p>VERICOT (Verification of Chain-of-Thought) 是一个创新的神经符号框架，旨在解决大型语言模型（LLM）在执行多步骤链式思维（CoT）推理时面临的逻辑不一致和事实错误问题。传统LLM的推理过程如同一个“黑箱”，难以验证其内部逻辑的正确性。VERICOT通过将自然语言推理步骤与形式化的一阶逻辑（First-Order Logic, FOL）相结合，提供了一种自动化的验证机制，从而显著提升推理过程的可靠性、透明度和准确性。</p>
+<p>大型语言模型（LLM）在执行需要多步推理的复杂任务时，常采用链式思维（Chain-of-Thought, CoT）来模拟人类的思考过程。然而，这些生成的推理链常常包含逻辑谬误、与事实不符或缺乏依据的步骤，导致最终答案不可靠。为了解决这一问题，论文提出了 <strong>VERICOT</strong>，一个旨在自动验证CoT推理逻辑一致性的神经符号框架。其核心目标是确保LLM的每一步推理都有坚实的逻辑基础，从而提高其在生物医学、法律等高风险领域的可靠性和可信度。</p>
 
-<p><strong>核心目的：</strong>
-*   <strong>识别逻辑错误</strong>：在CoT推理链中自动检测无根据、自相矛盾或无法翻译的逻辑步骤。
-*   <strong>增强用户信任</strong>：通过将隐含的推理假设明确化为自然语言前提，使用户能够审查和信任模型的推理路径，尤其是在法律、生物医学等高风险领域。
-*   <strong>提升模型能力</strong>：利用验证过程中产生的结构化反馈信号，通过自我修正和微调来系统性地提升LLM生成逻辑一致推理的能力。</p>
+<h4><strong>核心方法与验证流程</strong></h4>
 
-<h4><strong>二、 VERICOT的核心方法论：验证过程详解</strong></h4>
+<p>VERICOT的核心思想是将自然语言的CoT推理步骤转化为可验证的符号逻辑公式，并利用自动求解器来检查其有效性。整个验证过程系统化且严谨，包含以下关键步骤：</p>
 
-<p>VERICOT 的工作流程围绕着将每个自然语言的CoT步骤转化为可验证的形式逻辑公式，并确保整个推理链的逻辑一致性。该过程主要包括以下四个关键环节：</p>
+<ol>
+<li><p><strong>自动形式化 (Automatic Formalization)</strong></p>
 
-<p><strong>1. 自动形式化 (Autoformalization)</strong>
-*   <strong>过程</strong>：对于CoT中的每一个自然语言步骤 \$C<em>i\$，VERICOT使用LLM将其自动翻译成一阶逻辑公式 \$F</em>i\$（通常采用SMT-LIB格式）。这个过程分为两个阶段：首先利用已有的逻辑词汇进行翻译，然后根据需要扩展词汇以表达文本中的所有相关信息。如果多次尝试后仍无法成功翻译，该步骤将被标记为“不可翻译”错误。</p>
+<ul>
+<li>VERICOT首先将CoT中的每一个自然语言推理步骤（例如，“查理在2023年最多18岁”）自动翻译成一阶逻辑（First-Order Logic, FOL）公式（例如，<code>Age(Charlie, 2023) &lt;= 18</code>）。</li>
+<li>这个过程不仅使推理步骤变得精确无歧义，也为后续的机器验证奠定了基础。如果某个步骤无法被有效翻译，系统会记录一个“无法翻译”的错误。</li>
+</ul></li>
+<li><p><strong>一致性检查 (Consistency Check)</strong></p>
 
-<p><strong>2. 逻辑验证循环</strong>
-一旦一个步骤被形式化为 \$F<em>i\$，VERICOT会通过一个循环来验证其逻辑有效性：
-*   <strong>一致性检查 (Consistency Check)</strong>：首先，使用约束求解器检查新的逻辑公式 \$F</em>i\$ 是否与先前所有已验证的知识（\$F<em>1, ..., F</em>{i-1}\$）相矛盾。如果存在矛盾，该步骤被标记为“矛盾”错误。
-*   <strong>蕴含性检查 (Entailment Check)</strong>：接着，检查 \$F_i\$ 是否可以由先前的知识逻辑推导（蕴含）出来。如果可以，则该步骤验证通过，其逻辑公式被并入知识库中。</p>
+<ul>
+<li>在将新步骤形式化后，VERICOT会检查这个新公式是否与所有先前已验证的公式和前提相矛盾。</li>
+<li>例如，如果已知“查理出生于2008年”，那么新公式“查理在2023年20岁”就会被判定为矛盾。</li>
+</ul></li>
+<li><p><strong>蕴涵检查 (Entailment Check)</strong></p>
 
-<p><strong>3. 前提生成 (Premise Generation)</strong>
-*   <strong>过程</strong>：如果蕴含性检查失败，说明当前步骤 \$C<em>i\$ 缺少必要的支持信息。此时，VERICOT会启动前提生成模块。LLM被提示从以下来源识别并生成支持性的自然语言前提：
-    *   <strong>问题上下文</strong>：从原始问题或提供的文档中提取信息。
-    *   <strong>常识知识</strong>：引入与当前推理相关的常识。
-    *   <strong>先前步骤</strong>：回顾并利用之前的推理结论。
-*   这些生成的自然语言前提随后也被自动形式化为逻辑公式 \$P</em>i\$，并与现有知识结合，再次尝试验证 \$F<em>i\$。如果添加前提后仍无法推导出 \$F</em>i\$，则该步骤被标记为“无根据”错误。</p>
+<ul>
+<li>接下来，系统会检查新的逻辑公式是否可以从已有的知识库（包括先前步骤的公式和已知前提）中<strong>逻辑推导</strong>出来。</li>
+<li>如果可以推导，说明该推理步骤是有效的，其公式将被加入到知识库中。</li>
+<li>如果不能推导，则意味着该步骤可能依赖于一个未明确说明的<strong>隐含前提</strong>。</li>
+</ul></li>
+</ol>
 
-<p><strong>4. 前提评估 (LLM-as-Judge)</strong>
-*   <strong>目的</strong>：为了确保生成的前提不是模型“幻觉”出的虚假信息，VERICOT引入了一个“LLM评判者”机制。
-*   <strong>过程</strong>：
-    *   对于从源文档推导的前提，评判者LLM会评估该前提是否能被源文本支持。
-    *   对于基于常识的前提，评判者会评估其在特定上下文中的合理性。
-*   这一步骤极大地提高了生成前提的可靠性，确保了整个验证过程的高保真度。</p>
+<h4><strong>关键组件：前提生成与评估</strong></h4>
 
-<p><strong>最终输出</strong>：如果整个CoT验证通过，VERICOT会输出一组自洽的、明确的自然语言前提，以及与之对应的、逻辑上层层递进的形式化推理链。如果验证失败，它会精确指出第一个出错的步骤及其错误类型（不可翻译、矛盾或无根据）。</p>
+<p>当一个推理步骤虽然不矛盾但无法从现有知识中推导出来时，VERICOT会启动其最关键的功能之一：前提的提取与评估。</p>
 
-<h4><strong>三、 应用与影响：利用验证信号提升LLM性能</strong></h4>
+<ol>
+<li><p><strong>前提生成 (Premise Generation)</strong></p>
 
-<p>VERICOT的价值不仅在于验证，更在于利用其产生的“验证信号”来主动提升LLM的推理能力。这主要通过以下三种方式实现：</p>
+<ul>
+<li>VERICOT会提示LLM根据上下文或常识，生成一个或多个能够支持当前推理步骤的自然语言前提。</li>
+<li>例如，为了从“查理出生于2005年”推导出“他在2023年最多18岁”，系统需要生成一个常识性前提：“一个人的年龄至多是当前年份减去其出生年份”。</li>
+<li>生成的所有候选前提都会经过一致性检查，以确保它们不会与现有知识库产生矛盾。</li>
+</ul></li>
+<li><p><strong>前提评估 (LLM-as-Judge Premise Evaluation)</strong></p>
 
-<p><strong>1. 推理时自我反思 (Inference-time Self-reflection)</strong>
-当VERICOT检测到推理错误时，它可以向LLM提供结构化的反馈，包括出错的步骤、所需的前提以及错误类型。模型接收到这些信息后，会被提示进行自我修正，生成一条新的、逻辑更严谨的推理路径，然后再次提交给VERICOT验证。实验表明，这种自我纠错循环平均能将CoT的验证通过率提高46%，并带来显著的任务准确性提升。</p>
+<ul>
+<li>为了确保生成的前提是合理且有依据的，VERICOT采用“LLM作为评审者”的机制进行评估。</li>
+<li><strong>基于源文本的前提</strong>：如果前提声称来自某个源文档（如法律条款），评审LLM会判断该前提是否能忠实地从原文中归因。</li>
+<li><strong>基于常识的前提</strong>：如果前提是常识性的，评审LLM会评估其在当前上下文中的可接受性和合理性。</li>
+<li>只有通过评估的前提才会被接受，用于支持推理链。</li>
+</ul></li>
+</ol>
 
-<p><strong>2. 监督微调 (Supervised Fine-tuning, SFT)</strong>
-VERICOT可以用来筛选和创建一个高保真度的数据集，其中只包含通过验证的、逻辑一致的CoT样本。使用这个“黄金”数据集对基础模型进行监督微调，可以有效地教会模型如何生成结构更合理、逻辑更可靠的推理过程。</p>
+<h4><strong>多层反馈机制</strong></h4>
 
-<p><strong>3. 偏好微调 (Preference Fine-tuning, PFT/DPO)</strong>
-VERICOT的验证结果天然地构成了偏好数据。通过验证的CoT可以作为“首选”（chosen）样本，而未通过验证的CoT则作为“被拒”（rejected）样本。利用这些偏好对，可以通过直接偏好优化（DPO）等技术进行微调。这种方法能更直接地激励模型生成可被验证的推理，实验证明其在提高验证通过率和最终答案准确率方面效果显著。</p>
+<p>VERICOT不仅给出一个简单的“通过/失败”判断，还提供细粒度的反馈，指出每个步骤的验证状态和失败原因。主要的错误类型包括：
+*   <strong>无基础 (Ungrounded)</strong>：推理步骤无法从上下文或常识中找到一个合理的、非矛盾的前提来支持。
+*   <strong>矛盾 (Contradiction)</strong>：推理步骤与先前已确立的事实或前提相冲突。
+*   <strong>无法翻译 (Untranslatable)</strong>：推理步骤的自然语言表达过于模糊或复杂，无法转换为支持的一阶逻辑子集。</p>
 
-<h4><strong>四、 结论</strong></h4>
+<h4><strong>应用与增强：提升LLM的推理能力</strong></h4>
 
-<p>VERICOT框架通过其独特的神经符号方法，成功地在自然语言推理和形式逻辑验证之间架起了一座桥梁。它不仅能够精确地识别和诊断链式思维中的逻辑缺陷，还提供了一套完整的、可操作的解决方案，通过自我反思和微调来系统性地增强LLM的推理能力。通过提高推理过程的透明度、可靠性和准确性，VERICOT为推动LLM在需要严谨逻辑的复杂领域（如法律、生物医学和科学研究）中的应用奠定了坚实的基础。</p>
+<p>VERICOT的验证和反馈机制被用于通过多种方式主动提升LLM的推理能力：</p>
+
+<ol>
+<li><p><strong>推理时自我反思与校正 (Reasoning-Time Self-Reflection and Correction)</strong></p>
+
+<ul>
+<li>当VERICOT检测到一个CoT验证失败时，它会将详细的反馈（包括错误类型、相关前提和形式化公式）提供给LLM。</li>
+<li>LLM接收到这些结构化的反馈后，会进行自我修正，尝试生成一条新的、逻辑上更严谨的推理路径。</li>
+<li>实验证明，这种自我校正循环显著提升了验证通过率和最终任务的准确性（例如，验证正确答案率平均提升约9.5%）。</li>
+</ul></li>
+<li><p><strong>监督微调 (Supervised Fine-Tuning, SFT)</strong></p>
+
+<ul>
+<li>VERICOT可以作为一个高质量的数据过滤器。通过筛选出那些完全通过验证的、逻辑一致的CoT样本，可以构建一个高保真度的“黄金”数据集。</li>
+<li>使用这个数据集对LLM进行监督微调，能够有效教会模型如何生成更具可验证性的推理过程。</li>
+</ul></li>
+<li><p><strong>偏好微调 (Preference Fine-Tuning, DPO/PFT)</strong></p>
+
+<ul>
+<li>VERICOT的验证信号还可以用作偏好优化的奖励信号。</li>
+<li>例如，一个通过验证的CoT被视为“选择”的样本，而一个失败的CoT则被视为“拒绝”的样本。通过这种成对的偏好数据进行训练（如DPO），可以引导模型更倾向于生成逻辑正确的推理。</li>
+</ul></li>
+</ol>
+
+<h4><strong>实现细节</strong></h4>
+
+<ul>
+<li><strong>逻辑编码</strong>：使用标准的 <strong>SMT-LIB</strong> 格式来编码逻辑公式。</li>
+<li><strong>约束求解器</strong>：采用业界知名的 <strong>Z3求解器</strong> 来高效地执行一致性和蕴涵检查。</li>
+<li><strong>模型应用</strong>：实验中使用了 <strong>Claude-3.5-Sonnet</strong> 作为VERICOT的执行器，并对 <strong>Qwen2.5-7B-Instruct</strong> 等模型进行了微调。</li>
+</ul>
+
+<h4><strong>总结</strong></h4>
+
+<p>VERICOT通过其独特的神经符号方法，在LLM的自然语言推理和符号逻辑验证之间架起了一座桥梁。它不仅能像“逻辑警察”一样检测出CoT推理中的不一致和无根据之处，还能通过自我反思、监督微调和偏好微调等多种机制，主动地、系统地提升LLM生成逻辑可靠推理的能力。这使得LLM在需要高信任度和透明度的关键应用领域中，成为更值得信赖的工具。</p>
 
 <h3>实验设计</h3>
 
 <ul>
-<li><strong>数据集</strong>: 在多个基准数据集上对VERICOT进行评估，主要包括 <strong>ProofWriter</strong>（逻辑推理）、<strong>LegalBench</strong>（法律推理）和 <strong>BioASQ</strong>（生物医学问答）。</li>
-<li><strong>评估指标</strong>: 采用多维度指标进行评估，包括验证通过率、验证器精度、验证正确答案率以及最终的任务准确率。</li>
-<li><strong>对比实验</strong>: 将VERICOT与多种基线方法进行比较，并设计消融实验（如不生成显式前提的VERICOT-NoPrem）来验证各组件的有效性。</li>
-<li><strong>自我反思评估</strong>: 评估模型在接收到VERICOT的反馈后，修正其推理链并提高准确性的能力。</li>
-<li><strong>微调实验</strong>: 比较使用经过VERICOT验证的CoT数据与随机采样数据进行微调时，模型性能的差异。</li>
+<li><strong>模型</strong>: 使用Claude-3.5-Sonnet-V2作为VERICOT的执行器。</li>
+<li><strong>评估任务</strong>: 在多个基准数据集上评估VERICOT的性能，并与多种基线方法进行比较。</li>
+<li><strong>评估指标</strong>: 主要评估指标包括验证通过率（Validation Pass Rate）、验证器精度（Validator Precision）、已验证的正确答案率（Verified Correct Answer Rate, VCAR）以及最终的任务准确率。</li>
 </ul>
 
 <h3>数据集和代码</h3>
 
-<p>论文中使用了 <strong>ProofWriter</strong>、<strong>LegalBench</strong> 和 <strong>BioASQ</strong> 等公开数据集。然而，在所有提供的片段中，均未明确提供代码库或具体数据集的链接。</p>
+<ul>
+<li><strong>数据集</strong>: 实验主要在三个基准数据集上进行：
+<ul>
+<li><strong>ProofWriter</strong>: 一个基于规则的逻辑推理数据集。</li>
+<li><strong>LegalBench</strong>: 一个评估法律推理能力的数据集（特别是SARA子集）。</li>
+<li><strong>BioASQ</strong>: 一个生物医学领域的问答数据集。</li>
+</ul></li>
+<li><strong>代码</strong>: 所有提供的论文片段均未明确说明代码的公开位置。</li>
+</ul>
 
 <h3>实验结果</h3>
 
 <ul>
-<li><strong>有效性</strong>: VERICOT能够有效识别逻辑错误，在所有基准测试中均获得了最高的验证通过率和验证正确答案率。</li>
-<li><strong>性能提升</strong>: 通过自我反思机制，VERICOT的反馈使模型在多个数据集上的CoT验证通过率和任务准确性平均相对提高了46%和41%。</li>
-<li><strong>微调效果</strong>: 使用VERICOT验证信号进行监督微调，可使模型的最终任务准确性提高3-4%。</li>
-<li><strong>优越性</strong>: 实验结果表明，VERICOT在各项指标上均优于现有基线方法，证明了其在提升LLM推理可靠性方面的强大能力。</li>
+<li><strong>有效性</strong>: VERICOT能够有效识别推理中的逻辑缺陷，其验证结果与最终答案的正确性高度相关。</li>
+<li><strong>性能提升</strong>: VERICOT在所有基准测试中均实现了最高的验证通过率和VCAR。通过自我反思机制，验证通过率平均提高了46%，生成准确且可验证结果的能力稳定提高了41%。</li>
+<li><strong>高精度</strong>: VERICOT保持了很高的验证精度，意味着通过其验证的推理链具有很高的可靠性。</li>
 </ul>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出VERICOT框架</strong>: 提出了首个能够在非数学/代码领域对CoT推理进行神经符号验证的框架，显著提升了推理的透明度和可靠性。</li>
-<li><strong>引入自我反思机制</strong>: 展示了如何利用符号验证信号来引导LLM进行有效的自我反思和修正，从而生成逻辑更严谨的推理链。</li>
-<li><strong>验证了微调潜力</strong>: 证明了VERICOT生成的验证信号可作为高质量的训练数据，通过监督微调和偏好微调来提升模型内在的推理能力。</li>
-<li><strong>推动高风险领域应用</strong>: 为在法律、生物医学等对逻辑准确性要求极高的领域中安全、可靠地应用LLM提供了新的思路和解决方案。</li>
+<li><strong>提出VERICOT框架</strong>: 首次提出了一个能够在非数学/代码领域（如法律、生物医学）验证CoT推理链逻辑一致性的神经-符号框架。</li>
+<li><strong>自动化验证机制</strong>: 详细阐述了如何通过自动形式化、前提生成和符号求解器来自动化验证CoT推理的每一步。</li>
+<li><strong>引入自我反思</strong>: 证明了利用验证信号进行自我反思是提升LLM推理可靠性的有效途径，能够引导模型主动纠正错误。</li>
+<li><strong>提供实证依据</strong>: 在多个标准基准上进行了广泛实验，有力地证明了该框架在提升LLM推理准确性和可靠性方面的显著优势。</li>
 </ol>
 
                     </div>
@@ -789,7 +836,7 @@ VERICOT的验证结果天然地构成了偏好数据。通过验证的CoT可以�
         
         <div class="footer">
             <p>📧 这是由智能论文简报系统自动生成的页面</p>
-            <p>生成时间: 2025-11-07 19:47:47</p>
+            <p>生成时间: 2025-11-07 19:48:13</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
