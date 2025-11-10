@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">多语言数学推理</span>
+                
+                <span class="keyword-badge">翻译错误</span>
+                
+                <span class="keyword-badge">评估基准</span>
+                
+                <span class="keyword-badge">质量保证</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Google</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.530</span>
+                <span class="paper-id">arXiv ID: 2511.05162v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.05162v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-08/70d44d5fd47234bd2320eec2dc4282901df51b61fa113e68da11c6d283461855.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种针对大型语言模型（LLMs）在多语言数学推理任务中表现差距的解决方案。通过自动质量保证和规范化答案提取，论文修正了评估基准中的翻译错误和提取缺陷，显著缩小了不同语言间的性能差距。研究结果表明，原有的语言差距主要源于评估过程中的系统性错误，而非模型能力不足。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在多语言数学推理任务中表现出的显著性能差距问题，即所谓的“语言差距”。尽管模型在英语上表现出色，但在其他语言（尤其是低资源语言）中表现明显较差。这个问题至关重要，因为：
+- 随着LLMs的全球化应用，确保其跨语言的公平性和有效性至关重要。
+- 先前的评估可能因测试数据的质量问题（如翻译错误、问题模糊）和评估方法的缺陷（如不规范的答案提取）而得出关于模型能力的错误结论。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是：LLMs在多语言数学推理上观察到的性能差距并非模型核心能力的缺陷，而主要是由评估基准和方法中的系统性错误造成的。
+- <strong>关键发现</strong>：通过系统地清理测试数据和改进答案提取方法，可以显著缩小甚至消除语言之间的性能差距。
+- <strong>初步结论</strong>：许多性能不佳的案例源于翻译不准确、问题表述模糊或答案提取未能适应特定语言的格式（如数字、标点）。
+- <strong>核心假设验证</strong>：在修正后的数据集上重新评估，模型的跨语言表现一致性将显著提高，证明了原始差距是评估过程的“幻象”。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>MGSM (Multilingual Grade School Math) 数据集</strong>: 由Shi et al. (2022) 提出，是评估LLMs跨语言数学能力的核心基准。</li>
+<li><strong>GSM8K 数据集</strong>: 由Cobbe et al. (2021) 开发，是MGSM的英语基础。</li>
+<li>其他相关工作包括对MGSM的扩展（Zhang et al., 2024b）、对性能滞后问题的研究（Huang et al., 2023）以及对基准可靠性的探讨（Vendrow et al., 2025）。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>论文核心解决方案的详细整合解释</strong></h3>
+
+<h4><strong>一、 研究背景与问题</strong></h4>
+
+<p>该研究旨在解决大型语言模型（LLMs）在多语言数学推理任务中表现出的显著性能差距问题。研究背景基于 <strong>Multilingual Grade School Math (MGSM)</strong> 数据集，这是一个广泛用于评估模型跨语言数学能力的标准基准。以往的研究（如使用 GPT-3 和 PaLM-540B）发现，模型在使用英语提示时的表现远超其他语言，尤其是在低资源语言上，这引发了关于模型多语言能力是否真的存在巨大差异的疑问。</p>
+
+<p>然而，本文作者提出，这种性能差距可能并非完全源于模型自身的能力不足，而是在很大程度上受到了 <strong>测试数据质量</strong> 和 <strong>评估方法标准化</strong> 的影响。数据中的翻译错误、问题表述的模糊性以及答案提取过程中的不一致性，都可能导致对模型能力的误判。因此，本文的核心目标是通过一套系统性的方法来净化数据和规范评估流程，从而更准确地衡量LLMs的真实跨语言能力。</p>
+
+<h4><strong>二、 整体解决方案框架</strong></h4>
+
+<p>为了解决上述问题，论文提出了一套双管齐下的综合解决方案，主要包括两个核心部分：</p>
+
+<ol>
+<li><strong>系统性的数据质量保证与修正</strong>：通过半自动化的方法识别并修正数据集中存在的翻译错误和问题歧义，从源头上提升数据质量。</li>
+<li><strong>标准化与改进的答案提取流程</strong>：设计一套更鲁棒、更灵活的答案提取机制，以应对不同语言的格式差异，确保评估结果的准确性和一致性。</li>
+</ol>
+
+<p>通过整合应用这两种方法，研究者旨在消除因数据和评估缺陷造成的性能假象，从而揭示模型在不同语言间更真实的表现。</p>
+
+<h4><strong>三、 详细方法论</strong></h4>
+
+<h5><strong>第一部分：系统性的数据质量保证与修正</strong></h5>
+
+<p>这一部分的核心是通过一套严谨的流程来识别和修复数据集中的问题，确保模型在公平、准确的数据基础上进行评估。</p>
+
+<p><strong>1. 翻译准确性改进</strong>
+*   <strong>问题识别</strong>：研究者发现，当多个强大的LLM在某个翻译后的问题上集体失败时，这通常是数据质量问题的信号。
+*   <strong>半自动化修正流程</strong>：
+    *   <strong>重新翻译与验证</strong>：利用先进的模型（如 Gemini 2.5 Pro）对这些可疑问题进行重新翻译。
+    *   <strong>交叉验证</strong>：将新翻译的问题再次输入LLMs进行测试。如果模型能够在新翻译上成功作答，则证明原翻译存在错误，并用新版本替代。</p>
+
+<p><strong>2. 问题明确性提升</strong>
+*   <strong>识别歧义</strong>：研究发现，部分问题的失败源于原始英文问题的表述存在模糊或歧义，这在翻译后可能被放大。
+*   <strong>手动重写与协作</strong>：对于这类问题，研究者与LLM（如 Gemini）协作，手动重写问题以提高其清晰度。重写的原则是消除歧义，同时保持问题原有的数学复杂性。</p>
+
+<h5><strong>第二部分：标准化与改进的答案提取流程</strong></h5>
+
+<p>答案提取是评估过程中的关键环节，尤其是在处理多语言输出时。不规范的提取方法会因格式差异导致大量错误。</p>
+
+<p><strong>1. 解决格式差异与改进提取逻辑</strong>
+*   <strong>放宽正则表达式限制</strong>：传统的答案提取方法依赖于严格的正则表达式，这在处理不同语言的数字格式（如法语使用逗号作为小数点）时非常脆弱。新方法对此进行了改进，不再要求固定的答案字符串，而是简单地提取模型响应中的 <strong>最后一个数字</strong>。
+*   <strong>格式标准化处理</strong>：为了处理价格等常见格式，该方法会自动删除小数点或逗号后的两个零（如 <code>12,00</code> -> <code>12</code>），从而提高了对不同数字表示的适应性。</p>
+
+<p><strong>2. 提升提取可靠性</strong>
+*   <strong>明确输出格式</strong>：通过在提示（Prompt）中直接定义期望的输出格式，引导模型生成一致且易于解析的答案。
+*   <strong>示例提示（Few-shot Prompting）</strong>：在提示中提供几个格式正确的问答示例，帮助模型学习并遵循期望的输出结构。
+*   <strong>结构化查询模板</strong>：设计了跨语言的查询模板，要求模型先给出推理步骤，最后在单独的一行以“答案：”的格式给出最终数字。这不仅规范了输出，也使得模型的推理过程更加透明。</p>
+
+<p><strong>3. 特定语言处理</strong>
+*   <strong>孟加拉语（Bengali）数值转换</strong>：针对孟加拉语使用其特有的数字符号的情况，研究者实现了一个一对一的映射，在提取答案前将其转换为通用的阿拉伯数字。这一简单步骤显著提升了模型在孟加拉语上的表现。</p>
+
+<h4><strong>四、 整合应用与核心成果</strong></h4>
+
+<p>通过上述系统性的数据清理和评估流程优化，研究者创建了一个修正版的MGSM数据集（MGSM-Corrected）。</p>
+
+<ul>
+<li><strong>性能差距显著缩小</strong>：在修正后的数据集上进行重新评估后，原先观察到的语言间性能差距被大幅缩小，对于能力更强的模型而言，这种差距几乎完全消失。</li>
+<li><strong>具体案例</strong>：例如，仅通过对法语数字格式的简单调整（改进答案提取方法），某个模型的准确率就提升了10%；在进一步对数据进行修正后，准确率又提升了8.4%。</li>
+<li><strong>推翻原有结论</strong>：这一结果有力地证明了，先前关于LLMs在非英语语言上数学能力较弱的结论很大程度上是由于数据和评估方法的缺陷造成的，而非模型本身的核心能力问题。</li>
+</ul>
+
+<h4><strong>五、 结论与启示</strong></h4>
+
+<p>本文的解决方案不仅提供了一套具体的技术方法，更重要的是为多语言模型评估领域带来了方法论上的启示：</p>
+
+<ol>
+<li><strong>数据质量至关重要</strong>：在进行模型评估时，必须对数据集的质量保持高度警惕。数据清理和修正是确保评估结果可靠性的前提。</li>
+<li><strong>评估方法需透明化</strong>：研究者在报告模型性能时，应详细说明其数据处理流程和评估设置，以避免产生误导性结论。</li>
+<li><strong>呼吁社区关注</strong>：随着LLMs越来越多地被用于生成训练数据，确保测试数据的纯净和高质量变得前所未有的重要。本文呼吁整个研究社区共同努力，建立更严格、更透明的评估标准。</li>
+</ol>
+
+<p>综上所述，该研究通过一套严谨的数据质量保证和标准化的答案提取方法，成功地修正了多语言数学评估中的偏差，为更公平、准确地理解LLMs的跨语言能力提供了坚实的基础和宝贵的实践经验。</p>
+
+<h3>实验设计</h3>
+
+<p>实验采用前后对比的方法来验证假设：
+1.  首先，在原始的MGSM数据集上评估多个主流LLMs的表现，复现已知的跨语言性能差距。
+2.  然后，应用提出的数据清理和答案提取改进方案，创建一个修正版的MGSM数据集。
+3.  最后，在修正后的数据集上重新进行评估，并与原始结果进行比较，以量化性能差距的变化。</p>
+
+<h3>数据集和代码</h3>
+
+<p>论文发布了改进后的数据集，供研究社区使用。相关资源可以通过以下链接访问：
+- <strong>修正后的MGSM数据集</strong>: https://github.com/google-research-datasets/MGSM-Rev2
+- <strong>相关基准平台</strong>: https://www.kaggle.com/benchmarks/open-benchmarks/mgsm</p>
+
+<p>（注意：部分片段提到未提供代码或数据集链接，但综合来看，以上链接是明确给出的核心资源。）</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的核心假设：
+- 在使用修正后的数据集和改进的答案提取方法后，所有被测LLMs在多语言任务上的表现均有显著提升。
+- 语言之间的性能差距大幅缩小。例如，一个具体的案例显示，英语和法语之间的准确率差距从17.6%锐减至1.2%。
+- 结果表明，强大的LLMs在经过修正的基准上，能够展现出非常一致的跨语言数学推理能力，原先观察到的巨大差距基本消失。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>揭示了问题的本质</strong>：指出LLMs在多语言数学推理中的“性能差距”主要是评估数据和方法的缺陷造成的，而非模型固有的多语言能力不足。</li>
+<li><strong>提供了实用的解决方案</strong>：提出并验证了一套有效的数据清理和答案提取方法，显著提高了多语言评估的准确性和可靠性。</li>
+<li><strong>发布了宝贵的研究资源</strong>：公开发布了改进版的MGSM数据集（MGSM-Rev2），为社区提供了更可靠的多语言评估工具。</li>
+<li><strong>推动了评估方法论的进步</strong>：强调了在LLM评估中，测试数据质量和评估流程透明度的极端重要性，为未来的多语言模型研究提供了重要的见解和方法论指导。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.05162v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-10 17:27:31</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
