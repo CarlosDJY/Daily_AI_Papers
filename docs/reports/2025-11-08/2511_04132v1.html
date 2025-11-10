@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploring the Feasibility of End-to-End Large Language Model as a Compiler</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Exploring the Feasibility of End-to-End Large Language Model as a Compiler</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大语言模型</span>
+                
+                <span class="keyword-badge">编译器</span>
+                
+                <span class="keyword-badge">源代码转换</span>
+                
+                <span class="keyword-badge">汇编代码</span>
+                
+                <span class="keyword-badge">编译能力</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Institute of Software, Chinese Academy of Sciences, University of Chinese Academy of Sciences</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.481</span>
+                <span class="paper-id">arXiv ID: 2511.04132v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.04132v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-08/cf94801a46ed126a502deee0d4534317711449ee68fb979eebd7330ef1eda147.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种将大语言模型（LLM）作为编译器的框架（LaaC），探索了其在源代码到汇编代码转换中的可行性。通过设计`CompilerEval`数据集和评估框架，论文分析了LLM的编译能力及其局限性，并提出优化方法以提高编译成功率。实验结果显示，尽管当前成功率较低，但通过改进提示和模型规模，LLM在生成高质量汇编代码方面具有潜力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在探索将端到端大语言模型（LLM）作为编译器的可行性，即“Language model as a Compiler”（LaaC）。传统编译器开发和维护成本高、系统复杂、且在支持新的编程语言和硬件架构时通用性有限。尽管LLM在软件工程中展现出巨大潜力，但直接将其用于从源代码生成汇编代码时，面临编译成功率低和跨平台代码质量不稳定的核心挑战。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，端到端的LLM能够直接将源代码编译成目标汇编代码。尽管当前通用LLM的编译成功率较低，但论文推测通过优化提示工程（Prompt Engineering）、扩大模型规模、并结合逐步推理（step-by-step reasoning）等方法，可以显著提高生成代码的质量和正确性，从而简化编译器开发流程，并有效支持多平台编译需求。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的相关研究主要涵盖三个方面：
+1.  <strong>传统编译器技术</strong>：包括编译器前端、中端和后端的理论框架与实现。
+2.  <strong>AI与编译器的结合</strong>：已有研究将AI用于编译器优化、开发和测试等辅助任务。
+3.  <strong>LLM的代码生成能力</strong>：借鉴了其他代码生成任务的评估框架和数据集，如HumanEval。</p>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：利用大型语言模型作为编译器（LaaC）的框架与评估</strong></h3>
+
+<p>本文提出了一种名为 <strong>LaaC（LLM as a Compiler）</strong> 的创新框架，旨在利用大型语言模型（LLM）直接将高级编程语言的源代码编译成目标硬件平台的汇编代码。该方案的核心是通过一个端到端的模型，解决传统编译器在信息传递、模块化设计和多平台支持方面面临的挑战。为了系统地评估和提升LLM在这一任务上的能力，论文还设计并实现了一个专门的 <strong>CompilerEval 数据集与评估框架</strong>。</p>
+
+<hr />
+
+<h4><strong>一、 LaaC 框架的设计理念与核心组件</strong></h4>
+
+<p>LaaC框架旨在将编译过程整合到一个统一的模型中，其设计理念主要围绕以下三个核心能力展开：</p>
+
+<ol>
+<li><p><strong>目标代码生成能力</strong></p>
+
+<ul>
+<li><strong>方法</strong>：通过结合LLM的基础代码转换能力、存储特定语言和硬件信息的<strong>知识库</strong>以及精心设计的<strong>提示（Prompts）</strong>，LaaC能够灵活地生成针对不同编程语言和硬件架构的汇编代码。</li>
+<li><strong>优势</strong>：这种设计避免了为每种新语言或硬件平台进行成本高昂的模型再训练。只需更新知识库和提示，框架就能快速适应新需求，具备高度的灵活性和可扩展性。</li>
+</ul></li>
+<li><p><strong>代码分析与优化能力</strong></p>
+
+<ul>
+<li><strong>方法</strong>：LaaC采用<strong>逐步推理（Step-by-Step Reasoning）</strong>的方法来模拟传统编译器的代码分析过程。通过这种方式，模型可以理解程序逻辑，分析代码执行流程，识别冗余操作或潜在的优化点，从而生成效率更高的汇编代码。</li>
+<li><strong>优势</strong>：这不仅提升了生成代码的执行效率，还通过分析减少了潜在错误，提高了代码质量。</li>
+</ul></li>
+<li><p><strong>增强的调试能力</strong></p>
+
+<ul>
+<li><strong>方法</strong>：LaaC框架能够深刻理解源程序，并在编译过程中生成详细的符号表和调试信息。这些信息可以嵌入到生成的汇编代码中，与现有调试工具集成，甚至可以设计一个由LLM驱动的调试器，提供更精确的错误定位和自动修复建议。</li>
+<li><strong>优势</strong>：极大地提升了调试效率，减少了开发人员排查故障的时间和成本，增强了对生成代码的可靠性。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>二、 CompilerEval：评估框架与数据集</strong></h4>
+
+<p>为了验证LaaC的可行性并量化LLM的编译能力，论文构建了CompilerEval框架。</p>
+
+<ol>
+<li><p><strong>CompilerEval 数据集</strong></p>
+
+<ul>
+<li>该数据集包含了20个来自<strong>线性代数、智能计算、图像处理和音频处理</strong>等领域的代表性C语言测试案例。每个案例都分为内核定义和主程序两部分，用于评估LLM对核心算法的编译能力。</li>
+</ul></li>
+<li><p><strong>评估流程</strong>
+该框架将评估过程分为两个主要阶段：</p>
+
+<ul>
+<li><strong>汇编代码生成</strong>：将源代码通过提示输入给LLM（如GPT、Gemini等），生成汇编代码。同时，使用传统编译器（如gcc、clang）对相同代码进行编译，作为正确性验证的基准。</li>
+<li><strong>汇编代码评估</strong>：对生成的汇编代码进行多步验证：
+<ol>
+<li><strong>可执行文件生成</strong>：尝试将汇编代码编译成可执行文件。</li>
+<li><strong>正确性验证</strong>：运行可执行文件，检查其输出是否与基准编译器生成的结果一致，从而验证其语法和语义的正确性。</li>
+<li><strong>结果记录</strong>：记录成功编译和正确执行的样本数量。</li>
+<li><strong>错误反馈</strong>：收集编译或执行失败的错误信息，用于后续的模型优化。</li>
+</ol></li>
+</ul></li>
+<li><p><strong>专用评估指标</strong>
+论文指出，传统的文本相似度指标（如BLEU分数）不适用于评估汇编代码，因为相同功能的代码可以有多种指令组合。因此，提出了更关注功能正确性的新指标：</p>
+
+<ul>
+<li><strong>编译成功率 (success@1)</strong>：衡量语义正确的样本占总样本的比例。
+$$ \text{success@1} := 1 - \frac{N<em>{\text{total}} - N</em>{\text{succ}}}{N<em>{\text{total}}} $$
+其中，$N</em>{\text{total}}$ 为总样本数，$N_{\text{succ}}$ 为语义正确的样本数。</li>
+<li><strong>可执行样本正确率 ($R<em>{\text{exec corr}}$)</strong>：在所有成功生成可执行文件的样本中，功能正确的比例。
+$$ R</em>{\text{exec corr}} := \frac{N<em>{\text{succ}}}{N</em>{\text{exec}}} $$
+其中，$N_{\text{exec}}$ 为成功生成可执行文件的样本数。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>三、 提升LLM编译成功率的策略</strong></h4>
+
+<p>实验结果表明，尽管主流LLM具备生成汇编代码的基本能力，但平均成功率仍有待提高。为此，论文探索并验证了以下三种优化策略：</p>
+
+<ol>
+<li><p><strong>提示工程（Prompt Engineering）</strong></p>
+
+<ul>
+<li><strong>方法</strong>：针对编译过程中出现的常见错误（如未识别字符、指令错误等），设计了特定的提示来引导模型生成更准确的代码。</li>
+<li><strong>效果</strong>：总体上，所有模型的平均编译成功率<strong>提高了2.32个百分点</strong>，其中Claude-3.5-Sonnet模型的成功率提升了7.5个百分点，证明了提示工程的有效性。</li>
+</ul></li>
+<li><p><strong>模型规模扩展（Model Scaling）</strong></p>
+
+<ul>
+<li><strong>方法</strong>：比较了不同参数规模的Llama模型（8B、70B、405B）在编译任务上的表现。</li>
+<li><strong>效果</strong>：实验结果显示，模型规模与编译成功率存在显著的正相关关系。Llama-8B未能生成任何可执行代码，而Llama-405B的表现则有显著提升，证明了更大规模的模型在理解和处理复杂编译任务方面具有明显优势。</li>
+</ul></li>
+<li><p><strong>推理方法（Reasoning Methods）</strong></p>
+
+<ul>
+<li><strong>方法</strong>：通过引入不同的推理机制（如思维链），使LLM能够更好地处理复杂的编译逻辑，从而提高代码生成的准确性。</li>
+<li><strong>效果</strong>：系统性地评估不同推理方法，为优化LLM的编译过程提供了重要参考。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>四、 总结与未来研究方向</strong></h4>
+
+<p>本研究的主要贡献在于首次探索了将端到端LLM技术应用于编译器的可行性，并通过构建CompilerEval框架和数据集，系统地评估了当前LLM的能力与局限。</p>
+
+<p>基于当前的实验结果，论文指出了未来三个关键的研究方向：
+1.  <strong>针对编译场景的模型训练</strong>：对LLM进行特定于编译任务的微调和训练，以提高其在特定场景下的表现。
+2.  <strong>开发LaaC的基础设施</strong>：构建支持多语言到多平台的通用编译基础设施，为LaaC的广泛应用奠定基础。
+3.  <strong>对齐LaaC与调试器设计</strong>：进一步整合LLM与调试工具，提高调试效率，增强错误处理能力。</p>
+
+<p>总之，LaaC框架不仅展示了LLM在提升汇编代码生成质量方面的巨大潜力，更有望为编译器领域带来一次深刻的范式转变。</p>
+
+<h3>实验设计</h3>
+
+<p>实验围绕<code>CompilerEval</code>数据集展开，主要包括：
+- <strong>模型评估</strong>：评估了多种主流LLM（如GPT-4o, Claude-3.5-Sonnet等）在20个C语言测试用例上的汇编代码生成能力。
+- <strong>跨平台分析</strong>：在多种硬件指令集架构（x86, ARM, RISC-V）上进行测试，分析LLM的跨平台编译性能。
+- <strong>正确性验证</strong>：将LLM生成的汇编代码与传统编译器（如gcc, clang）的输出进行比较，验证其编译和执行的正确性。
+- <strong>改进策略分析</strong>：通过实验评估提示工程、模型规模等方法对提升编译成功率的影响。</p>
+
+<h3>数据集和代码</h3>
+
+<p>论文创建了<code>CompilerEval</code>数据集，包含来自线性代数、图像处理等领域的20个代表性测试用例。该数据集和评估框架已公开：
+- <strong>链接</strong>：https://github.com/buddy-compiler/compiler-eval</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果表明：
+- <strong>潜力与局限</strong>：当前主流LLM具备生成可执行汇编代码的基本能力，但整体编译成功率较低，尤其是在处理复杂程序时，尚不具备实用价值。
+- <strong>模型差异</strong>：不同LLM的表现存在显著差异，其中Claude-3.5-Sonnet在多数测试中表现最佳。
+- <strong>架构影响</strong>：LLM在指令集较简单的架构（如ARM和RISC-V）上表现优于复杂的x86架构。
+- <strong>改进有效</strong>：通过优化提示和使用更强的模型，可以有效提升编译成功率。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出并开源了<code>CompilerEval</code></strong>：首个用于系统性评估LLM作为编译器能力的基准测试框架和数据集。
+2.  <strong>全面的实证分析</strong>：对多种主流LLM在跨平台汇编代码生成方面的能力和局限性进行了深入评估，为领域研究提供了基线。
+3.  <strong>提出了<code>LaaC</code>概念框架</strong>：明确了将LLM发展为实用编译器的关键设计理念和未来研究方向，包括推理机制的融合、模型训练和调试效率的提升。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.04132v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-10 17:24:08</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

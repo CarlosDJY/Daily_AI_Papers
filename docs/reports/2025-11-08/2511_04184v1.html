@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trustworthy LLM-Mediated Communication: Evaluating Information Fidelity in LLM as a Communicator (LAAC) Framework in Multiple Application Domains</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Trustworthy LLM-Mediated Communication: Evaluating Information Fidelity in LLM as a Communicator (LAAC) Framework in Multiple Application Domains</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大语言模型</span>
+                
+                <span class="keyword-badge">信息传递</span>
+                
+                <span class="keyword-badge">真实性</span>
+                
+                <span class="keyword-badge">沟通中介</span>
+                
+                <span class="keyword-badge">信任缺口</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Iowa State University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.464</span>
+                <span class="paper-id">arXiv ID: 2511.04184v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.04184v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-08/21164707cfc03bfabfd3c4fc67b246c693c8a33cfbc48e0e50f2a40e3136c0d7.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了LAAC（LLM作为沟通中介）框架，通过三代理架构提升信息传递的真实性和可靠性。该框架解决了当前大语言模型在沟通中介角色中的信任缺口，确保信息捕获的保真度、一致性和响应的完整性。初步实验揭示了LLM在高风险沟通中的潜力与挑战，为未来研究指明了方向。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大语言模型（LLM）在作为沟通中介时，面临的信息真实性、可靠性、保真度和一致性的核心问题。随着LLM在沟通场景中的广泛应用，它们往往被用作内容生成工具而非忠实的沟通中介，这导致用户意图的传递失真、信息被削弱。这个问题在学术论文撰写和审阅等高风险领域尤为突出，因为低效和不准确的沟通会严重影响知识传播的质量。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过将LLM重新定位为结构化的沟通中介（即LAAC框架），可以显著提高信息传递的真实性和可靠性。该框架通过多代理架构（访谈、提取、查询）和结构化对话，能够更准确地捕捉发送者的意图，并以可验证的方式呈现给接收者，从而弥合当前LLM存在的“信任缺口”。</p>
+
+<h3>相关研究</h3>
+
+<p>本研究建立在多个领域之上，包括：
+- 现有的LLM辅助沟通应用（如邮件和学术写作）。
+- 针对LLM幻觉和信息真实性的研究。
+- 多代理LLM系统（如AutoGPT, MetaGPT）的设计。
+- 信任AI（Trustworthy AI）的原则、信息提取与验证技术，以及不确定性量化方法。</p>
+
+<h3>解决方案</h3>
+
+<h4><strong>LAAC框架：一个提升人机沟通真实性的详细解决方案</strong></h4>
+
+<p>本文提出的核心解决方案是一个名为<strong>LAAC（LLM as a Communicator，大型语言模型作为沟通者）</strong>的创新框架。该框架旨在解决当前大型语言模型（LLM）在信息传递中存在的真实性、可靠性和一致性问题。其核心目标是将LLM重新定义为一个智能的沟通中介，通过结构化的多代理架构，确保发送者的真实意图被准确捕捉，并以高保真度的方式传递给接收者，从而显著改善人机沟通的质量与效率。</p>
+
+<h5><strong>一、 LAAC框架的核心架构：三代理系统</strong></h5>
+
+<p>与传统的单一LLM应用不同，LAAC将复杂的沟通任务分解，采用了一个由三个专门代理组成的多代理架构。每个代理都经过优化，以执行特定的信任关键功能，共同维护信息传递过程中的保真度。</p>
+
+<ol>
+<li><p><strong>访谈代理 (Interview Agent)</strong></p>
+
+<ul>
+<li><strong>角色与功能</strong>：作为发送者与系统的主要接口，访谈代理通过结构化的引导式对话来提取发送者的真实意图。它不接受自由形式的文本输入，而是通过提出一系列针对性问题来获取信息的具体细节。</li>
+<li><strong>核心目的</strong>：
+<ul>
+<li><strong>确保信息提取的准确性</strong>，而非内容生成。</li>
+<li>通过提问而非假设来工作，并在必要时请求澄清。</li>
+<li>明确承认理解上的空白，避免用推测性内容填补。</li>
+</ul></li>
+<li><strong>应用示例</strong>：在学术论文开发场景中，访谈代理会询问研究方法、关键发现、理论贡献等；在商业提案中，则会询问目标、行动项目和利益相关者。</li>
+</ul></li>
+<li><p><strong>提取代理 (Extraction Agent)</strong></p>
+
+<ul>
+<li><strong>角色与功能</strong>：该代理负责处理访谈代理生成的完整对话记录，并将其转化为一个结构化的知识表示（Knowledge Structure）。这个知识结构将作为所有后续交互的唯一真实来源（ground truth）。</li>
+<li><strong>核心目的</strong>：
+<ul>
+<li>生成一个既可供查询又能忠实反映访谈内容的知识结构。</li>
+<li>确保不引入新信息、不曲解关系，同时避免遗漏关键细节。</li>
+</ul></li>
+<li><strong>输出要求</strong>：其输出必须是发送者意图的忠实转化，具有层次化组织、明确的概念关系，并包含支持性证据或确定性等级等元数据。</li>
+</ul></li>
+<li><p><strong>查询代理 (Query Agent)</strong></p>
+
+<ul>
+<li><strong>角色与功能</strong>：查询代理是接收者与结构化知识进行互动的接口。它允许接收者使用自然语言提出问题，查询发送者信息的任何方面。</li>
+<li><strong>核心目的</strong>：
+<ul>
+<li>使接收者能够高效访问相关信息，而无需阅读冗长的原始文本。</li>
+<li>当问题无法通过现有知识回答时，必须明确承认其局限性，以对抗LLM的“幻觉”倾向，避免生成不实的推测性回答。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<h5><strong>二、 完整信息流</strong></h5>
+
+<p>LAAC框架的信息传递遵循一个清晰的流程：
+1.  <strong>互动开始</strong>：发送者与<strong>访谈代理</strong>进行互动。
+2.  <strong>意图提取</strong>：访谈代理通过结构化对话，全面提取发送者的意图，并生成访谈记录。
+3.  <strong>知识结构化</strong>：<strong>提取代理</strong>处理访谈记录，生成结构化的知识表示。
+4.  <strong>发送者验证</strong>：发送者审查并确认提取的知识结构，确保其准确性（此为关键的验证步骤）。
+5.  <strong>接收者查询</strong>：接收者与<strong>查询代理</strong>互动，以自然语言提问。
+6.  <strong>信息检索</strong>：查询代理基于经过验证的结构化知识，检索并呈现准确的答案。</p>
+
+<p>通过这种方式，发送者的意图被一次性捕捉、忠实表达，并由所有接收者一致地访问，有效避免了信息在传递过程中的失真、膨胀或压缩。</p>
+
+<h5><strong>三、 系统化的信任度评估方法</strong></h5>
+
+<p>为了验证LAAC框架的有效性，论文提出了一套系统的评估方法，围绕信任度的三个关键维度展开：</p>
+
+<ol>
+<li><p><strong>信息捕获的可靠性 (Information Capture Fidelity)</strong></p>
+
+<ul>
+<li><strong>目标</strong>：衡量访谈代理和提取代理在捕捉和表示发送者意图时的准确性。</li>
+<li><strong>评估指标</strong>：内容覆盖率、语义准确性、信息添加率（幻觉）和信息遗漏率。</li>
+</ul></li>
+<li><p><strong>可重复性 (Reproducibility)</strong></p>
+
+<ul>
+<li><strong>目标</strong>：衡量系统在多次处理相同输入时，生成知识结构的一致性。</li>
+<li><strong>评估指标</strong>：结构相似性、语义等价性、细节一致性以及变异分析。</li>
+</ul></li>
+<li><p><strong>查询响应的完整性 (Query Response Integrity)</strong></p>
+
+<ul>
+<li><strong>目标</strong>：评估查询代理回答的可信度，特别是其防止虚假信息、保证来源准确和承认不确定性的能力。</li>
+<li><strong>评估指标</strong>：答案准确性、虚假信息率（幻觉率）、引用准确性和不确定性校准。</li>
+</ul></li>
+</ol>
+
+<h5><strong>四、 技术实现与初步实验发现</strong></h5>
+
+<p>为了验证该框架，研究团队实现了一个用于学术论文开发与审查的Web应用原型。
+*   <strong>技术栈</strong>：前端采用React，后端使用Node.js和PostgreSQL，并集成了Anthropic的Claude模型作为LLM核心。
+*   <strong>初步发现</strong>：实验结果揭示了当前LLM技术的系统性缺陷。尽管访谈代理在提取论文宏观结构上表现良好，但在处理定量结果和技术细节时准确性显著下降。更严重的是，<strong>查询代理在面对无法回答的问题时，产生了高达31%的虚假响应（幻觉）</strong>，这在学术等高风险领域是不可接受的。</p>
+
+<h5><strong>五、 增强可信度的关键机制与改进建议</strong></h5>
+
+<p>基于初步发现，论文提出了一系列关键机制来弥补信任差距，确保LAAC系统在实际部署中的可靠性：</p>
+
+<ol>
+<li><strong>忠实性验证机制 (Fidelity Verification Mechanisms)</strong>：在知识结构对接收者可见之前，强制要求发送者进行审查和批准，确保信息的准确性。</li>
+<li><strong>来源追踪 (Provenance Tracking)</strong>：在知识结构中维护信息与原始访谈陈述的直接链接，使接收者可以追溯和验证信息来源。</li>
+<li><strong>不确定性量化 (Uncertainty Quantification)</strong>：系统应明确表示其对不同信息片段的置信水平，帮助接收者判断信息的可靠性。</li>
+<li><strong>幻觉检测 (Hallucination Detection)</strong>：为查询代理配备强大的检测机制，当知识不足以回答问题时，明确拒绝猜测，而不是编造答案。</li>
+<li><strong>人工验证 (Human-in-the-Loop Validation)</strong>：在高风险领域，自动提取过程必须辅以人工审查，以确保最终信息的准确无误。</li>
+</ol>
+
+<h5><strong>六、 总结与未来方向</strong></h5>
+
+<p>LAAC框架通过其创新的多代理架构，为利用LLM作为可信沟通中介提供了一个系统化的解决方案。它不仅定义了实现高保真度信息传递的核心组件和流程，还建立了一套严格的评估方法论来衡量其可信度。</p>
+
+<p>未来的研究将集中于开发更高级的可信度机制（如检索增强提取）、进行用户研究以了解真实用户的信任感知，并将该框架扩展到商业提案、技术文档等更多领域，最终建立标准化的评估基准，推动整个领域向更真实、更可靠的人机沟通迈进。</p>
+
+<h3>实验设计</h3>
+
+<p>研究团队设计了初步的控制实验来评估LAAC框架，主要集中在学术交流场景：
+- <strong>评估维度</strong>: 实验围绕三个核心信任维度进行：信息捕获的保真度、知识再现性（即多次运行的一致性）和查询响应的完整性。
+- <strong>实验材料</strong>: 使用了已发表的计算机科学论文作为信息源。
+- <strong>评估方法</strong>: 结合了自动化指标和人类专家评估，通过重复提取和查询来测试系统在不同参数下的稳定性和准确性。</p>
+
+<h3>数据集和代码</h3>
+
+<p>所有论文片段均表明，研究中没有提供公开的数据集或代码链接。</p>
+
+<h3>实验结果</h3>
+
+<p>初步实验结果揭示了当前LLM作为沟通中介的潜力和挑战：
+- <strong>存在信任缺口</strong>: 实验证实了当前LLM在可靠性方面存在显著问题。例如，Query Agent在处理可回答问题时准确率为82%，但在面对其知识库之外的问题时，虚构（捏造）答案的比例高达31%。
+- <strong>表现存在变异性</strong>: LLM在信息提取的准确性和一致性上表现出不稳定性，有时会生成不一致的知识结构。
+- <strong>框架有效性</strong>: 尽管存在不足，但实验也表明LAAC框架在信息捕获保真度、可重复性和响应完整性方面显示出潜力。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出LAAC框架</strong>: 创新性地提出了一个三代理架构，将LLM重新定义为沟通中介，以系统性地解决信息保真度问题。
+2.  <strong>形式化信任维度</strong>: 确定并定义了评估此类系统的三个基本信任维度（保真度、可再现性、完整性），并提出了相应的评估方法论。
+3.  <strong>提供实证基线</strong>: 通过初步实验，量化了当前LLM在沟通中介角色上的“信任缺口”，为未来的改进提供了数据支持。
+4.  <strong>指明未来方向</strong>: 明确了未来研究的关键方向，包括技术创新（如不确定性量化）、用户研究和向更多领域的扩展。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.04184v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-10 17:24:08</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

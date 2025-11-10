@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM-as-a-Judge is Bad, Based on AI Attempting the Exam Qualifying for the Member of the Polish National Board of Appeal</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LLM-as-a-Judge is Bad, Based on AI Attempting the Exam Qualifying for the Member of the Polish National Board of Appeal</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">法律推理</span>
+                
+                <span class="keyword-badge">逻辑论证</span>
+                
+                <span class="keyword-badge">自动评估</span>
+                
+                <span class="keyword-badge">跨学科合作</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Polish National Board of Appeal, National Appeal Chamber</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.459</span>
+                <span class="paper-id">arXiv ID: 2511.04205v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.04205v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-warning">
+            <strong>⚠️ 核心思路图片提取失败：</strong>未找到图片
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本研究评估了大型语言模型（LLMs）在波兰国家申诉委员会资格考试中的表现，采用“LLM作为法官”的方法进行自动评估。尽管LLMs在知识测试中表现良好，但在实践书面考试中未能通过，揭示了其在法律推理和逻辑论证方面的显著缺陷。研究强调了人类监督的重要性，并呼吁法律与技术领域的跨学科合作。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在全面评估当代大型语言模型（LLMs）是否具备通过波兰国家申诉委员会（KIO）官方资格考试的能力。这个问题至关重要，因为随着人工智能在法律领域的应用日益增多，验证其在复杂的法律推理、判决撰写和实际应用方面的可靠性，而不仅仅是知识回忆，对于确定其在法律实践中的适用范围和局限性具有紧迫意义。研究的核心是探究LLMs能否替代或有效辅助人类法律专家，并评估现有自动化评估方法（如“LLM作为法官”）在法律这一要求“始终正确”而非“平均正确”的领域的有效性。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：尽管大型语言模型在知识型测试中可能表现出色，但它们无法通过资格考试中需要深度法律推理、上下文理解和逻辑论证的实践书面部分。研究预期发现，LLMs在法律条款的实际应用、事实分析和生成结构严谨、逻辑一致的法律判决方面存在显著缺陷，因此尚不能在独立的法律评估任务中替代人类专家。</p>
+
+<h3>相关研究</h3>
+
+<p>本研究建立在多个相关领域的研究基础之上：
+- <strong>人工智能在法律领域的应用</strong>：探讨AI在法律推理、审判及法律服务中的有效性和可靠性。
+- <strong>LLM在法律考试中的表现</strong>：借鉴了先前关于LLM（如GPT-4）在其他法律考试（如美国统一律师考试UBE、巴西OAB）中的表现研究。
+- <strong>自动化评估方法</strong>：参考了“LLM作为法官”的评估机制（如G-Eval），并对其在法律领域的适用性提出质疑。
+- <strong>法律信息检索技术</strong>：涉及检索增强生成（RAG）模型、混合搜索架构以及法律研究工具（如Lexis+ AI）的实证研究。</p>
+
+<h3>解决方案</h3>
+
+<hr />
+
+<h3><strong>面向法律领域的LLM综合评估与应用框架</strong></h3>
+
+<p>本文提出了一个全面的实证评估框架，旨在系统性地测试和验证大型语言模型（LLMs）在特定且高风险的法律领域——波兰国家上诉委员会（NAC）资格考试——中的应用潜力和局限性。该解决方案不仅将LLM作为考试候选人进行测试，还探索了其作为自动化评审工具的可行性，并为未来的人机协作模式提供了具体的技术路径和改进方向。</p>
+
+<hr />
+
+<h4><strong>第一部分：技术基础 — 先进的法律信息检索与处理系统</strong></h4>
+
+<p>为了让LLM能够有效处理法律任务，解决方案首先构建了一个强大的信息检索和数据处理系统，即高级检索增强生成（RAG）管道。</p>
+
+<ol>
+<li><p><strong>多源数据采集与处理</strong>:</p>
+
+<ul>
+<li><strong>数据来源</strong>: 系统从三个关键来源收集全面的法律文档：官方FTP服务器上的<strong>司法判决与裁决</strong>、政府门户网站的<strong>分析总结</strong>，以及通过网络抓取获得的<strong>公共采购法官方评论</strong>。</li>
+<li><strong>处理管道</strong>: 所有文档都经过标准化的预处理流程，包括：
+<ul>
+<li><strong>文本分块</strong>: 采用基于令牌的分段策略，将长文本分割成适合嵌入模型处理的块。</li>
+<li><strong>时间信息提取</strong>: 使用正则表达式从文本中提取并标准化发布日期，以便进行时间索引。</li>
+<li><strong>质量控制</strong>: 实施严格的质量过滤，如移除过短（少于100字符）的片段和在文档及片段级别进行去重，以确保知识库的纯净度和高质量。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>混合搜索架构</strong>:</p>
+
+<ul>
+<li>该系统采用混合搜索架构，结合了<strong>语义向量搜索</strong>（用于理解概念和上下文）和<strong>传统关键词搜索</strong>（用于精确匹配法律术语和法规引用）。</li>
+<li>查询首先经过上下文增强，然后通过专门的嵌入模型转化为向量。搜索在多个按文档类型组织的集合（如判决、摘要、法规评论）中并行执行。</li>
+<li>最终，通过一个集成的重排名机制，结合语义相似性和文本相关性得分，向用户呈现最相关的结果。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第二部分：核心应用 — LLM作为考试候选人</strong></h4>
+
+<p>此部分旨在通过模拟真实的资格考试，评估LLM在公共采购法领域的知识掌握和实际应用能力。</p>
+
+<ol>
+<li><p><strong>自动化信息提取与案件评估</strong>:</p>
+
+<ul>
+<li><strong>信息提取管道</strong>: 系统利用零-shot LLM提示（如GPT-4），从案件描述中自动提取关键信息（如上诉日期、费用支付情况、合同发布日期等）并以结构化的JSON格式输出。如果格式有误，会使用GPT-4o进行自动修正。</li>
+<li><strong>形式评估</strong>: 根据提取的信息，系统首先检查上诉是否满足所有法定的形式要求，以判断案件应通过裁决驳回还是进入实质性审理。</li>
+<li><strong>实质性评估</strong>: 对于通过形式审查的案件，系统会进入一个结构化的评估程序：
+<ol>
+<li><strong>申诉提取与分类</strong>: 识别所有争议点，并将其状态分类（如当前、已撤回、已满足）。</li>
+<li><strong>申诉特征化</strong>: 为每个申诉构建结构化记录，包含<strong>论点</strong>、<strong>研究问题</strong>、引用的<strong>法律条款</strong>和<strong>事实依据</strong>。</li>
+<li><strong>可决性判断</strong>: 评估当前信息是否足以对申诉做出决定，对于信息不足的申诉标记为“不可决”。</li>
+<li><strong>生成初步结果</strong>: 对可决的申诉生成“维持”、“驳回”或“部分维持”的初步结果，并附上基于已提取事实和法律条款的简要理由。</li>
+</ol></li>
+</ul></li>
+<li><p><strong>实验设计与模型测试</strong>:</p>
+
+<ul>
+<li><strong>模型选择</strong>: 实验评估了多个LLM，包括本地模型（Bielik-11B-v2.6）和国际领先模型（GPT-4.1, Claude 4 Sonnet）。</li>
+<li><strong>测试设置</strong>: 模型在多种设置下进行测试，包括<strong>闭卷</strong>（无外部知识）、<strong>基础RAG</strong>（提供法律条款）和<strong>高级RAG</strong>（提供法律条款和相关判例）。</li>
+<li><strong>关键发现</strong>:
+<ul>
+<li>RAG显著提升了模型在知识选择题上的表现，高级RAG配置下的GPT-4.1准确率高达88.4%。</li>
+<li>尽管模型在知识测试中表现出色，但在需要深度法律推理和逻辑论证的<strong>书面判决部分均未能达到及格线</strong>。这暴露了当前LLM在实质性法律分析、逻辑一致性和引用准确性方面的严重不足。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第三部分：辅助应用 — LLM作为评审工具</strong></h4>
+
+<p>为了解决自动评估生成内容的需求，该研究还探索了“LLM作为评审”的方法。</p>
+
+<ol>
+<li><p><strong>自动化评估框架</strong>:</p>
+
+<ul>
+<li><strong>评估标准</strong>: 基于官方考试委员会文件，定义了八个具体的、带分值的评估指标，包括<strong>判断构建</strong>（20分）、<strong>法律条款应用</strong>（30分）、<strong>事实分析</strong>（30分）、<strong>法律语言</strong>（5分）等。</li>
+<li><strong>自动化工作流</strong>: 使用低代码平台n8n构建了一个自动化工作流。该流程首先将模型生成的答案和官方参考答案标准化为Markdown格式，然后通过API将它们连同详细的评估标准和系统提示一起发送给GPT-4o。</li>
+<li><strong>结构化数据捕获</strong>: GPT-4o返回每个标准的得分和定性反馈，工作流自动提取这些信息并存入Google表格，以便进行后续的定量分析。</li>
+</ul></li>
+<li><p><strong>结果与局限性</strong>:</p>
+
+<ul>
+<li>研究发现，LLM评审的评估结果与官方人类考官的判断存在<strong>显著差异</strong>。LLM倾向于在语言和风格等表面层面给予高分，但在核心的法律逻辑和实质性分析上无法做出准确判断。这表明，虽然LLM可以用于初步或辅助评估，但其可靠性远未达到可以替代人类专家的水平。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第四部分：结论、解决方案与未来方向</strong></h4>
+
+<p>该研究的实证结果清晰地展示了当前LLM在法律领域的潜力和严峻挑战。基于这些发现，论文提出了一个以<strong>人机协作为核心</strong>的未来发展路径。</p>
+
+<ol>
+<li><p><strong>当前局限性总结</strong>:</p>
+
+<ul>
+<li>LLM在生成法律文本时常出现<strong>引用不存在的法律条款</strong>、<strong>逻辑不连贯</strong>和<strong>缺乏深度实质性分析</strong>等问题。</li>
+<li>其生成的文本表面上看起来专业，具有误导性，可能给非专业人士带来法律风险。</li>
+</ul></li>
+<li><p><strong>提出的解决方案与未来方向</strong>:</p>
+
+<ul>
+<li><strong>强化人机合作</strong>: 强调AI应作为辅助工具，在文档结构化、信息提取等机械性任务中提升效率，但最终的法律判断和决策责任必须由人类专家承担。</li>
+<li><strong>技术改进路径</strong>:
+<ul>
+<li><strong>监督微调与强化学习</strong>: 对模型进行监督微调，并引入人类反馈的强化学习（RLHF），奖励正确的法律推理和决策。</li>
+<li><strong>优化信息检索</strong>: 采用<strong>边界对齐的重叠分块</strong>技术处理法律文本，并探索<strong>混合检索方法</strong>（稀疏+密集）与法律特定的交叉编码器重排序算法，以提高检索的准确性。</li>
+<li><strong>深化跨学科合作</strong>: 强调技术团队必须与法律专家紧密合作，以改进任务分解、数据集策划和错误分类，减少因领域知识不足导致的模型缺陷。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<p>通过这一系列系统性的评估和前瞻性的规划，本研究为LLM在法律领域的健康发展提供了一个清晰、可靠的框架和路线图。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>参与模型</strong>：评估了多种LLMs，主要包括GPT-4.1、Claude 4 Sonnet和Bielik。</li>
+<li><strong>考试内容</strong>：实验模拟了资格考试的两个核心部分：
+<ol>
+<li><strong>知识测试</strong>：一个包含250道题目的多项选择题测试，涵盖公共采购法和民法知识。</li>
+<li><strong>书面考试</strong>：基于五个真实的案例研究，要求模型撰写一份完整的法律判决书。</li>
+</ol></li>
+<li><strong>评估方法</strong>：采用双重评估机制，一方面由官方考试委员会的专家对书面答案进行评分，另一方面也测试了使用LLM（GPT-4o）作为自动评审者的可行性。</li>
+<li><strong>实验变量</strong>：对比了不同模型在闭卷、基础RAG和高级RAG三种不同信息检索设置下的表现。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了来自五个过去波兰国家申诉委员会资格考试的公开数据，包括250个知识测试问题和五个案例研究。</li>
+<li><strong>代码</strong>：论文中未提供一个集中的代码库链接，但提到了实验中使用的特定组件，如一个嵌入模型可在Hugging Face上获取（<code>Qwen/Qwen3-Embedding-0.6B</code>）。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>知识测试 vs. 书面考试</strong>：实验结果呈现明显分化。LLMs（特别是GPT-4.1）在多项选择知识测试中表现出色，得分在70-74分之间，达到了及格线。然而，在实践书面考试中，所有模型均未通过，得分最高的GPT-4.1也仅获得37分，远低于及格标准。</li>
+<li><strong>模型表现差异</strong>：GPT-4.1在所有配置和任务中始终表现最佳。</li>
+<li><strong>法律推理缺陷</strong>：模型生成的判决书虽然语言流畅，但在核心法律能力上存在严重缺陷，如无法正确引用和应用法律条款（该项得分普遍为零）、逻辑不一致、事实分析肤浅等。</li>
+<li><strong>RAG效果</strong>：基础RAG设置能有效提升模型表现，但高级RAG管道并未带来显著的额外优势。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>首次实证评估</strong>：对当代LLMs在非英语系国家的高风险法律资格考试中进行了首次全面、系统的实证评估。</li>
+<li><strong>揭示核心局限性</strong>：明确揭示了当前LLMs在知识回忆和实际法律推理应用之间的巨大鸿沟，证明了它们尚不能替代人类法官或独立审查员。</li>
+<li><strong>警示应用风险</strong>：强调了在高风险法律场景中无监督地使用LLMs的潜在危险，并对“LLM作为法官”等自动化评估方法的可靠性提出了批判性质疑。</li>
+<li><strong>倡导跨学科合作</strong>：呼吁法律专家与技术专家进行更深入的跨学科合作，并强调在法律AI系统的开发和应用中，人类的监督、解释能力和伦理责任是不可或缺的。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.04205v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-10 17:24:08</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
