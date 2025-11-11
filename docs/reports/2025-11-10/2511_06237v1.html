@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mixtures of SubExperts for Large Language Continual Learning</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mixtures of SubExperts for Large Language Continual Learning</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">子专家混合</span>
+                
+                <span class="keyword-badge">持续学习</span>
+                
+                <span class="keyword-badge">灾难性遗忘</span>
+                
+                <span class="keyword-badge">知识隔离</span>
+                
+                <span class="keyword-badge">模型扩展</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Deep.AI</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.460</span>
+                <span class="paper-id">arXiv ID: 2511.06237v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.06237v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-10/6892d6317cb9656793fda2c9ffac7cac64b64d5bb2b17fe1c9a2ba043e88a1a1.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为“子专家混合”（Mixtures of SubExperts, MoSEs）的新框架，旨在解决大型语言模型在持续学习中面临的灾难性遗忘问题。MoSEs通过集成稀疏的子专家网络和任务特定的路由机制，实现了知识的隔离与重用，确保模型在学习新任务时有效保留旧知识，同时以亚线性方式扩展模型容量。实验结果显示，MoSEs在知识保留和任务适应性方面显著优于传统方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在<strong>持续学习（Continual Learning, CL）</strong>中面临的核心挑战：<strong>灾难性遗忘（Catastrophic Forgetting）</strong>。具体来说，当模型学习新任务时，它会倾向于忘记在先前任务上学到的知识。这个问题在现实场景中愈发重要，因为模型需要不断适应新的数据和用户需求。</p>
+
+<p>现有的解决方案存在以下局限性：
+- <strong>参数高效微调（PEFT）方法</strong>（如LoRA）：在处理连续任务流时，如果重用相同的参数，容易导致灾难性遗忘。
+- <strong>为每个任务分配独立参数</strong>：虽然可以避免遗忘，但这会导致模型规模随任务数量线性增长，不仅内存开销大，也难以实现任务间的知识迁移。
+- <strong>传统的混合专家（MoE）架构</strong>：在任务数量增多时，专家管理和存储面临挑战，可能导致学习效率低下。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，通过一个名为<strong>“子专家混合”（Mixtures of SubExperts, MoSEs）</strong>的新框架，可以有效地解决上述问题。
+- <strong>核心假设</strong>：通过在Transformer层中集成稀疏的子专家网络，并为每个任务学习一个特定的稀疏路由（gating）机制，MoSEs能够有效隔离和保护任务知识，减少参数干扰，从而在最小化灾难性遗忘和实现高效模型扩展之间取得平衡。
+- <strong>关键发现</strong>：MoSEs通过自适应地重用先前学习的参数，不仅能保护旧知识，还能促进任务间的知识迁移。
+- <strong>初步结论</strong>：实验表明，MoSEs在知识保留、任务扩展能力和参数效率方面显著优于传统的持续学习方法和PEFT基线。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的相关研究主要涵盖以下几个领域：
+- <strong>持续学习（CL）方法</strong>：包括基于正则化的方法（如EWC）、重放方法和动态架构方法。
+- <strong>参数高效微调（PEFT）</strong>：如适配器（Adapters）、LoRA（低秩适应）和前缀调优（Prefix-Tuning）。
+- <strong>混合专家（MoE）模型</strong>：包括Switch Transformers和GLaM等架构，它们通过增加模型容量而不显著增加计算负担。</p>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：用于持续学习的子专家混合模型 (Mixtures of SubExperts, MoSEs)</strong></h3>
+
+<h4><strong>一、 引言：问题与目标</strong></h4>
+
+<p>大规模语言模型（LLMs）在处理单一任务时表现出色，但在持续学习（Continual Learning）场景中面临两大核心挑战：</p>
+
+<ol>
+<li><strong>灾难性遗忘 (Catastrophic Forgetting)</strong>：在学习新任务时，模型会忘记或破坏在先前任务中学到的知识。</li>
+<li><strong>模型可扩展性与效率</strong>：随着任务数量的增加，模型参数会线性增长，导致巨大的计算和存储开销，降低了模型的实用性。</li>
+</ol>
+
+<p>为了解决这些问题，本论文提出了一个名为 <strong>“Mixtures of SubExperts (MoSEs)”</strong> 的创新框架。该框架是一种参数高效微调（PEFT）方法，通过集成稀疏的子专家（Sub-Experts）和任务特定的路由机制，旨在实现高效、可扩展且能有效保留知识的持续学习。</p>
+
+<p><strong>核心目标：</strong>
+*   <strong>最小化遗忘</strong>：通过将不同任务的知识隔离到专门的子专家中，减少参数间的干扰。
+*   <strong>提升可扩展性</strong>：通过适应性地重用和组合先前学习的稀疏参数，使模型容量以亚线性速度增长。
+*   <strong>降低计算成本</strong>：通过条件计算（只激活部分专家），在保持高性能的同时显著减少推理和训练的计算开销。</p>
+
+<hr />
+
+<h4><strong>二、 MoSEs 框架的核心机制与组件</strong></h4>
+
+<p>MoSEs 框架的核心思想是将一个庞大的模型分解为多个小型的、专门的“子专家”网络，并通过一个智能的“路由”机制来决定在处理特定输入时激活哪些专家。</p>
+
+<h5><strong>1. 子专家网络 (Sub-Experts)</strong></h5>
+
+<p>MoSEs 在预训练模型的特定层（如 Transformer 的注意力和前馈网络层）中嵌入一个由 N 个子专家组成的池。每个子专家都是一个独立的神经网络模块，负责学习和存储特定领域的知识。这种设计有以下优势：</p>
+
+<ul>
+<li><strong>知识隔离</strong>：将不同任务的知识封装在不同的子专家中，当学习新任务时，可以只更新或激活与该任务相关的专家，从而保护了其他专家的知识不被覆盖。</li>
+<li><strong>参数重用</strong>：面对新任务时，模型可以重用先前任务训练好的专家，促进了知识的有效迁移。</li>
+</ul>
+
+<h5><strong>2. 任务特定的稀疏路由机制 (Task-Specific Sparse Routing)</strong></h5>
+
+<p>路由机制是 MoSEs 的“大脑”，它决定了如何为每个输入选择最合适的专家组合。</p>
+
+<ul>
+<li><strong>过程</strong>：对于给定的输入 <code>x</code>，一个可训练的稀疏路由函数会计算一个得分向量，评估每个专家与该输入的相关性。然后，通过 <code>top-k</code> 或 <code>top-c%</code> 策略选择得分最高的 <code>k</code> 个专家（其中 <code>k ≪ N</code>）来处理该输入。</li>
+<li><strong>条件计算</strong>：只有被选中的专家会被激活并参与前向和反向传播，其他专家则保持休眠。这种稀疏激活机制是实现计算高效性的关键。</li>
+<li><strong>任务适应性</strong>：路由机制可以根据任务ID或通过学习任务特定的提示（Prompt）来动态调整。在任务增量学习（TIL）场景中，任务ID可以直接指导路由；在任务无关场景（TaIL）中，模型需要从输入数据中隐式推断任务信息来选择专家。</li>
+</ul>
+
+<h5><strong>3. 与参数高效微调（PEFT）的结合</strong></h5>
+
+<p>MoSEs 框架与低秩适应（LoRA）等 PEFT 方法紧密结合。它不是微调整个庞大的基础模型，而是在保持大部分预训练权重不变的情况下，仅训练新添加的子专家和路由器的参数。这极大地降低了训练所需的计算资源和存储空间。</p>
+
+<hr />
+
+<h4><strong>三、 数学原理与优化</strong></h4>
+
+<p>MoSEs 的工作流程可以通过以下公式来概括：</p>
+
+<ol>
+<li><p><strong>专家输出</strong>：对于输入 <code>x</code>，MoSEs 层的输出是所选专家的加权和：
+$$ MoSE(x) = \sum<em>{j \in \text{TopK}(R(x))} R</em>j(x) \cdot E<em>j(x) $$
+其中，$R(x)$ 是路由函数生成的权重，$E</em>j(x)$ 是第 <code>j</code> 个专家的输出。</p></li>
+<li><p><strong>层级适应</strong>：在第 <code>l</code> 层，模型的隐藏状态 <code>h_l</code> 通过以下方式进行适应性调整：
+$$ h<em>l = x</em>{\theta<em>l} + \beta \cdot \text{MoSE}</em>{l}^{\tilde{\theta} \odot m<em>t}(x) $$
+其中，$x</em>{\theta<em>l}$ 是基础模型的输出，$\text{MoSE}</em>{l}$ 是该层的专家输出，$\beta$ 是一个控制适应程度的缩放因子。</p></li>
+<li><p><strong>优化目标</strong>：为了确保路由机制能够准确地将输入与相关的任务（或专家）关联起来，模型引入了一个<strong>拉近约束损失函数 (Pull Constraint Loss)</strong>，旨在最大化输入嵌入与相应任务提示键之间的余弦相似度。
+$$ L<em>{\text{pull}} = -\frac{1}{B}\sum</em>{i=1}^{B} \frac{1}{T}\sum<em>{t=1}^{T} \langle \hat{x}</em>{i,t}, \hat{k}<em>{t} \rangle $$
+最终的训练目标是任务损失和该约束损失的加权和：
+$$ L</em>{\text{total}} = L<em>{\text{task}} + \lambda</em>{\text{pull}} \cdot L_{\text{pull}} $$</p></li>
+</ol>
+
+<hr />
+
+<h4><strong>四、 实验性能与优势分析</strong></h4>
+
+<p>在 <strong>TRACE</strong> 基准数据集上的评估结果表明，MoSEs 框架在多个方面显著优于传统的持续学习方法（如 EWC、重放机制）和参数高效微调方法（如 LoRA）。</p>
+
+<h5><strong>1. 显著减少灾难性遗忘</strong></h5>
+
+<ul>
+<li><strong>向后转移 (BWT)</strong>：MoSEs 实现了极低的遗忘率，BWT 指标接近于零（例如，-0.90% 和 -0.43%），甚至在某些配置下为正值。相比之下，LoRA 和标准 MoE 的遗忘率则非常高（分别为 -22.67% 和 -11.10%）。</li>
+<li><strong>任务间迁移矩阵</strong>：分析显示，在学习新任务后，MoSEs 在旧任务上的性能依然保持在高水平，证明了其强大的知识保留能力。</li>
+</ul>
+
+<h5><strong>2. 高参数效率与可扩展性</strong></h5>
+
+<ul>
+<li><strong>参数量</strong>：MoSEs 在仅增加极少量可训练参数（约 3.82M–3.83M）的情况下，就实现了卓越的性能。</li>
+<li><strong>亚线性增长</strong>：通过重用专家，模型参数不会随任务数量线性增长，实现了高效的可扩展性。</li>
+</ul>
+
+<h5><strong>3. 优越的性能与计算效率</strong></h5>
+
+<ul>
+<li><strong>平均性能</strong>：在 0.5K 数据集上，MoSEs 的平均性能达到 <strong>49.1%</strong>，显著高于 LoRA（33.1%）和标准 MoE（42.4%）。</li>
+<li><strong>推理效率</strong>：由于采用了稀疏激活机制，MoSEs 在推理时的计算延迟较低（例如，测试时间为 1.20 小时），使其在实际应用中更具可行性。</li>
+</ul>
+
+<h5><strong>4. 灵活的专家配置</strong></h5>
+
+<p>实验表明，专家配置对性能有重要影响。例如，<strong>E2T2</strong>（总共2个专家，每次选择2个）配置在准确性和知识保留之间取得了最佳平衡。过少（如 E2T1）或过多（如 E3、E4）的专家激活都可能导致性能下降。</p>
+
+<hr />
+
+<h4><strong>五、 应用场景与结论</strong></h4>
+
+<p><strong>应用场景：</strong>
+MoSEs 框架特别适用于需要模型不断学习新知识和技能的动态环境，例如：
+*   <strong>多任务对话系统</strong>：需要处理不同领域对话的机器人。
+*   <strong>个性化推荐系统</strong>：需要根据用户不断变化的兴趣进行调整。
+*   <strong>自然语言处理</strong>：需要模型快速适应新领域或新语言的应用。</p>
+
+<p><strong>结论：</strong>
+<strong>Mixtures of SubExperts (MoSEs)</strong> 通过巧妙地结合<strong>稀疏子专家网络、任务特定路由机制</strong>和<strong>参数高效微调</strong>，为大规模语言模型的持续学习提供了一个强大、高效且可扩展的解决方案。它不仅成功地克服了灾难性遗忘的难题，还以极低的计算和参数成本实现了卓越的性能，为构建能够终身学习的智能系统铺平了道路。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准数据集</strong>：实验主要在<strong>TRACE基准数据集</strong>上进行评估，该数据集包含多样化的语言任务，并提供了不同规模的版本（如TRACE 0.5K和TRACE 5K）。</li>
+<li><strong>学习设置</strong>：评估在任务增量学习（TIL）和任务无关增量学习（TaIL）两种持续学习场景下进行。</li>
+<li><strong>对比基线</strong>：将MoSEs与多种基线方法进行比较，包括单一全参数微调（Single FT）、LoRA、标准的MoE模型以及其他持续学习方法。</li>
+<li><strong>评估指标</strong>：主要评估模型的平均准确率、<strong>反向转移（Backward Transfer, BWT）</strong>以衡量遗忘程度，以及可训练参数数量和推理延迟等效率指标。</li>
+<li><strong>消融研究</strong>：分析了不同稀疏度配置（如激活专家的比例<code>c</code>）和专家数量对模型性能的影响。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了由Wang等人（2023）构建的<strong>TRACE基准数据集</strong>，包括TRACE 0.5K和TRACE 5K两个版本。</li>
+<li><strong>代码</strong>：在提供的论文片段中，<strong>未明确提供</strong>代码的公开链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了MoSEs的有效性：
+- <strong>性能优越</strong>：在TRACE基准上，MoSEs在平均准确率方面显著优于所有基线方法。
+- <strong>有效防止遗忘</strong>：MoSEs表现出极低甚至为正的BWT值（例如，在一个最优配置下BWT为+0.05%），表明它几乎没有遗忘，甚至能通过学习新任务来增强旧任务的性能。相比之下，LoRA等方法的遗忘则要严重得多。
+- <strong>参数高效</strong>：MoSEs以更少的可训练参数实现了更高的性能，其模型容量随任务数量呈亚线性增长，具有良好的可扩展性。
+- <strong>效率平衡</strong>：实验表明，通过选择合适的稀疏度（如<code>c=30.0%</code>），可以在准确性、稳定性和计算效率之间达到最佳平衡。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了MoSEs框架</strong>：提出了一种新颖的、名为“子专家混合”（Mixtures of SubExperts）的框架，该框架结合了MoE的模块化优势和PEFT的效率，为大型语言模型的持续学习提供了一个高效且可扩展的解决方案。</li>
+<li><strong>有效解决灾难性遗忘</strong>：通过稀疏、任务特定的子专家路由机制，MoSEs在不依赖数据重放或显式正则化的情况下，成功地缓解了灾难性遗忘问题。</li>
+<li><strong>SOTA性能验证</strong>：在TRACE持续学习基准上进行了广泛的实验，结果表明MoSEs在知识保留和任务适应性方面均达到了最先进的（SOTA）水平，为该领域设立了新的强大基线。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.06237v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 14:27:38</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
