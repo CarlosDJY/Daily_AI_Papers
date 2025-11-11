@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Abstraction from Grounded Experience for Plan-Guided Policy Refinement</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Self-Abstraction from Grounded Experience for Plan-Guided Policy Refinement</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">自我抽象</span>
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">软件工程</span>
+                
+                <span class="keyword-badge">计划引导</span>
+                
+                <span class="keyword-badge">政策优化</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Salesforce AI Research</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.477</span>
+                <span class="paper-id">arXiv ID: 2511.05931v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.05931v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-09/ee43db92b3fa08019d4526f00050cfeec575da7aafb33bbad81582c5f52f1e2c.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了SAGE（Self-Abstraction from Grounded Experience）框架，旨在解决大型语言模型（LLM）代理在软件工程任务中缺乏自我学习和改进能力的问题。SAGE通过“探索-计划抽象-计划增强执行”的循环，使代理从自身经验中提取高层次计划，显著提升了任务执行的性能，尤其在SWE-Bench基准上实现了7.2%的相对提升。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）基础的代理在执行复杂的软件工程任务时，缺乏从自身经验中学习和自我改进能力的问题。现有代理通常在静态框架下运行，难以应对多步推理、代码修改和边缘案例处理，导致性能受限且效率低下。此外，现有基准测试方法可能存在数据泄露风险（例如，通过<code>git</code>命令获取未来信息），从而影响评估结果的公正性。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过一个结构化的反思和重执行过程，LLM代理可以从自身的执行轨迹中提取出可重用的高层次计划，并利用这些计划来指导后续的行动，从而显著提升其解决问题的能力。该框架（SAGE）被假设为在不同的LLM基础和代理架构上都能带来持续的性能提升，尤其是通过将失败的尝试转化为成功的解决方案。</p>
+
+<h3>相关研究</h3>
+
+<p>本研究建立在多个相关领域之上，包括：
+- <strong>代理的自我改进机制：</strong> 如“批评与改进”的迭代循环、基于经验的学习和知识提炼。
+- <strong>LLM在软件工程中的应用：</strong> 包括自动化代码生成、代码修复、调试以及代理与计算机的交互接口（如OpenHands CodeAct）。
+- <strong>规划与决策：</strong> 借鉴了计划归纳（plan induction）、树搜索技术（如MCTS）以及利用LLM作为评判者进行自我评估的方法。
+- <strong>软件工程基准：</strong> 如SWE-Bench，用于评估代理在真实世界任务中的表现。</p>
+
+<h3>解决方案</h3>
+
+<p>论文中提出的核心解决方案是一个名为<strong>SAGE (Self-Abstraction from Grounded Experience)</strong> 的框架，其中文全称为“自我抽象化基于实际经验的计划指导策略改进框架”。该框架旨在通过一个结构化的自我学习和反思循环，显著提升大型语言模型（LLM）代理在复杂软件工程任务（如多步骤推理、代码修改和Bug修复）中的表现。</p>
+
+<p>SAGE的核心思想是让代理从自身的实际操作经验中学习，将一次性的、可能充满噪声的执行过程，提炼成可重用的、高层次的策略知识，并利用这些知识指导后续的行动。</p>
+
+<h4><strong>SAGE框架的核心组件与流程</strong></h4>
+
+<p>SAGE框架通过一个三阶段的循环过程实现策略的自我改进，这三个阶段分别由不同角色的代理来执行：</p>
+
+<p><strong>第一阶段：探索 (Exploration)</strong></p>
+
+<p>在此初始阶段，<strong>探索代理 (Exploration Agent)</strong> 接收一个具体的任务，例如修复一个软件Bug。代理会与代码库、测试环境等进行交互，执行一系列操作（如分析代码、编写测试、尝试修改）来解决问题。</p>
+
+<ul>
+<li><strong>目标</strong>：尝试解决任务，并在此过程中生成一份完整、详细但非结构化的<strong>执行轨迹 (Execution Trajectory)</strong>。</li>
+<li><strong>产出</strong>：这份轨迹记录了代理的所有思考过程、执行的命令、遇到的错误以及最终的结果。由于其长度和包含的试错信息，这份原始轨迹本身并不适合直接用于学习。</li>
+</ul>
+
+<p><strong>第二阶段：计划抽象 (Plan Abstraction)</strong></p>
+
+<p>这是SAGE框架最核心的环节。在探索阶段结束后，<strong>计划抽象代理 (Plan Abstraction Agent)</strong> 会对生成的执行轨迹进行批判性的自我反思和分析，目标是从中提炼出一个简洁、高层次的计划。</p>
+
+<p>这一过程依赖于三个关键的<strong>反思支柱 (Reflective Pillars)</strong>：</p>
+
+<ol>
+<li><strong>分析 (Analysis)</strong>：代理首先回顾整个执行过程，识别问题的根本原因，并确定为解决问题需要强制执行的约束或核心逻辑（例如，“必须避免直接解码原始字节数据”）。</li>
+<li><strong>反馈 (Feedback)</strong>：代理记录在执行过程中出现的误解、疏忽或失败的尝试。这部分反馈指出了策略中的缺陷和需要改进的地方（例如，“最初的类型处理逻辑未能覆盖所有字节容器类型”）。</li>
+<li><strong>诱导计划 (Induced Plan)</strong>：基于上述分析和反馈，代理将这些洞察转化为一个通用的、高层次的行动计划。这个计划概括了关键步骤、依赖关系和限制，形成了一个可用于指导未来行动的策略框架。</li>
+</ol>
+
+<p>通过这个过程，代理将一次具体的、混乱的经验，升华为结构化的、可复用的知识。</p>
+
+<p><strong>第三阶段：计划增强执行 (Plan-Augmented Execution)</strong></p>
+
+<p>最后，<strong>计划增强执行代理 (Plan-Augmented Execution Agent)</strong> 会利用第二阶段生成的<strong>高层次计划</strong>作为额外的上下文信息，重新执行相同的任务。</p>
+
+<ul>
+<li><strong>目标</strong>：在抽象计划的指导下，采取更具战略性、更有目的性的行动，从而更高效地解决问题。</li>
+<li><strong>优势</strong>：由于有了计划的指导，代理能够避免重复之前的错误，并能更好地识别和处理在首次探索中遗漏的边缘案例，从而显著提高任务的成功率。</li>
+</ul>
+
+<h4><strong>SAGE框架的优势与特性</strong></h4>
+
+<ol>
+<li><strong>自我导向学习</strong>：SAGE使代理能够在没有外部人类反馈的情况下，通过自我反思进行学习和改进，实现了真正的自主学习循环。</li>
+<li><strong>结构化决策</strong>：它将代理的行为从无序的试错转变为有计划、有指导的结构化探索，提高了决策的可靠性和效率。</li>
+<li><strong>广泛兼容性</strong>：SAGE是一个“即插即用”的框架，可以轻松地与不同的大型语言模型（如GPT系列、Gemini、Claude）和现有的代理架构（如Mini-SWE-Agent, OpenHands）集成，并带来一致的性能提升。</li>
+<li><strong>减轻自我偏见</strong>：研究发现，通过为计划抽象和计划执行阶段使用不同的LLM模型，可以有效减少自我评估中可能出现的偏见，进一步提高解决方案的质量。</li>
+</ol>
+
+<h4><strong>实证验证与应用</strong></h4>
+
+<p>论文通过在权威的<strong>SWE-Bench Verified</strong>基准测试集上进行的大量实验，验证了SAGE框架的有效性。</p>
+
+<ul>
+<li><strong>性能提升</strong>：SAGE在多个LLM和代理架构上均展现出了一致的性能提升。特别是在与Mini-SWE-Agent结合使用时，取得了高达<strong>7.2%</strong>的相对性能提升。</li>
+<li><strong>顶尖水平</strong>：应用SAGE框架的代理在SWE-Bench Verified基准上达到了<strong>73.2%</strong>至<strong>74%</strong>的通过率，展示了其在真实软件工程任务中的强大能力。</li>
+<li><strong>关键因素分析</strong>：实验还表明，高精度的<strong>错误定位 (Error Localization)</strong> 信息能够显著提升代理的修复性能，这进一步强调了在复杂任务中提供准确上下文的重要性。</li>
+</ul>
+
+<p><strong>总结</strong></p>
+
+<p>SAGE框架通过引入一个<strong>探索-抽象-执行</strong>的自我改进循环，为AI代理提供了一种从自身经验中学习和提炼策略的强大机制。它将代理的单次执行经验转化为可重用的知识，通过结构化的反思和计划指导，显著提升了其在软件工程等复杂领域解决问题的能力，为构建更智能、更自主的AI代理系统提供了新的方向。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准数据集：</strong> 实验主要在 <strong>SWE-Bench Verified</strong> 基准上进行，该基准包含500个经过人工验证的真实GitHub问题。</li>
+<li><strong>评估方法：</strong> 将应用了SAGE框架的代理与基线代理（未应用SAGE）进行性能比较，衡量指标为Pass@1解决率。</li>
+<li><strong>实验变量：</strong>
+<ul>
+<li>测试了多种LLM基础（如GPT-4o、Claude Sonnet 4.5）和代理架构（如Mini-SWE-Agent、OpenHands CodeAct）。</li>
+<li>探索了为SAGE的不同阶段（探索、抽象、执行）分配不同LLM的效果。</li>
+<li>分析了为防止数据泄露而使用受保护的Docker镜像对评估完整性的影响。</li>
+</ul></li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集：</strong> 实验使用了 <strong>SWE-Bench Verified</strong> 数据集。该数据集可在Hugging Face上获取：<code>https://huggingface.co/datasets/princeton-nlp/SWE-bench</code>。</li>
+<li><strong>代码：</strong> 论文片段中未提供SAGE框架的实现代码链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能显著提升：</strong> SAGE框架在不同的LLM和代理架构上均带来了一致的性能提升。例如，在使用GPT-4o时，相较于基线，SAGE将解决率提升了7.2个百分点，达到了<strong>73.2%</strong>。</li>
+<li><strong>对弱模型助益更大：</strong> 该框架对能力较弱的模型提升效果尤为明显，能有效补充其推理能力。</li>
+<li><strong>策略优化有效：</strong> 通过为不同阶段配置不同的LLM，解决率可进一步提升至<strong>74%</strong>。</li>
+<li><strong>反思是成功的关键：</strong> 定性分析表明，成功的修复案例与更强、更具反思性的计划密切相关，SAGE能有效将失败的尝试转化为成功。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了SAGE框架：</strong> 提出了一种新颖的、通用的SAGE框架，通过“探索-计划抽象-计划增强执行”的循环，使LLM代理能够从自身经验中学习和改进。</li>
+<li><strong>验证了框架的有效性：</strong> 在具有挑战性的SWE-Bench基准上，全面验证了SAGE在多种LLM和代理架构上的有效性，并取得了业界领先的性能。</li>
+<li><strong>揭示了反思性计划的重要性：</strong> 证明了从执行经验中抽象出的高层次反思性计划是提升代理解决复杂问题能力的关键驱动力。</li>
+<li><strong>强调了评估的严谨性：</strong> 指出了当前代理评估中潜在的数据泄露问题，并倡导使用受保护的环境来确保评估结果的有效性和公正性。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.05931v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 12:30:48</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

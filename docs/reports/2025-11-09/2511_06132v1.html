@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On the Convergence and Stability of Distributed Sub-model Training</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>On the Convergence and Stability of Distributed Sub-model Training</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">分布式子模型训练</span>
+                
+                <span class="keyword-badge">联邦学习</span>
+                
+                <span class="keyword-badge">收敛性</span>
+                
+                <span class="keyword-badge">泛化能力</span>
+                
+                <span class="keyword-badge">滚动掩码策略</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Columbia University, The Pennsylvania State University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.317</span>
+                <span class="paper-id">arXiv ID: 2511.06132v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.06132v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-09/bb2c27e3a5adf7ae19c587d956087b6baf2391b573d5be4fc30fa18e0cd3ebb3.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为“Rolling Masked FedAvg”的分布式子模型训练框架，旨在解决联邦学习中子模型训练的收敛性和泛化能力问题。通过引入滚动掩码策略，服务器在每轮通信中对模型进行洗牌并分配给客户端，从而提高了训练的稳定性和准确性。实验结果验证了该方法在高数据异构性环境下的优越性能，并提供了首次严格的收敛性分析。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文主要解决联邦学习（Federated Learning）或分布式学习环境中，进行<strong>子模型训练（sub-model training）</strong>时面临的<strong>收敛性、稳定性、泛化能力</strong>以及<strong>模型漂移</strong>等核心挑战。这些问题在资源受限的设备和数据异构（non-IID）的场景下尤为突出，具体包括：
+- <strong>资源限制</strong>：随着模型规模增大，在计算和存储能力有限的客户端设备上进行全模型训练变得不可行。
+- <strong>数据异构性</strong>：不同客户端的数据分布不一致，会导致模型训练不稳定、收敛缓慢，并影响全局模型的泛化能力。
+- <strong>收敛性分析缺失</strong>：现有的子模型训练方法缺乏严格的理论收敛性分析，尤其是在更复杂的非凸优化场景下。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过设计有效的<strong>子模型采样和更新策略</strong>，可以在保证数据隐私和降低资源消耗的同时，提升分布式训练的收敛速度、稳定性和泛化能力，尤其是在数据异构的环境下。
+- <strong>关键发现</strong>：特定的掩蔽（masking）策略，如<strong>滚动掩码（Rolling Masking）</strong>，能够通过稳定训练过程、控制优化误差和减少模型漂移，显著增强模型的泛化能力。
+- <strong>初步结论</strong>：与随机掩码或全模型训练相比，滚动掩码在处理高数据异构性时表现更优。
+- <strong>理论验证</strong>：所提出的算法在凸和非凸优化设置下均能实现理论上的收敛。</p>
+
+<h3>相关研究</h3>
+
+<p>论文参考了多个领域的研究，包括：
+- <strong>部分模型训练方法</strong>：如 PruneFL、IST、HeteroFL 和 FedRolex。
+- <strong>分布式优化的收敛性分析</strong>：特别是针对局部随机梯度下降（Local SGD）的研究，如 Woodworth et al. (2020a)、Khaled et al. (2020) 等。
+- <strong>子模型训练的理论研究</strong>：如 Shulgin &amp; Richtárik (2023) 和 Demidovich et al. (2023) 的工作。
+- <strong>联邦学习中的知识蒸馏</strong>：如 Zhu et al. (2021) 提出的数据无关蒸馏方法。</p>
+
+<h3>解决方案</h3>
+
+<h4><strong>一、 问题背景与目标</strong></h4>
+
+<p>在联邦学习（Federated Learning）或边缘计算场景中，参与训练的客户端（如手机、物联网设备）通常计算能力和通信带宽有限，并且它们拥有的数据往往是异构的（Non-IID）。直接在这些设备上训练大型、完整的深度学习模型会面临以下挑战：</p>
+
+<ol>
+<li><strong>资源瓶颈</strong>：客户端设备内存和算力不足，难以承载完整的模型训练。</li>
+<li><strong>通信开销</strong>：频繁传输完整的模型参数会消耗大量网络带宽。</li>
+<li><strong>收敛性与泛化能力</strong>：数据异质性会导致模型训练不稳定，收敛缓慢，并且最终得到的全局模型泛化能力差。</li>
+</ol>
+
+<p>为了解决这些问题，该论文提出了一种名为<strong>分布式洗牌子模型训练 (Distributed Shuffled Sub-model Training)</strong> 的新方法。其核心目标是：</p>
+
+<ul>
+<li><strong>提高资源效率</strong>：通过只训练模型的一部分（子模型），降低对客户端计算和通信资源的需求。</li>
+<li><strong>加速模型收敛</strong>：通过精心设计的子模型分配策略，确保训练过程的多样性和有效性。</li>
+<li><strong>增强泛化能力</strong>：通过稳定训练过程，减少数据异质性带来的负面影响，提升模型在未见数据上的表现。</li>
+</ul>
+
+<h4><strong>二、 核心思想：基于掩蔽的子模型训练</strong></h4>
+
+<p>该方法的核心思想是<strong>掩蔽 (Masking)</strong>。服务器不再将完整的模型发送给每个客户端，而是为每个客户端生成一个“掩码”（mask），这个掩码决定了客户端本次训练需要更新模型的哪些参数。客户端只下载、计算和上传被掩码选中的那部分子模型的参数，从而大大减轻了负担。</p>
+
+<p>论文探讨并比较了两种主要的掩蔽策略，形成了两种具体的算法。</p>
+
+<h4><strong>三、 关键算法实现</strong></h4>
+
+<h5><strong>算法1：随机掩蔽联邦平均 (Randomly Masked FedAvg)</strong></h5>
+
+<p>这是一种基础的实现方式，其过程如下：</p>
+
+<ol>
+<li><strong>初始化</strong>：服务器初始化一个全局模型 $w^0$。</li>
+<li><strong>随机掩码生成</strong>：在每一轮通信 <code>r</code> 中，服务器为每个客户端 <code>i</code> 独立地生成一个伯努利随机掩码 $m^r<em>i$。掩码中的每个元素以概率 $p</em>i$ 为1，否则为0。这个概率 $p_i$ 可以根据客户端的计算能力进行调整，能力强的客户端可以分配更高的概率（即训练更大的子模型）。</li>
+<li><strong>分发与本地更新</strong>：服务器将全局模型 $w^r$ 和对应的掩码 $m^r<em>i$ 发送给客户端 <code>i</code>。客户端只在被掩码选中的参数上执行 <code>K</code> 步本地随机梯度下降（SGD）更新：
+$$ w^r</em>{i,k+1} = w^r<em>{i,k} - \eta \cdot (m^r</em>i \odot \nabla f<em>i(m^r</em>i \odot w^r_{i,k})) $$
+这里的 $\odot$ 表示元素乘积，确保梯度只在子模型对应的参数上产生作用。</li>
+<li><strong>聚合更新</strong>：客户端将更新后的本地模型 $w^r<em>{i,K}$ 发回服务器。服务器聚合所有客户端的更新，形成新的全局模型：
+$$ w^{r+1} = \frac{1}{N} \sum</em>{i=1}^{N} (w^r<em>{i,K} + (1 - m^r</em>i) \odot w^r) $$
+这个公式的含义是：对于每个客户端，其更新的部分采用本地训练后的参数，未更新的部分则保留原始的全局模型参数，然后对所有客户端的结果进行平均。</li>
+</ol>
+
+<h5><strong>算法2：滚动/洗牌掩蔽联邦平均 (Rolling/Shuffled Masked FedAvg)</strong></h5>
+
+<p>这是论文中更受推崇的改进算法，它通过更有条理的掩码分配来确保模型的每个部分都能得到充分训练。</p>
+
+<ol>
+<li><strong>子模型划分</strong>：首先，服务器将完整的模型参数预先划分为 <code>R</code> 个互不重叠的子模型（或掩码）$m<em>1, m</em>2, \ldots, m_R$。</li>
+<li><strong>洗牌与顺序分配</strong>：在每个训练周期（epoch）开始时，服务器生成一个随机排列 $\sigma<em>e$，对这 <code>R</code> 个子模型的顺序进行洗牌。在接下来的 <code>R</code> 个通信轮次中，服务器会<strong>依次</strong>将洗牌后的子模型 $m</em>{\sigma_e(r)}$ 分配给所有客户端进行训练。</li>
+<li><strong>本地更新与聚合</strong>：本地更新和服务器聚合的步骤与随机掩蔽算法类似，但所有客户端在同一轮次 <code>r</code> 中都使用相同的掩码 $m<em>{\sigma</em>e(r)}$。</li>
+</ol>
+
+<p>这种“滚动”或“洗牌”的方式确保了在一个周期内，模型的<strong>所有参数都会被训练到</strong>，避免了随机掩蔽可能导致的某些参数长时间未被更新的问题，从而获得了更好的收敛性和稳定性。</p>
+
+<h4><strong>四、 理论分析</strong></h4>
+
+<p>论文为上述方法提供了坚实的理论支持：</p>
+
+<ol>
+<li><p><strong>收敛性分析</strong>：</p>
+
+<ul>
+<li>论文在<strong>凸</strong>和<strong>非凸</strong>两种设定下，严格证明了算法的收敛性，并给出了收敛速率。例如，在某些条件下，收敛速率可达 $O(1/T)$。</li>
+<li>分析指出了掩蔽训练会引入一个<strong>残差误差 (Residual Error)</strong>，这个误差与掩蔽概率有关。但论文证明，这个误差是可控的，并且可以通过合理的策略来最小化其影响。</li>
+</ul></li>
+<li><p><strong>泛化能力与稳定性分析</strong>：</p>
+
+<ul>
+<li>核心论点是，子模型训练通过<strong>稳定训练过程</strong>来提升模型的泛化能力。</li>
+<li>相比于在本地训练整个模型（如标准的 FedAvg），训练子模型可以看作是一种正则化，限制了本地模型在异构数据上的“过拟合”，从而减少了客户端之间的模型漂移（model drift）。</li>
+<li>实验结果表明，尤其是在数据异质性高（non-IID）的情况下，滚动/洗牌掩蔽方法的泛化性能显著优于标准 FedAvg 和随机掩蔽方法。</li>
+</ul></li>
+</ol>
+
+<h4><strong>五、 实验验证</strong></h4>
+
+<ul>
+<li><strong>数据集与模型</strong>：实验在 CIFAR-10 和 CIFAR-100 等标准数据集上进行，使用了 ResNet18 等模型。</li>
+<li><strong>关键发现</strong>：
+<ul>
+<li><strong>滚动/洗牌掩蔽</strong>在测试准确率和损失上均优于<strong>随机掩蔽</strong>和<strong>标准FedAvg</strong>，特别是在高数据异质性场景下优势更为明显。</li>
+<li>子模型训练（尤其是滚动掩蔽）能够有效减轻 non-IID 数据带来的负面影响，表现出更强的鲁棒性。</li>
+</ul></li>
+</ul>
+
+<h4><strong>六、 优势总结</strong></h4>
+
+<ol>
+<li><strong>资源高效</strong>：显著降低了客户端的计算、内存和通信开销，使得更多资源受限的设备能够参与联邦学习。</li>
+<li><strong>性能优越</strong>：通过滚动/洗牌策略，保证了模型训练的完整性和多样性，从而加速收敛并提升最终模型的准确率和泛化能力。</li>
+<li><strong>鲁棒性强</strong>：能有效应对客户端之间的数据异质性，减少模型漂移，使训练过程更稳定。</li>
+<li><strong>适应性好</strong>：掩蔽概率可以根据客户端的异构计算能力进行动态调整，实现了对异构系统的良好适应。</li>
+<li><strong>隐私增强</strong>：由于客户端仅上传部分模型更新，相较于上传完整模型，在一定程度上减少了信息泄露的风险。</li>
+</ol>
+
+<p>综上所述，<strong>分布式洗牌子模型训练</strong>通过巧妙的掩蔽和分配策略，在联邦学习的资源效率、模型性能和系统鲁棒性之间取得了出色的平衡，为在实际边缘环境中部署大规模分布式学习提供了-个有效且理论坚实的解决方案。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>对比方法</strong>：实验对比了滚动掩码、随机掩码、全模型训练以及其他基线方法（如 HeteroFL）的性能。</li>
+<li><strong>实验环境</strong>：模拟一个包含100个客户端的联邦学习环境。</li>
+<li><strong>数据异构性</strong>：实验在<strong>高数据异构性</strong>和<strong>低数据异构性</strong>两种设置下进行，以评估不同方法的鲁棒性。</li>
+<li><strong>模型与数据集</strong>：使用 <strong>CIFAR-10</strong> 和 <strong>CIFAR-100</strong> 数据集，并训练 <strong>Pre-activated ResNet18</strong> 模型。</li>
+<li><strong>理论分析</strong>：除了实验验证，论文还对算法在凸和非凸优化设置下的收敛性进行了严格的数学推导和证明。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验主要使用了 <strong>CIFAR-10</strong> 和 <strong>CIFAR-100</strong> 数据集。</li>
+<li><strong>代码</strong>：提供的片段中未明确给出代码的公开链接，但提及可能会在论文的附录中提供。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>滚动掩码的优势</strong>：实验结果表明，在<strong>高数据异构性</strong>和低数据异构性条件下，<strong>滚动掩码（Rolling Masking）</strong> 的性能均优于随机掩码和全模型训练，尤其是在全局模型的准确率和损失方面。例如，在CIFAR-100上，滚动掩码的表现优于HeteroFL。</li>
+<li><strong>数据异构性的影响</strong>：在高数据异构性下，随机掩码的表现优于全模型训练；而在低数据异构性下，全模型训练的效果更好。这表明训练策略的选择应考虑数据的异质性程度。</li>
+<li><strong>理论验证</strong>：实验结果与理论分析一致，验证了所提出的子模型训练方法能够有效提高模型的收敛性、稳定性和泛化能力。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>首次收敛性分析</strong>：为分布式洗牌/置换子模型训练方法提供了首次严格的收敛性分析，填补了该领域的理论空白。</li>
+<li><strong>提出并验证新方法</strong>：提出了“Rolling Masked FedAvg”算法，并通过理论和实验证明了滚动掩码在处理数据异构性方面的优越性。</li>
+<li><strong>深入理解泛化能力</strong>：系统地研究了不同子模型采样策略对联邦学习泛化能力和稳定性的影响，为资源受限和数据异构环境下的模型训练提供了新的见解和有效方法。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.06132v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 12:30:48</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

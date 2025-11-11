@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRAGON: Guard LLM Unlearning in Context via Negative Detection and Reasoning</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DRAGON: Guard LLM Unlearning in Context via Negative Detection and Reasoning</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">去学习</span>
+                
+                <span class="keyword-badge">知识遗忘</span>
+                
+                <span class="keyword-badge">推理</span>
+                
+                <span class="keyword-badge">上下文干预</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of California, Santa Cruz, Center for Advanced AI, Accenture</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.549</span>
+                <span class="paper-id">arXiv ID: 2511.05784v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.05784v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-09/ecb778e9ea694fd9aa2c7f414efd3da86b62a135fa60a80907067f88dfb8632e.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了DRAGON框架，旨在解决大型语言模型（LLM）中有效“去学习”特定知识的挑战。该方法通过引入轻量级检测模块和基于推理的上下文干预，实现在无保留数据的情况下进行知识遗忘，同时保持模型的通用能力。DRAGON在多个实验中表现出色，证明了其高效性和鲁棒性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）中有效、高效地“遗忘”或“去学习”特定知识的挑战，例如有害内容、私人数据或敏感信息。这个问题日益重要，原因如下：
+- <strong>法规与隐私需求</strong>：随着GDPR等数据保护法规的实施和用户隐私意识的提高，模型必须具备按需删除特定数据的能力。
+- <strong>现有方法的局限性</strong>：传统的基于微调或重训练的遗忘方法成本高昂、效率低下，并且通常需要访问“保留数据”（即不应被遗忘的数据），这在实际应用中往往不可行。
+- <strong>新挑战</strong>：现有方法难以支持“持续遗忘”（即连续处理新的遗忘请求）和“概念遗忘”（即遗忘整个语义类别而非特定样本），并且缺乏合适的评估指标来衡量动态环境下的遗忘效果。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过引入一个轻量级的、无需修改模型权重的框架（DRAGON），利用<strong>负向检测</strong>和<strong>基于推理的上下文干预</strong>（如生成思维链CoT指令），可以在不依赖保留数据的情况下，高效、可扩展地实现LLM的知识遗忘，同时最大限度地保持模型的通用能力。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>基于微调的遗忘方法</strong>：如梯度上升（GA）、KL最小化、直接偏好优化（DPO）、负偏好优化（NPO）、RMU等。</li>
+<li><strong>无需训练的遗忘方法</strong>：如过滤提示（Filter-Prompting）和上下文遗忘（ICUL/ICUL+）。</li>
+<li><strong>持续遗忘研究</strong>：如Gao et al. (2024) 的工作。</li>
+<li><strong>相关基准</strong>：如TOFU（Maini et al., 2024）。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：DRAGON 框架——通过负向检测与推理实现大语言模型的高效遗忘</strong></h3>
+
+<p>本文提出的核心解决方案是一个名为 <strong>DRAGON (Detect-Reasoning Augmented GeneratiON)</strong> 的创新框架。该框架旨在解决大型语言模型（LLM）在“遗忘”（Unlearning）特定知识（如隐私数据、有害内容或版权信息）时面临的挑战。与需要修改模型权重或重新训练的传统方法不同，DRAGON 通过在推理阶段进行上下文干预，提供了一种灵活、低成本、可扩展且适用于黑箱模型的解决方案。</p>
+
+<h4><strong>核心问题与目标</strong></h4>
+
+<p>当前LLM的“遗忘”方法通常需要访问原始训练数据或进行昂贵的微调，这在许多现实场景中（如使用API访问的黑箱模型或需要持续处理遗忘请求的环境）是不可行的。DRAGON框架旨在解决这些局限性，其核心目标包括：</p>
+
+<ul>
+<li><strong>保护隐私与安全</strong>：在不修改基础模型的情况下，有效删除敏感信息和有害知识，防止信息泄露。</li>
+<li><strong>高效与低成本</strong>：避免重新训练和微调，显著降低计算成本和推理延迟。</li>
+<li><strong>灵活性与可扩展性</strong>：适用于各种LLM（包括黑箱模型），并能有效处理持续不断的遗忘请求。</li>
+<li><strong>保持模型效用</strong>：在实现遗忘的同时，最大限度地减少对模型通用语言能力和知识保留的负面影响。</li>
+</ul>
+
+<hr />
+
+<h4><strong>DRAGON 框架的架构与工作流程</strong></h4>
+
+<p>DRAGON框架主要由两大核心模块组成：<strong>双层负向检测模块</strong> 和 <strong>上下文干预与推理生成模块</strong>。其工作流程如下：</p>
+
+<p><strong>1. 双层负向检测模块 (Dual-Layer Negative Detection)</strong></p>
+
+<p>当接收到用户查询时，该模块首先进行检测，以判断查询是否与需要遗忘的内容相关。这是一个双重验证过程，旨在提高准确性并减少误报。</p>
+
+<ul>
+<li><p><strong>第一层：评分模型 (Scoring Model)</strong></p>
+
+<ul>
+<li>DRAGON 训练一个轻量级的评分模型（如基于RoBERTa微调的分类器），用于识别有害或触发性查询。该模型仅使用合成或改写的负向数据（即需要遗忘的数据）进行训练，无需访问保留数据。</li>
+<li>它为每个查询分配一个置信度分数，判断其与遗忘概念的关联程度。</li>
+</ul></li>
+<li><p><strong>第二层：基于相似度的验证 (Similarity-based Verification)</strong></p>
+
+<ul>
+<li>为了进一步验证，系统会查询一个 <strong>“遗忘存储库 (Unlearn Store)”</strong>。该存储库仅包含需要遗忘内容的<strong>重述或改写版本</strong>的嵌入向量，而不存储原始敏感数据，以确保合规性。</li>
+<li>系统计算用户查询的嵌入向量与存储库中向量的最大余弦相似度。</li>
+<li>最终的置信度分数结合了评分模型的分数和相似度分数。如果该分数超过预定义阈值，查询将被标记为需要进行遗忘干预。</li>
+</ul></li>
+</ul>
+
+<p><strong>2. 上下文干预与推理生成模块 (Contextual Intervention &amp; Reasoning Generation)</strong></p>
+
+<p>一旦查询被检测模块标记，该模块就会被激活，以引导LLM生成安全合规的响应。</p>
+
+<ul>
+<li><p><strong>守护模型 (Guard Model)</strong></p>
+
+<ul>
+<li>DRAGON 框架使用一个经过微调的、相对较小的“守护模型”（例如，Llama3.1-8B-Instruct）。该模型经过专门训练，能够根据检测信号和相关安全策略，动态生成高质量的 <strong>链式思维（Chain-of-Thought, CoT）推理指令</strong>。</li>
+<li>这个守护模型只需训练一次，便可应用于多个不同的基础LLM，显著降低了维护成本。</li>
+</ul></li>
+<li><p><strong>动态生成CoT指令</strong></p>
+
+<ul>
+<li>生成的CoT指令会详细说明为什么需要拒绝或重定向当前查询。例如，指令可能会指出：“用户查询涉及受版权保护的内容，根据政策，必须拒绝回答，并说明原因。”</li>
+<li>这些指令是<strong>动态生成</strong>的，确保了响应的上下文相关性，并避免了存储用户查询带来的隐私风险。</li>
+</ul></li>
+<li><p><strong>引导LLM响应</strong></p>
+
+<ul>
+<li>生成的CoT指令会被预先附加到原始用户查询的前面，然后一同发送给主LLM。</li>
+<li>主LLM利用其强大的指令跟随能力，按照CoT指令的引导进行推理，最终生成一个被“遗忘”约束的响应，例如礼貌地拒绝回答、提供重定向信息或给出符合政策的模糊答案。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>关键应用场景与评估</strong></h4>
+
+<p>DRAGON框架在多种场景下展示了其有效性：</p>
+
+<ul>
+<li><strong>隐私记录遗忘 (TOFU 数据集)</strong>：有效遗忘虚构作者的个人信息，同时保持模型对真实世界知识的理解。</li>
+<li><strong>有害知识遗忘 (WMDP 数据集)</strong>：高效地拒绝回答涉及生物、化学、网络安全等领域的有害问题。</li>
+<li><strong>持续遗忘 (Continual Unlearning)</strong>：在模拟用户不断提交数据删除请求的场景中，DRAGON能够持续保持最佳的遗忘性能和模型效用。</li>
+<li><strong>对抗攻击的鲁棒性</strong>：实验证明，DRAGON能有效抵御语言混合、拼写错误等多种攻击手段，防止攻击者恢复被遗忘的信息。</li>
+</ul>
+
+<p>为了全面评估框架性能，论文引入了几个新的评估指标：</p>
+
+<ul>
+<li><strong>拒绝质量 (Refusal Quality, RQ)</strong>：评估模型在拒绝有害问题时，生成内容的质量和与标准拒绝模板的相似度。</li>
+<li><strong>动态偏差评分 (Dynamic Deviation Score, DDS)</strong>：衡量在持续遗忘过程中，模型遗忘效果的平均水平和稳定性。</li>
+<li><strong>动态效用评分 (Dynamic Utility Score, DUS)</strong>：衡量在持续遗忘过程中，模型保持通用能力的稳定性。</li>
+</ul>
+
+<hr />
+
+<h4><strong>核心优势总结</strong></h4>
+
+<ol>
+<li><strong>无需重新训练</strong>：完全在推理时进行干预，无需修改模型权重，适用于黑箱LLM。</li>
+<li><strong>高效低成本</strong>：计算开销极低，对于非遗忘相关查询，推理延迟增加微乎其微（约5毫秒）。</li>
+<li><strong>增强的安全性与隐私保护</strong>：“遗忘存储库”不存储原始数据，动态生成指令避免了记录用户查询。</li>
+<li><strong>高灵活性与可扩展性</strong>：守护模型一次训练，多处复用，可轻松适应新的遗忘任务和不同的基础LLM。</li>
+<li><strong>强大的鲁棒性</strong>：在多个基准测试和对抗性攻击下均表现出卓越的性能，超越了现有的基线方法。</li>
+</ol>
+
+<h3><strong>结论</strong></h3>
+
+<p>DRAGON框架通过其创新的<strong>负向检测</strong>和<strong>推理生成</strong>机制，为大型语言模型的“遗忘”问题提供了一个实用、高效且安全的解决方案。它巧妙地利用了LLM自身的指令跟随能力，在不牺牲模型通用性的前提下，实现了对敏感和有害知识的有效管理，特别适用于需要遵守严格隐私法规和持续处理数据删除请求的现实世界应用场景。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>任务</strong>：实验在多个代表性的遗忘任务上进行，包括有害知识遗忘、隐私数据删除以及持续遗忘。</li>
+<li><strong>基线对比</strong>：将DRAGON与多种基线方法进行比较，包括ICUL+、Filter-Prompting、RMU以及各种基于微调的方法。</li>
+<li><strong>评估模型</strong>：在多个预训练的LLM（如Llama2-7B-Chat）上验证了框架的有效性。</li>
+<li><strong>评估指标</strong>：引入了新的评估指标来全面衡量遗忘性能，包括：
+<ul>
+<li><strong>拒绝质量（Refusal Quality, RQ）</strong>：评估模型拒绝有害查询的响应质量。</li>
+<li><strong>动态偏差分数（Dynamic Deviation Score, DDS）</strong>：衡量在持续遗忘过程中的遗忘效果。</li>
+<li><strong>动态效用分数（Dynamic Utility Score, DUS）</strong>：衡量在持续遗忘过程中模型通用能力的保持情况。</li>
+<li>同时使用模型效用（MU）、知识遗忘率（KFR）和知识保留率（KRR）等传统指标。</li>
+</ul></li>
+<li><strong>鲁棒性测试</strong>：评估了DRAGON在面对对抗性攻击（如语言混合、拼写错误）时的表现。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了多个公开基准数据集，包括 <strong>WMDP</strong>（有害知识）、<strong>MMLU</strong>（模型通用能力）、<strong>TOFU</strong>（模拟用户数据遗忘）和 <strong>MUSE</strong>。</li>
+<li><strong>代码</strong>：论文片段中未提供代码的公开链接，通常表示代码和数据的详细信息可能在论文的附录或后续发布中提供。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>：DRAGON在各项遗忘任务和评估指标上均显著优于现有的基线方法，尤其是在拒绝质量（RQ）、动态偏差分数（DDS）和动态效用分数（DUS）上取得了最佳表现。</li>
+<li><strong>高效遗忘</strong>：实验证明，DRAGON能够有效遗忘目标知识（例如，在相关任务上的准确率降至随机猜测水平）。</li>
+<li><strong>效用保持</strong>：在实现有效遗忘的同时，DRAGON对模型的通用性能影响最小（例如，在MMLU基准上的性能下降幅度最小）。</li>
+<li><strong>鲁棒性强</strong>：DRAGON在面对多种对抗性攻击时表现出强大的鲁棒性，能有效防止被遗忘信息的恢复。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出DRAGON框架</strong>：设计并实现了一个新颖、可扩展、无需训练的LLM遗忘框架，解决了现有方法成本高、依赖保留数据的核心痛点。</li>
+<li><strong>创新的机制</strong>：引入了“负向检测”与“基于推理的上下文干预”（CoT指令）相结合的机制，为LLM知识管理提供了新范式。</li>
+<li><strong>新的评估体系</strong>：提出了如拒绝质量（RQ）、动态偏差分数（DDS）和动态效用分数（DUS）等一系列新颖的评估指标，为衡量连续和动态场景下的遗忘性能提供了更全面的方法。</li>
+<li><strong>广泛的实验验证</strong>：通过在多个基准数据集和任务上的大量实验，证明了DRAGON框架的有效性、高效性和鲁棒性，为LLM的安全、合规和伦理应用提供了重要的技术支持。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.05784v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 12:30:48</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
