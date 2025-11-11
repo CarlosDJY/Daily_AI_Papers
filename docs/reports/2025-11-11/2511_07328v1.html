@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-RAG: Long Context Multi-step Retrieval via Value-based Embedder Training</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Q-RAG: Long Context Multi-step Retrieval via Value-based Embedder Training</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">Q-RAG</span>
+                
+                <span class="keyword-badge">多步骤检索</span>
+                
+                <span class="keyword-badge">马尔可夫决策过程</span>
+                
+                <span class="keyword-badge">强化学习</span>
+                
+                <span class="keyword-badge">长上下文</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Applied AI, Learnable Intelligence Lab, CILAB.AI, London Institute for Mathematical Sciences, Higher School of Economics</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.490</span>
+                <span class="paper-id">arXiv ID: 2511.07328v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.07328v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-11/3718ab1b1b090048bae85c8e885ef42af4c94c79bbee06c747108aed61258ad9.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Q-RAG方法，通过将多步骤检索建模为马尔可夫决策过程，利用强化学习高效训练嵌入器，实现长上下文中的复杂问答。Q-RAG在多个基准测试中表现出色，显著降低资源消耗并提高检索准确率，尤其在处理超长文本时展现出优越性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决现有检索增强生成（RAG）方法在处理<strong>长上下文</strong>和<strong>复杂问题</strong>时的局限性。具体来说，现有方法在需要<strong>多步骤、多跳检索和推理</strong>的开放领域问答任务中表现不佳，且传统的多步骤方法资源消耗高、效率低下，难以扩展到超长文本（如百万级tokens）。</p>
+
+<h3>Hypothesis</h3>
+
+<p>论文的核心假设是，通过将多步骤检索建模为<strong>马尔可夫决策过程（MDP）</strong>，并利用<strong>强化学习（RL）</strong>直接在文本嵌入的潜在空间中训练一个检索代理，可以高效地解决长上下文中的复杂问答问题。该方法通过优化Q函数、引入<strong>相对位置编码</strong>来利用文本块间的空间关系，并冻结大语言模型（LLM）仅微调嵌入器，从而实现资源高效且性能优越的多步骤检索。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>多步骤检索方法</strong>: IM-RAG, R1-Searcher/SearchR1, RePlug, BeamRetriever</li>
+<li><strong>长上下文处理模型</strong>: Mamba, Recurrent Memory Transformer (RMT), ATLAS, Titans</li>
+<li><strong>结合知识图谱的检索方法</strong>: GraphReader, HippoRAG</li>
+<li><strong>强化学习算法与理论</strong>: DQN, PQN, 通用逼近定理 (Universal Approximation Theorem), Stone-Weierstrass定理</li>
+<li><strong>位置编码技术</strong>: 旋转位置编码 (Rotary Position Embedding, RoPE)</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出的核心解决方案是一个名为<strong>Q-RAG (Query-Retrieval-Answer Generation)</strong> 的创新框架，旨在高效、准确地解决在超长上下文（可达数百万标记）中的多步骤信息检索和问答任务。其核心思想是<strong>通过强化学习（RL）来训练一个嵌入模型（Embedder），使其成为一个能够在潜在空间中进行多步检索的智能代理（Agent）</strong>，而无需对昂贵的大型语言模型（LLM）进行微调。</p>
+
+<h4><strong>1. 核心理念：将多步检索建模为强化学习问题</strong></h4>
+
+<p>Q-RAG框架将复杂的长上下文检索任务形式化为一个<strong>马尔可夫决策过程（MDP）</strong>，从而能够利用强化学习进行优化。</p>
+
+<ul>
+<li><strong>状态空间 (S)</strong>：状态由初始查询（q）和已经检索到的文本块（chunks）序列组成。初始状态 <code>s₀ = [q]</code>，每当代理选择一个新的文本块，状态就会更新。</li>
+<li><strong>动作空间 (A)</strong>：动作是在每一步从剩余的候选文本块中选择一个。初始动作空间 <code>A₀</code> 包含上下文中的所有文本块，已选择的块会从后续的动作空间中移除。</li>
+<li><strong>奖励函数 (r)</strong>：采用稀疏终端奖励机制。在检索过程的每一步，奖励均为0。只有在整个检索序列（episode）结束时，如果最终状态包含了回答问题所需的所有支持事实（support facts），代理才会获得+1的奖励。</li>
+</ul>
+
+<h4><strong>2. 技术实现：基于价值的强化学习与Q函数近似</strong></h4>
+
+<p>Q-RAG采用基于价值的强化学习策略，特别是<strong>最大熵强化学习</strong>，通过学习一个状态-动作值函数（即Q函数）来指导代理的检索行为。</p>
+
+<h5><strong>2.1 Q函数的创新性近似</strong></h5>
+
+<p>为了高效计算Q值，Q-RAG没有使用传统的神经网络直接输出Q值，而是将其<strong>因子化</strong>为两个嵌入器（Embedder）的内积：</p>
+
+<ol>
+<li><strong>状态嵌入器 (Eₛ)</strong>：将当前状态 <code>sₜ</code>（包含查询和已检索的文本块）编码为一个状态向量。</li>
+<li><strong>动作嵌入器 (Eₐ)</strong>：将候选的文本块 <code>a</code> 编码为一个动作向量。</li>
+</ol>
+
+<p>Q函数因此被近似为：<code>Q(sₜ, a) ≈ Eₛ(sₜ)ᵀ ⋅ Eₐ(a)</code>。这种设计不仅计算高效，而且从理论上被证明可以逼近任何连续的Q函数，为模型的有效性提供了数学保障。</p>
+
+<h5><strong>2.2 引入相对位置编码 (RoPE)</strong></h5>
+
+<p>为了让模型能够理解和利用文本块在原始上下文中的<strong>空间邻近性</strong>，Q-RAG在嵌入器中集成了<strong>相对位置编码（Rotary Position Embedding, RoPE）</strong>。与传统的绝对位置编码不同，RoPE能够更好地捕捉文本块之间的相对顺序和距离，这对于需要遵循时间线或逻辑顺序的推理任务至关重要。它显著提升了模型在超长上下文中的泛化能力。</p>
+
+<h4><strong>3. 训练与推理流程</strong></h4>
+
+<h5><strong>3.1 训练阶段</strong></h5>
+
+<ul>
+<li><strong>目标</strong>：通过强化学习优化嵌入器（Eₛ 和 Eₐ），使其能够为包含正确答案支持事实的检索路径分配更高的Q值。</li>
+<li><strong>过程</strong>：在每个训练周期中，代理根据当前的Q函数（由嵌入器内积定义）和探索策略（如epsilon-greedy）从上下文中选择一系列文本块。在检索结束后，根据是否找到所有支持事实来计算终端奖励，并使用这个奖励信号通过Q-learning算法（如DQN的变体）来更新嵌入器的参数。</li>
+<li><strong>效率</strong>：关键在于，整个训练过程<strong>仅微调嵌入器</strong>，而生成答案的大型语言模型（LLM）保持<strong>冻结</strong>。这使得训练过程非常高效，资源消耗远低于需要微调LLM的方法。</li>
+</ul>
+
+<h5><strong>3.2 推理阶段</strong></h5>
+
+<ul>
+<li><strong>过程</strong>：在推理时，代理采用贪心策略，在每一步都选择使Q值最大化的文本块。具体来说，代理首先计算当前状态的嵌入向量 <code>Eₛ(sₜ)</code>，然后计算它与所有候选文本块嵌入向量 <code>Eₐ(a)</code> 的内积，选择内积最大的文本块加入到检索序列中。这个过程重复进行，直到达到预设的检索步数。</li>
+<li><strong>最终答案生成</strong>：检索完成后，将初始查询和所有检索到的文本块拼接起来，作为最终的上下文输入给一个冻结的、现成的大型语言模型（如Llama-3），由其生成最终答案。</li>
+</ul>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>任务</strong>: 在多个复杂任务上评估Q-RAG的性能，包括长上下文常识推理、时间推理、多跳问答（Multi-hop QA）和“大海捞针”（Needle-in-a-Haystack, NIAH）任务。</li>
+<li><strong>上下文长度</strong>: 实验覆盖了从4k到10M tokens的多种上下文长度，以测试模型的可扩展性。</li>
+<li><strong>基准</strong>: 与多种最先进的基线方法（如Beam-Retriever, R1-Searcher, RMT等）在公开基准上进行比较。</li>
+<li><strong>评估指标</strong>: 重点关注检索准确率（如F1分数）和最终答案的准确性，同时评估训练和推理的效率（速度和资源消耗）。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验使用了多个公开基准数据集，包括：
+<ul>
+<li><strong>长上下文基准</strong>: Babilong, RULER</li>
+<li><strong>开放域多跳问答</strong>: HotpotQA, Musique</li>
+</ul></li>
+<li><strong>代码</strong>: 提供的论文片段中<strong>未明确提供</strong>代码和数据的获取链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能</strong>: Q-RAG在多个基准测试中达到了最先进（SOTA）或极具竞争力的结果。尤其是在Babilong、HotpotQA和Musique数据集上表现优于所有基线方法。</li>
+<li><strong>可扩展性</strong>: 模型的优势随着上下文长度的增加而愈发明显，在处理超过1M tokens的超长上下文时性能几乎没有下降。</li>
+<li><strong>效率</strong>: 与其他多步骤RAG方法相比，Q-RAG在训练和推理上更快、资源消耗更低。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出Q-RAG框架</strong>: 提出了一种新颖、高效且可扩展的框架，通过强化学习在嵌入的潜在空间中进行多步骤检索，有效解决了长上下文问答难题。</li>
+<li><strong>引入相对位置编码</strong>: 验证了相对位置编码在长上下文检索任务中的有效性，显著提升了模型的性能和泛化能力。</li>
+<li><strong>提供理论基础</strong>: 从理论上证明了使用内积和RoPE来近似Q函数的有效性，为强化学习在信息检索中的应用提供了理论支持。</li>
+<li><strong>实现SOTA性能</strong>: 在多个具有挑战性的长上下文和多跳问答基准上取得了最先进的结果，推动了该领域的发展。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.07328v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 15:15:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

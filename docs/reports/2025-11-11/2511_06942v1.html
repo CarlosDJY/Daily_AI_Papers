@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLPD: Aligning LLMs to Human Language Preference for Machine-Revised Text Detection</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>HLPD: Aligning LLMs to Human Language Preference for Machine-Revised Text Detection</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">人类语言偏好检测</span>
+                
+                <span class="keyword-badge">机器生成文本</span>
+                
+                <span class="keyword-badge">修订文本识别</span>
+                
+                <span class="keyword-badge">人类语言偏好优化</span>
+                
+                <span class="keyword-badge">模型敏感性</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> School of Cyber Science and Technology, Shandong University, China, Xi’an Jiaotong-Liverpool University, Chalmers University of Technology, State Key Laboratory of Cryptography and Digital Economy Security, Shandong University, China</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.518</span>
+                <span class="paper-id">arXiv ID: 2511.06942v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.06942v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-11/d16529c7b54262f78453327dfb7a0e14e35b3e70362304cee7aab8fba52bfda7.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了人类语言偏好检测（HLPD）方法，旨在解决在黑箱环境下准确识别机器生成和修订文本的挑战。HLPD通过人类语言偏好优化（HLPO）机制，增强模型对人类写作风格的敏感性，显著提高了检测性能。在多项实验中，HLPD在识别GPT系列模型修订文本时，AUROC表现优于现有基线，展示了其卓越的准确性和鲁棒性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决在“黑箱”环境下（即生成模型未知）准确检测机器生成及机器修订文本的挑战。随着大型语言模型（LLM）的进步，其生成的文本与人类写作的界限日益模糊，使得现有检测方法在面对经过多任务、对抗性修订的文本时表现不佳。这个问题至关重要，因为它关系到遏制虚假信息传播、确保高风险领域（如法律、医学）内容的可靠性。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>: 与其追踪不断变化的机器生成文本特征，不如通过优化（对齐）评分模型，使其更敏感地捕捉稳定且独特的人类写作风格特征，从而能更准确地识别出非人类写作的文本。</li>
+<li><strong>关键发现</strong>: 提出的HLPD方法通过奖励机制对齐人类语言偏好，显著增强了模型对人类写作的敏感性，从而提高了对机器生成和修订文本的识别能力。</li>
+<li><strong>实验验证</strong>: 在针对GPT系列模型修订文本的检测中，HLPD的AUROC相较于基线方法ImBD和Fast-DetectGPT分别取得了15.11%和45.56%的相对提升，证明了该假设的有效性。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>文本检测方法</strong>: DetectGPT, Fast-DetectGPT, ImBD, GPTZero, ReMoDetect, Ghostbuster。</li>
+<li><strong>偏好对齐方法</strong>: DPO (Direct Preference Optimization), RRHF, RLHF, ORPO, IPO等，这些方法主要用于提升生成质量，但其思想被借鉴用于检测。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出了一种名为<strong>人类语言偏好检测（Human Language Preference Detection, HLPD）</strong>的创新框架，旨在显著提升对机器生成及修订文本的检测能力，尤其是在面对多样化、对抗性的“黑箱”环境（即生成模型未知）时。该方法的核心思想是：与其直接寻找机器文本的“指纹”，不如训练一个评分模型，使其能够<strong>对齐并偏好人类的写作风格</strong>。通过这种方式，模型对人类写作的特征变得更加敏感，从而能更准确地识别出偏离这些特征的机器文本。</p>
+
+<p>该解决方案主要由两大核心组件构成：<strong>人类语言偏好优化（HLPO）</strong>训练阶段和<strong>人类语言偏好条件概率曲率（HLP-CPC）</strong>检测阶段。</p>
+
+<hr />
+
+<h4><strong>第一部分：人类语言偏好优化（Human Language Preference Optimization, HLPO）—— 训练评分模型</strong></h4>
+
+<p>HLPO是HLPD框架的训练核心，其目标是优化一个评分模型（$p_\theta$），使其在评估文本时，能够为人类撰写的文本分配比其对应的机器修订版本更高的概率分数。</p>
+
+<p><strong>1. 目的与原则：</strong>
+*   <strong>对齐人类偏好</strong>：使评分模型的输出分布更接近人类的写作风格，优先选择人类撰写的文本。
+*   <strong>增强敏感性</strong>：扩大人类文本与其机器修订版本之间的对数概率差异，从而让模型能捕捉到更细微的风格差别。</p>
+
+<p><strong>2. 训练过程与技术细节：</strong>
+*   <strong>数据准备</strong>：构建成对的训练样本 $(x<em>h, x</em>m)$，其中 $x<em>h$ 是原始的人类撰写文本，而 $x</em>m$ 是由大型语言模型（LLM）对其进行修订（如润色、扩展、重写等）后生成的版本。整个数据集的目标是让模型学习到偏好关系 $x<em>h \succ x</em>m$（即 $x<em>h$ 优于 $x</em>m$）。</p>
+
+<ul>
+<li><p><strong>优化框架</strong>：该方法借鉴了<strong>直接偏好优化（Direct Preference Optimization, DPO）</strong>的思想，使用布拉德利-特里模型（Bradley-Terry model）来建模偏好概率。其核心优化目标是最大化模型正确识别偏好的对数似然：
+$$ \max<em>{\theta} E</em>{(x<em>h, x</em>m)\sim D}[\log \sigma(r(x<em>h) - r(x</em>m))] $$
+其中，$r(x)$ 是奖励分数，定义为：
+$$ r(x) = \beta (\log p<em>\theta(x) - \log p</em>{\theta<em>{ref}}(x)) $$
+这里，$p</em>\theta$ 是待优化的评分模型，$p<em>{\theta</em>{ref}}$ 是一个固定的参考模型（通常是 $p_\theta$ 的初始版本），$\beta$ 是一个控制偏好强度的温度参数。</p></li>
+<li><p><strong>损失函数与动态调整</strong>：为了提高训练的稳定性和效果，论文对传统的优化方法进行了改进：</p>
+
+<ul>
+<li><strong>线性对比损失</strong>：使用线性损失函数替代传统的sigmoid激活函数，以避免在小样本偏好调整中出现饱和和过拟合。</li>
+<li><strong>动态$\beta$调度器（Dynamic-$\beta$）</strong>：引入一个自适应系数 $\beta<em>t$，它会根据训练过程中奖励分数 $r(x</em>h, x<em>m)$ 的方差进行动态调整。当方差较低时（模型对偏好判断较有信心），增大 $\beta</em>t$ 以加强学习信号；当方差较高时（信号噪声较大），减小 $\beta_t$ 以稳定训练。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>第二部分：人类语言偏好条件概率曲率（HLP-CPC）—— 检测文本来源</strong></h4>
+
+<p>当评分模型通过HLPO训练完成后，它便具备了对人类语言风格的偏好。HLP-CPC机制利用这一特性来进行最终的检测。</p>
+
+<p><strong>1. 检测原理：</strong>
+该机制的核心假设是：<strong>人类撰写的文本在其语言概率分布空间中处于一个“尖锐”的峰值</strong>，任何微小的扰动都会导致其概率大幅下降。相比之下，机器生成的文本则位于一个相对“平坦”的概率区域。HLP-CPC正是通过测量这种概率“曲率”来区分文本来源。</p>
+
+<p><strong>2. 检测过程：</strong>
+*   <strong>计算曲率</strong>：对于一个待检测的文本 $x$，通过比较其自身在优化后的评分模型 $p_\theta$ 下的概率，与一组经过轻微扰动后的版本 $\tilde{x}$ 的平均概率，来计算其曲率。
+*   <strong>设定检测标准</strong>：定义一个检测函数 $f(x)$。如果文本 $x$ 的概率远高于其扰动版本的平均概率（即曲率大），则判定其为人类撰写。反之，如果其概率与扰动版本相差不大（即曲率小），则判定为机器修订或生成的文本。具体来说，当曲率指标超过一个预设阈值 $\epsilon$ 时，文本被分类为机器生成。</p>
+
+<hr />
+
+<h4><strong>实验设置与性能优势</strong></h4>
+
+<p>为了验证HLPD的有效性，论文构建了一个全面的对抗性多任务评估框架。</p>
+
+<ul>
+<li><strong>多样化的数据集</strong>：利用包含750个独特提示的扩展提示池，并使用多种先进的LLMs（如GPT-3.5-Turbo, Llama-3-8B, GPT-4o等）在多种修订任务（润色、扩展、重写、生成）下创建训练和测试数据。</li>
+<li><strong>跨语言能力</strong>：该方法在中文、葡萄牙语和西班牙语等多种语言环境中也表现出卓越的检测能力。</li>
+</ul>
+
+<p><strong>主要优势与成果：</strong>
+1.  <strong>卓越的检测精度</strong>：
+    *   在单任务修订检测中，HLPD的<strong>AUROC</strong>（衡量分类器性能的指标）相比ImBD提升了<strong>15.11%</strong>。
+    *   在更具挑战性的对抗性多任务修订检测中，其AUROC超越ImBD <strong>13.52%</strong>，超越GPTZero <strong>24.54%</strong>。
+    *   在检测由先进LLM（如GPT-4）完全生成的文本时，其AUROC也比现有顶尖方法高出<strong>5.53%</strong>。</p>
+
+<ol start="2">
+<li><p><strong>强大的鲁棒性与适应性</strong>：</p>
+
+<ul>
+<li>HLPD在黑箱环境下表现出色，能够有效检测来自不同未知LLM的文本。</li>
+<li>该方法对“人性化适应攻击”（即通过微调使机器文本更像人类写作）也表现出较强的抵抗力。</li>
+</ul></li>
+<li><p><strong>广泛的应用场景</strong>：</p>
+
+<ul>
+<li>由于其高准确性，HLPD特别适用于对文本真实性要求极高的领域，如<strong>法律文书审查、医疗记录分析、学术诚信检测和新闻内容审核</strong>，有助于维护信息完整性，防止由AI引入的错误和偏见。</li>
+</ul></li>
+</ol>
+
+<h3><strong>总结</strong></h3>
+
+<p>综上所述，HLPD框架通过创新的<strong>人类语言偏好优化（HLPO）</strong>训练策略和<strong>条件概率曲率（HLP-CPC）</strong>检测机制，成功地将评分模型与人类写作风格对齐。这不仅显著提升了在复杂和对抗性场景下对机器文本的检测精度和鲁棒性，也为文本来源检测领域提供了一个全新的、更有效的解决方案。</p>
+
+<h3>实验设计</h3>
+
+<p>实验在一个全面的<strong>对抗性多任务评估框架</strong>中进行，旨在模拟真实的复杂应用场景。该框架利用一个<strong>五维提示生成器</strong>和多个先进的LLM（如GPT系列）来系统地构建多样化的单任务和多任务机器修订场景，并在此基础上将HLPD与多个现有基线方法进行性能比较。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 人类文本源自多个公开数据集，包括XSum, SQuAD, Writing Prompts, PubMedQA, 和 WikiText。</li>
+<li><strong>代码</strong>: 代码和实验数据计划在以下地址公开：https://github.com/dfq2021/HLPD</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设。HLPD在各种检测任务中（包括单任务、多任务修订、多语言场景）的表现始终优于所有基线模型。尤其是在对抗性多任务修订检测中，HLPD的AUROC得分显著更高，展示了其卓越的准确性、鲁棒性和泛化能力。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出HLPD框架</strong>: 提出了一种新颖的、专为检测机器修订文本而优化的HLPD方法，在多个基准上取得了SOTA性能。</li>
+<li><strong>引入人类写作对齐</strong>: 创新地将检测模型的优化方向从追踪机器特征转向对齐稳定的人类写作风格，为文本检测领域提供了新的思路。</li>
+<li><strong>构建综合评估体系</strong>: 设计并实现了一个全面的对抗性多任务评估框架，能够更真实地反映检测方法在复杂场景下的性能。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.06942v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 15:15:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

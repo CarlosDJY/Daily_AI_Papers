@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Representation-based Model Poisoning on the Heterogeneous Internet of Agents</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Graph Representation-based Model Poisoning on the Heterogeneous Internet of Agents</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">模型中毒攻击</span>
+                
+                <span class="keyword-badge">图表示学习</span>
+                
+                <span class="keyword-badge">联邦学习</span>
+                
+                <span class="keyword-badge">异构智能代理</span>
+                
+                <span class="keyword-badge">安全措施</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Internet of Everything (IoE) Group, Department of Engineering, University of Cambridge, CISTER Research Centre, Porto, Center for neXt-Generation Communications (CXC), Department of Electrical and Electronics Engineering, Koc¸ University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.435</span>
+                <span class="paper-id">arXiv ID: 2511.07176v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.07176v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-11/e1cb2d12152e93d56cb3d6de295c5e49daf49cba84f73880d25e0629813b5b65.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种新型的模型中毒攻击框架GRMP，利用图表示学习技术，通过构建参数相关图和生成恶意模型，成功绕过现有防御机制，显著降低联邦学习系统的准确性。该研究揭示了在异构智能代理环境中，现有防御的脆弱性，强调了对更强安全措施的需求。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决在异构智能代理的互联网（IoA）和联邦学习（FL）系统中，模型面临的复杂模型中毒攻击问题。尽管联邦学习提供了隐私保护，但它对恶意攻击者上传恶意模型更新以操控全局模型的行为仍然很脆弱。随着IoA的广泛应用，确保模型在多样化和动态环境中的安全性和准确性变得至关重要。现有的基于距离和相似性等统计属性的防御机制（如DiSim、Krum）在面对能够模仿良性模型行为的复杂攻击时，显得力不从心。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，攻击者可以通过分析良性模型更新之间的结构依赖和高阶相关性，来构建一种高度隐蔽且有效的模型中毒攻击（GRMP）。通过利用图表示学习技术（特别是变分图自编码器VGAE），攻击者可以生成在统计上与良性更新无法区分的恶意模型。这种方法使得攻击能够在不访问本地私有数据的情况下，成功绕过现有的防御机制，逐步污染全局模型，并显著降低整个系统的准确性。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>防御机制</strong>：研究了现有的基于统计属性来识别异常模型更新的防御方法，如Trimmed-Mean、Krum、Multi-Krum、Bulyan和DiSim。</li>
+<li><strong>攻击模型</strong>：参考了联邦学习和物联网安全领域中相关的模型中毒和数据投毒攻击研究。</li>
+<li><strong>相关技术</strong>：借鉴了图表示学习领域的研究，特别是变分自编码器（VAE）、图卷积网络（GCN）及其在图结构数据上的应用。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出了一种名为<strong>图表示模型中毒（Graph Representation-based Model Poisoning, GRMP）</strong>的新型攻击方案。该方案专门针对在异构的互联网代理（Internet of Agents, IoA）系统中应用的联邦学习（Federated Learning, FL）框架，旨在通过生成与良性模型在统计上难以区分的恶意模型更新，隐蔽地污染全局模型，从而逐步降低整个系统的性能。</p>
+
+<h4>一、 核心理念与目标</h4>
+
+<p>GRMP攻击的核心思想是，攻击者不再直接篡改数据或发送明显异常的模型，而是通过<strong>学习和模仿良性模型更新之间的内在结构和高阶依赖关系</strong>来构造恶意模型。这种方法使得生成的恶意模型能够绕过现有的、主要基于距离和相似性度量的防御机制（如DiSim防御机制）。</p>
+
+<p><strong>主要目标包括：</strong>
+*   <strong>隐蔽性</strong>：生成在统计特征上与良性模型高度相似的恶意模型，使其在上传至服务器时难以被检测。
+*   <strong>有效性</strong>：逐步污染全局模型，导致其准确性持续下降，并影响所有参与训练的良性代理。
+*   <strong>数据无关性</strong>：攻击者无需访问客户端的本地数据集，只需被动观察在无线通信信道中传输的模型参数即可实施攻击，降低了攻击成本和风险。</p>
+
+<h4>二、 GRMP攻击的完整框架与流程</h4>
+
+<p>GRMP攻击的实施过程可以分解为以下几个关键步骤，形成一个完整的攻击循环：</p>
+
+<p><strong>1. 观察与图构建</strong>
+攻击者首先伪装成一个合法的FL参与者，在多个通信轮次中被动地观察和拦截其他良性代理上传的本地模型更新 <code>wi(t)</code>。
+*   <strong>构建参数相关图 (Parameter Correlation Graph)</strong>：攻击者利用观察到的多个良性模型，构建一个图 <code>G = (V, E, F)</code>。
+    *   <strong>顶点 (V)</strong>：图中的每个顶点代表一个良性本地模型。
+    *   <strong>特征矩阵 (F)</strong>：包含了每个本地模型的参数特征。
+    *   <strong>邻接矩阵 (A)</strong>：图的边由邻接矩阵表示，它通过计算模型之间的余弦相似度来编码它们之间的内部相关性和依赖关系。</p>
+
+<p><strong>2. 学习高阶依赖：对抗变分图自编码器 (VGAE)</strong>
+为了捕捉图中所蕴含的复杂依赖关系，GRMP攻击的核心是设计并训练一个<strong>对抗变分图自编码器（Adversarial Variational Graph Autoencoder, VGAE）</strong>。
+*   <strong>编码器 (Encoder)</strong>：采用图卷积网络（GCN）作为编码器，将输入的参数相关图 <code>G</code> 映射到一个低维的潜在空间，从而学习良性模型之间的高阶统计特征。
+*   <strong>解码器 (Decoder)</strong>：从低维表示中重建图的邻接矩阵 <code>Ab(t)</code>，这个重建的矩阵反映了模型之间深层次的连接概率。
+*   <strong>优化目标</strong>：通过最大化一个基于拉格朗日对偶理论构建的损失函数 <code>Lloss</code>，VGAE被训练来生成能够最大化全局模型损失，同时又与良性模型分布保持一致的潜在表示。</p>
+
+<p><strong>3. 生成恶意模型：图信号处理 (GSP)</strong>
+在VGAE学习到良性模型的内在结构后，攻击利用<strong>图信号处理（Graph Signal Processing, GSP）</strong>模块来生成最终的恶意本地模型 <code>w'_j(t)</code>。
+*   GSP模块整合VGAE输出的重构邻接矩阵 <code>Ab</code> 和特征矩阵 <code>Fb</code>。
+*   通过构建拉普拉斯矩阵和使用图傅里叶变换（GFT），GSP能够从谱域中提取和重构特征，最终生成一个在结构上与良性模型一致，但嵌入了对抗性目标的恶意模型 <code>w'_j(t)</code>。</p>
+
+<p><strong>4. 上传与模型污染</strong>
+*   <strong>上传恶意模型</strong>：攻击者将生成的恶意模型 <code>w'_j(t)</code> 上传到中心服务器。
+*   <strong>全局模型聚合</strong>：服务器在不知情的情况下，将这个恶意的模型与所有其他良性模型进行聚合，生成一个被污染的全局模型 <code>w'_g(t)</code>。
+*   <strong>污染扩散</strong>：在下一轮通信中，这个被污染的全局模型将被分发给所有代理。良性代理基于这个有偏差的模型进行本地训练，导致它们的性能也随之下降，攻击效果在整个系统中扩散，形成类似流行病的传播模式。</p>
+
+<h4>三、 攻击策略与有效性</h4>
+
+<p>为了最大化攻击的隐蔽性和成功率，GRMP采用了一种巧妙的<strong>两阶段策略</strong>：</p>
+
+<ul>
+<li><strong>学习阶段</strong>：在攻击初期，攻击者保持较低的攻击成功率（ASR，约低于3%），主要目标是学习系统的正常行为模式并建立自身作为“合法代理”的可信度。这使得其行为能够持续满足动态DiSim防御机制的自适应检测阈值，从而避免被发现。</li>
+<li><strong>攻击阶段</strong>：一旦攻击者充分捕获了良性特征模式，便进入攻击阶段。此时，攻击者全力生成恶意模型，攻击成功率（ASR）会飙升至约<strong>62%</strong>。实验表明，这会导致良性代理的准确率下降约<strong>7.0%</strong>（从91%降至84%左右）。</li>
+</ul>
+
+<h4>四、 总结与优势</h4>
+
+<p>GRMP攻击方案展示了一种先进且高效的模型中毒方法，其关键优势在于：</p>
+
+<ul>
+<li><strong>绕过先进防御</strong>：通过模仿良性模型的统计和结构特征，能够有效绕过基于距离和相似性度量的防御机制，如动态DiSim防御。</li>
+<li><strong>高隐蔽性</strong>：两阶段策略和数据无关性使其难以被检测，攻击者可以长期潜伏在系统中。</li>
+<li><strong>深刻的破坏力</strong>：不仅降低了全局模型的准确性，还会通过FL的循环机制将污染传播到所有良性参与者，对整个IoA系统的可靠性构成严重威胁。</li>
+</ul>
+
+<p>综上所述，GRMP攻击揭示了当前联邦学习系统在面对结构化和高阶依赖攻击时的脆弱性，强调了未来需要开发图感知的安全聚合方案和更鲁棒的防御机制来应对此类高级威胁。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>环境模拟</strong>：在一个模拟的联邦学习（FL-enabled IoA）环境中进行实验，该环境包含多个LLM代理（例如6个），其中一部分（例如2个）由攻击者控制。</li>
+<li><strong>评估过程</strong>：实验持续多个通信轮次（例如20轮），在每一轮中，代理进行本地训练并上传模型。</li>
+<li><strong>评估指标</strong>：通过比较攻击前后全局模型的<strong>学习准确性</strong>和<strong>攻击成功率（ASR）</strong>来评估GRMP攻击的有效性和隐蔽性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验主要在 <strong>AG News</strong> 数据集上进行。</li>
+<li><strong>代码</strong>：该研究的源代码已在GitHub上公开，地址为：<a href="https://github.com/GuangLun2000/IoA-Attack-GRMP">https://github.com/GuangLun2000/IoA-Attack-GRMP</a>。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了本文的假设。GRMP攻击表现出高效性和隐蔽性：
+- <strong>有效性</strong>：攻击能够显著降低全局模型的学习准确性。在一个实验场景中，攻击成功率（ASR）达到了约62%。
+- <strong>隐蔽性</strong>：由于生成的恶意模型在统计上与良性模型相似，现有的DiSim等防御机制难以有效检测到该攻击。
+- <strong>影响</strong>：结果表明，GRMP攻击对异构智能代理系统构成了严重的安全威胁。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出新型攻击框架</strong>：首次提出了GRMP攻击，揭示了利用图表示学习进行模型中毒攻击的可行性与巨大威胁。</li>
+<li><strong>暴露防御脆弱性</strong>：通过实验证明了现有基于距离和相似度的防御机制在应对复杂、自适应攻击时的不足。</li>
+<li><strong>推动安全研究</strong>：该研究激励了对更高级防御机制的探索，特别是需要能够感知图结构和高阶依赖关系的图感知安全聚合方案，为联邦学习和IoA的安全防护提供了新的研究方向。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.07176v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-11 15:15:50</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
