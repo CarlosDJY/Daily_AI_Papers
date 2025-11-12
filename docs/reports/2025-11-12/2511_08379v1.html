@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOM Directions are Better than One: Multi-Directional Refusal Suppression in Language Models</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SOM Directions are Better than One: Multi-Directional Refusal Suppression in Language Models</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">自组织映射</span>
+                
+                <span class="keyword-badge">拒绝能力</span>
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">有害提示</span>
+                
+                <span class="keyword-badge">安全性</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of Cagliari, University of Genova</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.476</span>
+                <span class="paper-id">arXiv ID: 2511.08379v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.08379v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-12/98cabc4f9707f1fdcbbea26070d6b7b45c3dcb0b09cd50709cfcdd8281a16913.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种新方法，利用自组织映射（SOM）从大型语言模型中提取多个拒绝方向，以增强模型对有害提示的拒绝能力。通过训练SOM识别有害提示的神经元并与无害提示的中心进行比较，验证结果显示该方法在拒绝能力上优于单一方向基线和专门的破解算法，有效提升了安全性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3><strong>完整详细的解决方案：基于自组织映射的多方向拒绝行为抑制方法 (MD)</strong></h3>
+
+<p>本文提出了一种名为<strong>多方向拒绝 (Multi-Directional Refusal, MD)</strong> 的创新方法，旨在通过更精确地建模和抑制大型语言模型 (LLMs) 的拒绝行为，提升其在处理有害提示 (Harmful Prompts) 时的安全性，并有效抵御“越狱”攻击。该方法的核心是利用<strong>自组织映射 (Self-Organizing Maps, SOMs)</strong> 来识别和编码拒绝行为的复杂流形结构，从而超越了传统方法中将拒绝行为视为单一方向的局限。</p>
+
+<h4><strong>一、 理论基础与核心思想</strong></h4>
+
+<ol>
+<li><p><strong>从单一方向到多维流形</strong>：先前的研究通常将模型的“拒绝”行为（如回答“对不起，我无法回答这个问题”）编码为潜在表示空间中的一个<strong>单一方向 (Single Direction, SD)</strong>。这个方向通常通过计算“有害提示”和“无害提示”的平均激活表示（中心点）之差得出。然而，这种线性假设过于简单。本文的理论基础是，概念（如拒绝）在LLMs的高维潜在空间中并非以单一向量存在，而是以一个更复杂的<strong>低维流形 (Manifold)</strong> 形式嵌入。这意味着拒绝行为是由多个相互关联的方向共同构成的。</p></li>
+<li><p><strong>自组织映射 (SOMs) 的优势</strong>：为了捕捉这种复杂的流形结构，本文引入了SOMs。SOM是一种无监督学习算法，擅长将高维数据映射到低维（通常是二维）的神经元网格上，同时保持数据的拓扑结构。通过在有害提示的内部激活表示上训练SOM，可以有效地对拒绝流形进行建模。SOM的每个神经元会学习并代表有害提示分布的一个局部区域，从而为提取多个、有代表性的拒绝方向提供了基础。</p></li>
+</ol>
+
+<h4><strong>二、 解决方案的详细步骤</strong></h4>
+
+<p>该解决方案通过一个系统化的流程，从数据提取到模型干预，具体步骤如下：</p>
+
+<p><strong>步骤 1：内部表示提取与最佳层选择</strong>
+*   首先，收集两组提示：有害提示 (<code>X_hf</code>) 和无害提示 (<code>X_hl</code>)。
+*   为了最大化干预效果，需要选择一个最佳模型层 (<code>l*</code>) 进行操作。该层的选择依据是：在该层应用单方向消融 (SD) 时，能最显著地降低模型生成拒绝相关词元（如 "Sorry", "cannot"）的概率。
+*   在选定的 <code>l*</code> 层，提取模型处理完整个输入提示、但在生成第一个输出词元之前的所有提示的内部激活表示。</p>
+
+<p><strong>步骤 2：训练自组织映射 (SOM)</strong>
+*   使用从有害提示 (<code>X_hf</code>) 中提取的内部激活表示来训练一个SOM。由于无害提示的激活表示分布相对均匀，因此只需计算其中心点即可。
+*   <strong>实现细节</strong>：采用一个4x4的六边形拓扑结构（共16个神经元），这种结构在保持邻域关系上优于矩形网格。SOM训练约10,000次迭代，并使用自适应学习率衰减策略以确保稳定收敛。</p>
+
+<p><strong>步骤 3：生成候选拒绝方向</strong>
+*   首先，计算所有无害提示激活表示的中心点（质心）<code>ν</code>，将其作为基准。
+*   然后，将SOM中每个神经元 <code>w_ι</code> 的向量减去无害提示的中心点 <code>ν</code>，从而生成一组候选的拒绝方向 <code>r_ι = w_ι - ν</code>。这个过程可以看作是将传统的单方向计算方法推广到了多个方向，每个方向 <code>r_ι</code> 代表了拒绝流形的一个特定方面。</p>
+
+<p><strong>步骤 4：通过贝叶斯优化选择最佳方向组合</strong>
+*   拥有多个候选方向后，问题就变成了如何选择一个最优的子集（<code>k</code>个方向）进行消融，以最有效地抑制拒绝行为。
+*   由于这是一个离散的组合优化问题，本文采用<strong>贝叶斯优化 (Bayesian Optimization, BO)</strong> 来高效地搜索最佳方向组合。
+*   <strong>过程</strong>：
+    1.  <strong>目标函数</strong>：定义一个目标函数，即在验证集上应用某组方向进行消融后，模型的<strong>攻击成功率 (Attack Success Rate, ASR)</strong>。ASR越高，说明拒绝行为被抑制得越成功。
+    2.  <strong>黑箱优化</strong>：将该目标函数视为一个“黑箱”，BO通过构建一个代理模型（如树状帕尔岑估计器, TPE）来拟合“方向组合”与“ASR”之间的关系。
+    3.  <strong>迭代搜索</strong>：BO在初始随机试验后，会根据代理模型智能地提出新的方向组合进行测试，从而以较少的试验次数找到最大化ASR的最佳方向集 <code>{r*_i}</code>。</p>
+
+<p><strong>步骤 5：应用多方向消融</strong>
+*   找到最佳的 <code>k</code> 个方向后，构建一个组合<strong>消融操作符 (Ablation Operator)</strong>。该操作符通过将模型的激活表示投影到与这些拒绝方向正交的空间上，从而从表示中移除拒绝相关的概念。
+*   这个消融操作符会应用于模型<strong>所有层</strong>的输出上，从而系统性地抑制整个模型的拒绝倾向，使其在面对有害提示时不再生成拒绝回答。</p>
+
+<h4><strong>三、 机制分析：MD方法为何有效？</strong></h4>
+
+<p>通过主成分分析 (PCA) 等可视化技术，论文揭示了MD方法的内部工作机制：</p>
+
+<ul>
+<li><strong>压缩与对齐</strong>：在应用MD消融后，有害提示的内部表示在潜在空间中的分布变得更加<strong>紧凑</strong>（类内方差显著降低），并且其中心点向无害提示的中心点<strong>对齐</strong>（两者距离显著缩小）。这表明MD方法有效地将有害提示的表示“伪装”或“转化”得更像无害提示，从而绕过了模型的安全审查机制。</li>
+<li><strong>近似流形</strong>：SOM生成的多个方向能够有效地覆盖拒绝流形的高密度区域，证明了该方法能够适应性地捕捉不同模型架构中的拒绝行为模式。</li>
+</ul>
+
+<h4><strong>四、 评估与优势</strong></h4>
+
+<ul>
+<li><strong>卓越的性能</strong>：在Llama-2、Qwen等多个安全对齐模型上的实验表明，MD方法在提升ASR方面显著优于传统的单方向 (SD) 方法和其他拒绝抑制方法，甚至超过了专门的越狱攻击算法。例如，在Qwen2-7B模型上，MD的ASR达到95.97%，而SD仅为77.98%。</li>
+<li><strong>多维视角</strong>：MD方法能够从多个角度理解和干预拒绝行为，比单一视角更灵活、更强大。</li>
+<li><strong>高效性</strong>：尽管搜索空间巨大，但贝叶斯优化的使用使得寻找最优方向组合的过程在计算上是可行的（在3个A6000 GPU上平均耗时约8小时）。</li>
+</ul>
+
+<h4><strong>五、 局限性与未来方向</strong></h4>
+
+<ul>
+<li><strong>层级应用</strong>：当前方法在所有层上均匀应用相同的方向，未来可以探索层级特定的方向消融，以实现更精细的控制。</li>
+<li><strong>无害表示</strong>：该方法依赖于单一的无害提示中心点。未来可以尝试为无害提示也训练一个SOM，以探索更复杂的交互。</li>
+</ul>
+
+<p><strong>总结而言，本文提出的MD方法通过结合自组织映射（SOMs）和贝叶斯优化（BO），成功地将对LLM拒绝行为的理解从单一向量提升到了多维流形层面。它不仅提供了一种更有效抑制模型拒绝行为、抵御越狱攻击的强大工具，也为分析和提升LLMs安全性提供了全新的视角和方法论。</strong></p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.08379v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-12 14:56:27</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

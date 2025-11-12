@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Experience to Strategy: Empowering LLM Agents with Trainable Graph Memory</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>From Experience to Strategy: Empowering LLM Agents with Trainable Graph Memory</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">可训练图记忆</span>
+                
+                <span class="keyword-badge">大语言模型</span>
+                
+                <span class="keyword-badge">复杂决策</span>
+                
+                <span class="keyword-badge">强化学习</span>
+                
+                <span class="keyword-badge">战略推理</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Institute of Automation, Chinese Academy of Sciences, School of Artificial Intelligence, University of Chinese Academy of Sciences, Meituan, Nanjing University of Posts and Telecommunications, AI Centre, Department of Computer Science, University College London</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.469</span>
+                <span class="paper-id">arXiv ID: 2511.07800v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.07800v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-12/8c6fb48b07812814ccc11e71e1519c85319f0019143c3476a3b1781836dc455d.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种创新的可训练多层图记忆框架，旨在提升大语言模型（LLM）代理在复杂决策任务中的推理能力。通过将代理经验抽象为结构化决策路径，并结合强化学习优化，该框架有效改善了LLM的战略推理和泛化能力，显著提高了任务表现和训练效率。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大语言模型（LLM）代理在复杂、开放和多步骤的决策任务中表现不佳的问题。具体而言，现有代理的决策过程不稳定，难以有效利用过往经验，导致行动效率低下、重复犯错或任务失败。此问题的重要性在于：
+- LLM代理在自动化任务中的应用日益广泛，但其在长期推理、策略优化和经验适应方面的能力仍是关键瓶颈。
+- 现有的隐式记忆（模型参数）和显式记忆方法各有局限，尤其缺乏对可重用决策模式的有效管理和利用机制。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：<strong>一个可训练的、结构化的图记忆框架能够显著提升LLM代理的战略推理和决策能力。</strong>
+- <strong>关键发现</strong>: 通过将代理的经验抽象为结构化的决策路径（元认知策略），并将其整合到强化学习（RL）循环中，可以有效引导策略学习。
+- <strong>初步结论</strong>: 这种显式的、动态的记忆机制使代理能够系统性地学习和泛化规划策略，从而在不同任务中做出更优决策。
+- <strong>实验验证</strong>: 在七个不同的问答基准测试中的实验表明，该框架显著提升了模型的跨任务泛化能力和最终任务表现。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域的基础之上，主要包括：
+- <strong>LLM代理的规划与推理</strong>: 如ReAct、Chain-of-Thought (CoT) 和 Tool-Integrated Reasoning (TIR) 等基于提示的方法。
+- <strong>记忆增强的代理</strong>: 如Reflexion、Expel、A-MEM和MemAgent等利用反馈或历史轨迹来改进未来行为的框架。
+- <strong>强化学习（RL）在LLM中的应用</strong>: 利用RL来优化代理的决策策略，但通常依赖于隐式优化或静态提示。
+- <strong>图记忆网络</strong>: 利用图结构来管理和推理复杂信息。</p>
+
+<h3>解决方案</h3>
+
+<h2>解决方案：基于可训练图记忆的LLM代理元认知增强框架</h2>
+
+<p>本论文提出了一种新颖的、代理中心的可训练图记忆框架，旨在显著增强大型语言模型（LLM）代理的推理能力、决策效率和跨任务泛化能力。该框架通过结构化地编码历史经验、策略轨迹和高层次的元认知策略，并将记忆动态集成到强化学习（RL）循环中，从而指导和加速策略优化。</p>
+
+<h3>核心理念与优势</h3>
+
+<p>该框架的核心理念是将代理的经验抽象为结构化的决策路径和高层次的元认知策略，并通过动态的记忆优化机制提高代理的适应能力。与以往依赖静态提示或隐式优化的方法不同，本框架将显式记忆与动态学习进行了统一。</p>
+
+<p><strong>主要优势包括：</strong>
+*   <strong>提升决策能力与效率</strong>：通过结构化记忆和策略回忆，减少模型在面对相似任务时的思考时间，并做出更理性的决策。
+*   <strong>增强策略重用与泛化</strong>：使模型能够有效利用过去的学习，提升在新任务上的表现，尤其是在数据稀缺的情况下，并实现跨任务泛化。
+*   <strong>加速训练收敛</strong>：通过优化策略更新和提示增强，显著加快强化学习训练过程的收敛速度。
+*   <strong>推理准确性提升</strong>：实验结果表明，该方法在推理时的准确性显著提高。
+*   <strong>动态适应性与自我改进</strong>：记忆图能够根据环境变化和新的输入动态调整其策略，通过正向和负向的奖励差距不断优化其结构。
+*   <strong>跨模型通用性</strong>：该框架在不同的LLM后端（如Qwen3、GPT-4等）上均表现出良好的适用性。</p>
+
+<h3>框架设计与实施过程</h3>
+
+<p>该框架的设计包含三个主要阶段，每个阶段聚焦于不同的功能和优化目标：</p>
+
+<h4>阶段一：代理基础记忆图构建</h4>
+
+<p>此阶段旨在通过分析LLM的响应轨迹来构建一个多层异构记忆图，以结构化地表示代理的经验和决策过程。</p>
+
+<ol>
+<li><p><strong>有限状态机（FSM）的构建与轨迹抽象</strong>：</p>
+
+<ul>
+<li>为了形式化代理在工具调用过程中的决策，首先构建了一个有限状态机（FSM）。FSM的状态设计用于封装代理在执行任务时遇到的关键认知节点。</li>
+<li>代理的低级执行轨迹被映射到FSM中的规范路径，从而提炼出高层次、具有可解释性的战略元认知。这有助于识别成功和失败的模式，并过滤执行级别的噪声。</li>
+</ul></li>
+<li><p><strong>记忆图的层次结构</strong>：</p>
+
+<ul>
+<li><strong>查询层 (Q)</strong>：包含查询节点 \$q_i\$，每个节点代表一个任务实例（例如用户查询），包括输入、执行轨迹及结果标签。</li>
+<li><strong>转移路径层 (T)</strong>：包含路径节点 \$t_j\$，每个节点代表从FSM导出的规范决策路径。这些路径帮助代理在面临类似查询时进行参考和学习。</li>
+<li><strong>元认知层 (M)</strong>：包含高层次的战略原则，这些原则是通过分析成功和失败的路径得出的。每个元认知节点都代表一种可以用于问题解决的通用启发式。</li>
+<li>信息在这些层之间通过有向无环图的方式进行加权聚合，使得查询信息能够有效传递到元认知层，以便形成有效的决策支持。</li>
+</ul></li>
+<li><p><strong>元认知诱导</strong>：</p>
+
+<ul>
+<li>通过对规范决策路径的分析，框架能够诱导出有价值的元认知。</li>
+<li><strong>高置信度诱导</strong>：当成功和失败的路径均存在时，从中选择一条成功路径和一条失败路径进行对比，以提炼出有意义的元认知。</li>
+<li><strong>推测性诱导</strong>：如果没有成功路径但有失败路径，系统会寻找与当前查询语义相似的历史查询，并从这些历史查询的成功路径中提取元认知。</li>
+<li>新生成的元认知会被存储到记忆图中，如果已存在则更新其置信度，否则创建新节点。</li>
+</ul></li>
+</ol>
+
+<h4>阶段二：可训练图权重优化</h4>
+
+<p>此阶段引入强化学习驱动的权重优化机制，以动态捕获元认知的效用，并调整记忆图中的连接和权重。</p>
+
+<ol>
+<li><p><strong>图的参数化与激活</strong>：</p>
+
+<ul>
+<li>记忆图被参数化为一个稀疏连接的加权网络，每条边都与一个可训练的系数相关联，反映其效用。</li>
+<li>通过查询特征进行信息传播，选取与新查询相似的历史查询，以激活任务特定的子图。</li>
+</ul></li>
+<li><p><strong>策略梯度优化</strong>：</p>
+
+<ul>
+<li>使用REINFORCE算法对记忆图中的权重进行优化。</li>
+<li><strong>随机引导选择</strong>：对于每个新查询，从记忆图中选择相关的引导元认知。</li>
+<li><strong>反事实评估</strong>：生成两种响应（有引导和无引导），并计算奖励差（∆Rk），作为优化信号。</li>
+<li><strong>策略梯度更新</strong>：通过计算策略梯度 ∇wL ← −∆Rk · ∇w log p(mk | qnew) 来更新记忆图的权重，以增强那些在实际任务中表现良好的策略。</li>
+</ul></li>
+<li><p><strong>效用信号的估计</strong>：</p>
+
+<ul>
+<li>通过比较两条轨迹（一个受元认知指导，另一个不受指导），系统能够计算出效用信号，量化元认知的边际贡献。</li>
+<li>正的奖励差距会增强支持路径的相关性评分，反之则会降低，从而实现记忆图的动态更新和自我改进。</li>
+</ul></li>
+</ol>
+
+<h4>阶段三：记忆引导的强化学习</h4>
+
+<p>此阶段将优化后的策略动态集成到LLM代理的训练循环中，通过元认知提示来注入高质量策略，以指导代理行为并提高学习效率。</p>
+
+<ol>
+<li><p><strong>相关性评分计算与顶级策略检索</strong>：</p>
+
+<ul>
+<li>对每个元认知节点计算相关性评分，该评分基于记忆图中连接查询节点与元认知节点的所有路径的聚合权重。</li>
+<li>从记忆图中选择与当前训练实例最相关的前k个元认知节点，作为高层次策略的先验知识。</li>
+</ul></li>
+<li><p><strong>增强上下文的生成</strong>：</p>
+
+<ul>
+<li>将检索到的策略以文本形式添加至原始查询，形成增强的输入提示（augmented prompt），以便输入到策略网络中进行处理。</li>
+</ul></li>
+<li><p><strong>优化目标</strong>：</p>
+
+<ul>
+<li>通过最大化期望累积奖励来优化代理的策略，使用策略梯度方法更新参数。损失函数包含增强上下文信息，确保模型在学习过程中有效地利用记忆所提供的战略信息。</li>
+</ul></li>
+<li><p><strong>动态整合与自我改进</strong>：</p>
+
+<ul>
+<li>记忆图在每次新的决策路径生成时会进行动态更新，以保持其相关性和效用。</li>
+<li>通过强化现有原则的信心、引入新的模式并淘汰冗余或低信心的路径，系统能够维护一个简洁且不断演变的战略原则集合。</li>
+</ul></li>
+</ol>
+
+<h3>应用场景与实证结果</h3>
+
+<p>该框架适用于需要快速响应和高准确性的场景，如问答系统、信息检索和智能助手等。通过在七个不同的问答基准测试中进行实验，证明了该可训练图记忆框架的有效性。</p>
+
+<p><strong>实证结果显示：</strong>
+*   在跨任务泛化能力和最终任务表现方面有显著提升。
+*   尤其是在较小模型（如Qwen3-4B）上，实现了25.8%的相对性能提升，表明该解决方案能够有效地为模型提供结构化的推理框架，从而帮助其克服内在的能力限制。
+*   即使记忆组件主要使用HotpotQA数据构建，模型在其他领域数据集（如NQ、TriviaQA等）上同样表现优异，显示了策略的可迁移性。
+*   在不同的LLM后端（如OpenAI的GPT-4和Gemini-2.5）上进行验证，证明了本框架的广泛适用性。</p>
+
+<h3>总结</h3>
+
+<p>本论文提出的基于可训练图记忆的LLM代理元认知增强框架，通过结合有限状态机、多层记忆图、元认知策略和强化学习，构建了一个能够自我优化和适应的决策支持系统。这一系统不仅提升了LLM在复杂任务中的表现，还使其能够在面对不确定性和多样化输入时，做出更为理性、高效和准确的决策，为构建更具适应性、高效性和战略意识的智能代理提供了统一的框架。</p>
+
+<h3>实验设计</h3>
+
+<p>为了验证该框架的有效性，实验设计涵盖了多个方面：
+- <strong>基准评估</strong>: 在七个广泛使用的问答（QA）数据集上进行评估，涵盖单回合和多跳推理任务。
+- <strong>对比分析</strong>: 将该方法的性能与多种基线方法（如ITR、Search-R1）以及不使用记忆的代理进行比较。
+- <strong>影响研究</strong>: 分析记忆框架对RL训练动态（如收敛速度和最终性能）的影响。
+- <strong>消融实验</strong>: 评估不同组件（如记忆权重更新、元认知策略数量、记忆粒度）对整体性能的贡献。
+- <strong>模型泛化</strong>: 在不同规模的模型（如Qwen3-4B和Qwen3-8B）上进行测试，以验证其对小型模型的提升效果。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验使用了七个问答数据集，包括<strong>HotpotQA、Natural Questions (NQ)、TriviaQA、PopQA、2wiki、Bamboogle</strong>等。此外，还使用了2018年的维基百科数据作为外部知识库。</li>
+<li><strong>代码</strong>: 提供的论文片段中未提及代码的公开地址。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+- <strong>性能显著提升</strong>: 该框架使Qwen3-4B模型在多个任务上的平均性能相对基线提升了高达<strong>25.8%</strong>。
+- <strong>卓越的泛化能力</strong>: 模型在未见过的外部数据集（如TriviaQA和Bamboogle）上也表现出优异的性能。
+- <strong>对小模型增益明显</strong>: 该方法能有效提升小型模型的决策能力，使其在某些任务上达到或超越更大模型的表现。
+- <strong>加速训练</strong>: 框架的引入加快了强化学习的收敛速度。
+- <strong>元认知策略有效性</strong>: 实验证明，即使是少量的（如1-5个）元认知策略也能显著改善模型的推理能力，尤其是在复杂的多跳任务上。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出创新的框架</strong>: 提出了一个新颖的可训练多层图记忆框架，首次将显式的、结构化的经验记忆与强化学习优化过程有效结合，用于提升LLM代理的决策能力。</li>
+<li><strong>开发策略抽象机制</strong>: 设计了一种将低级代理轨迹抽象为高层次、可泛化元认知策略的方法，实现了对经验的有效利用。</li>
+<li><strong>引入动态优化过程</strong>: 开发了一种动态权重优化机制，使记忆能够根据下游任务表现自适应地调整和强化有效策略。</li>
+<li><strong>提供坚实的实验验证</strong>: 通过在多个基准上的广泛实验，证明了该框架在提升LLM代理性能、效率和泛化能力方面的显著优势，为开发更智能、更高效的AI代理提供了新的思路。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.07800v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-12 14:56:27</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
