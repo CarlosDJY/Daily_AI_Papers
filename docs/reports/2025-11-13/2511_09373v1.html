@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Routesplain: Towards Faithful and Intervenable Routing for Software-related Tasks</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Routesplain: Towards Faithful and Intervenable Routing for Software-related Tasks</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">路由框架</span>
+                
+                <span class="keyword-badge">软件相关任务</span>
+                
+                <span class="keyword-badge">可解释性</span>
+                
+                <span class="keyword-badge">黑箱路由</span>
+                
+                <span class="keyword-badge">诊断能力</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Columbia University, Oracle AI</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.479</span>
+                <span class="paper-id">arXiv ID: 2511.09373v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.09373v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-13/8d8ad609c8fe028f0fc7f1c401aeb76e109d6d4e85d2f0be5a2bc06fcc733fd7.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Routesplain，一个专为软件相关任务设计的LLM路由框架。它通过提取人类可解释的概念（如任务类型和复杂度）来优化用户查询的路由，提升了响应的准确性和成本效益。实验结果显示，Routesplain在多个软件任务上超越了现有黑箱路由方法，提供了更高的可解释性和诊断能力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在处理各类软件相关任务（如代码生成、修复、调试等）时，性能和成本存在显著差异的问题。随着LLMs应用的普及，如何根据用户查询，自动且高效地将其路由到最合适的LLM，以最大化响应质量并最小化成本，已成为一个重要挑战。现有通用的路由方法多为“黑箱”模型，缺乏针对软件任务的定制化设计和可解释性，难以诊断和优化其路由决策。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过一个基于人类可解释概念（如任务类型、编程语言、问题复杂度等）的路由框架，可以比传统黑箱方法更有效地为软件相关任务选择最佳的LLM。这种方法不仅能提升准确性和成本效益，还能提供透明、可信且可干预的路由决策依据，从而揭示并解决性能瓶颈。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li>通用的黑箱LLM路由方法，如基于MLP、KNN的路由器。</li>
+<li>概念瓶颈模型（Concept Bottleneck Models）及其在可解释AI中的应用。</li>
+<li>针对不同LLM在特定编码任务上性能差异的评估研究。</li>
+<li>领域专家路由（Domain-Specific Routing）的相关工作。</li>
+</ul>
+
+<h3><strong>Routesplain框架的完整详细解决方案</strong></h3>
+
+<h4><strong>一、 问题背景与核心目标</strong></h4>
+
+<p>在软件工程领域，不同的大型语言模型（LLM）在处理特定任务（如代码生成、代码修复、调试）时，其性能和成本存在显著差异。例如，昂贵的模型（如o3）可能在复杂查询上表现最佳，而成本较低的模型（如GPT-4.1 nano）则在许多其他任务中具有更高的成本效益。因此，依赖单一模型无法实现最优的准确性和成本效益。</p>
+
+<p>为了解决这一问题，本研究提出了 <strong>Routesplain</strong>，一个专门为软件相关任务设计的、<strong>基于概念驱动的、可解释的LLM路由器</strong>。</p>
+
+<p><strong>核心目标：</strong>
+1.  <strong>提升准确性</strong>：通过将用户查询智能地路由到最合适的LLM，最大化任务的成功率。
+2.  <strong>降低成本</strong>：避免对所有查询都使用昂贵的高性能模型，通过多目标路由策略实现成本与性能的平衡。
+3.  <strong>提供可解释性与可干预性</strong>：与传统的“黑箱”路由器不同，Routesplain的决策过程是透明的，允许用户理解、甚至在推理时干预路由决策。</p>
+
+<hr />
+
+<h4><strong>二、 Routesplain 核心架构与工作流程</strong></h4>
+
+<p>Routesplain的核心思想是将路由决策过程分解为两个独立但协同工作的阶段，通过一个中间的、人类可理解的<strong>概念空间</strong>连接。其架构主要由两个神经网络构成：<strong>网络h（概念分类器）</strong> 和 <strong>网络g（模型分类器）</strong>。</p>
+
+<h5><strong>工作流程：</strong></h5>
+
+<ol>
+<li><p><strong>查询嵌入 (Query Embedding)</strong>：
+用户输入的查询（例如：“为什么我无法编译这段Rust代码？”）首先通过一个固定的嵌入模型，被转换成一个高维的上下文向量表示。</p></li>
+<li><p><strong>概念提取 (Concept Extraction - 网络h)</strong>：
+该上下文向量被输入到<strong>网络h</strong>。网络h是一个多标签分类器，其任务是将输入的向量映射到一个<code>k</code>维的<strong>概念空间</strong>中。这个空间捕捉了查询的高层、可解释特征。这些概念主要包括：</p>
+
+<ul>
+<li><strong>任务类型</strong>：如代码编写、代码翻译、调试等。</li>
+<li><strong>编程语言</strong>：如Rust, Python, Java等。</li>
+<li><strong>自然语言</strong>：如英语、中文等。</li>
+<li><strong>所需库/领域</strong>：如TensorFlow, React等。</li>
+<li><strong>复杂性度量</strong>：包括推理复杂性、一般复杂性和总复杂性，这些度量反映了任务的内在难度。</li>
+</ul></li>
+<li><p><strong>模型适用性预测 (Model Suitability Prediction - 网络g)</strong>：
+从网络h输出的概念向量，被输入到<strong>网络g</strong>。网络g的任务是基于这些概念，预测LLM池中每个模型（共<code>n</code>个）处理该查询的适用性分数。这个过程会综合考虑每个模型在特定概念组合下的历史表现。</p></li>
+<li><p><strong>路由决策 (Routing Decision)</strong>：
+系统根据网络g输出的适用性分数，并结合成本效益分析，最终选择一个最合适的LLM来处理该查询，并将查询发送给该模型。</p></li>
+</ol>
+
+<p>![A simplified diagram illustrating the Routesplain workflow could be imagined here: Query -> Embedding -> Network h -> Concept Vector -> Network g -> Model Scores -> Final LLM Choice]</p>
+
+<hr />
+
+<h4><strong>三、 训练过程与关键技术</strong></h4>
+
+<h5><strong>1. 独立的网络训练</strong></h5>
+
+<p>Routesplain的一个关键设计是<strong>网络h和网络g是独立训练的</strong>，而非端到端训练。这种解耦设计是实现可干预性的基础。
+*   <strong>网络h的训练</strong>：旨在最小化概念预测的交叉熵损失（LBCE），使其能准确地从查询中提取概念。
+*   <strong>网络g的训练</strong>：旨在最小化模型适用性预测的损失，同时引入了成本正则化。</p>
+
+<h5><strong>2. 成本敏感的损失函数</strong></h5>
+
+<p>路由器的训练目标是最小化一个包含<strong>二进制交叉熵损失（LBCE）</strong>和<strong>成本正则化项</strong>的复合损失函数：
+<code>Loss = L_BCE(f(x), y) + λ * E[cost]</code>
+*   <code>L_BCE</code> 确保了预测的准确性。
+*   <code>λ</code> 是一个超参数，用于控制成本敏感度。<code>λ</code>值越高，路由器在做决策时就越倾向于选择成本更低的LLM。这使得Routesplain能够灵活地在成本和准确性之间进行权衡。</p>
+
+<h5><strong>3. 人类干预机制</strong></h5>
+
+<p>由于网络h和g是独立训练的，在推理阶段，系统可以在两者之间引入一个“干预点”。当网络h生成概念预测后，人类专家可以<strong>审查并编辑</strong>这些概念，然后再将其输入网络g。例如，如果模型错误地将一个复杂的算法问题识别为“低复杂性”，专家可以手动修正这个概念，从而引导路由器做出更准确的模型选择。</p>
+
+<hr />
+
+<h4><strong>四、 核心优势与特点</strong></h4>
+
+<ol>
+<li><p><strong>可解释性 (Explainability)</strong>：
+路由决策不再是黑箱。用户可以看到决策依据，例如：“因为该任务被识别为‘高推理复杂性’的‘Python代码修复’任务，所以系统选择了模型A。” 这种透明性增强了用户的信任。</p></li>
+<li><p><strong>可干预性 (Intervenability)</strong>：
+允许人类在环路中修正模型的中间推理过程（概念预测），为处理边缘情况和纠正模型偏见提供了强大的工具。</p></li>
+<li><p><strong>诊断能力 (Diagnostic Power)</strong>：
+通过概念消融研究和反事实干预（例如，用真实标签替换某个概念的预测），Routesplain能够识别出系统性能的主要瓶颈。研究发现，<strong>准确预测查询的“复杂性”是路由性能最关键的挑战</strong>。这一洞察是传统黑箱路由器无法提供的。</p></li>
+<li><p><strong>高性能与成本效益 (High Performance &amp; Cost-Effectiveness)</strong>：
+实验在8个软件任务和16个最先进的LLM上进行。结果表明，Routesplain在几乎所有成本正则化水平下的准确性都与完全黑箱的多层感知器（MLP）路由器相当或更优，同时提供了上述所有额外的好处。</p></li>
+</ol>
+
+<hr />
+
+<h4><strong>五、 实现与评估细节</strong></h4>
+
+<ul>
+<li><strong>数据集构建</strong>：研究人员构建了一个专门的代码修复数据集（BigCodeBench-Repair），包含38,685个经过严格过滤和去重的示例，用于训练和评估。</li>
+<li><strong>模型实现</strong>：Routesplain的两个网络均采用两层MLP实现，并使用GeLU激活函数和dropout。通过详尽的网格搜索对超参数进行了优化。</li>
+<li><strong>对比基线</strong>：与MLP路由器、K-最近邻（KNN）路由器等方法进行了全面比较。</li>
+<li><strong>评估指标</strong>：主要使用0-shot pass@1准确率，确保结果的可重复性。</li>
+</ul>
+
+<h4><strong>六、 总结与潜在影响</strong></h4>
+
+<p><strong>Routesplain</strong>通过引入<strong>概念瓶颈</strong>架构，成功地为LLM路由问题提供了一个兼具<strong>高性能、高可解释性和高灵活性</strong>的解决方案。它不仅在软件工程任务中展示了巨大的应用潜力，更重要的是，它揭示了通过概念级干预来诊断和提升复杂AI系统性能的新途径。</p>
+
+<p>该框架为未来构建更加透明、可控和高效的多模型协作系统指明了方向，特别是在需要领域知识和人机协作的复杂场景中具有广阔的应用前景。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>评估范围</strong>：在一个包含八个不同软件相关任务的数据集上进行评估。</li>
+<li><strong>模型池</strong>：使用了16个最先进的LLM作为路由选择的目标模型。</li>
+<li><strong>基线对比</strong>：将Routesplain的性能与单个LLM以及多种黑箱路由基线（如MLP路由器）进行比较。</li>
+<li><strong>深入分析</strong>：
+<ul>
+<li><strong>消融研究</strong>：通过系统性地移除不同的概念组（如“复杂度”或“编程语言”），来评估每个概念对路由性能的贡献。</li>
+<li><strong>反事实实验</strong>：在推理时手动更改某个概念的预测值，以验证概念空间的变化对路由决策的直接影响。</li>
+<li><strong>成本敏感性分析</strong>：通过调整成本正则化参数，研究模型在不同成本与准确性权衡下的表现。</li>
+</ul></li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<p>论文片段中提及使用了多个公开数据集，包括 <strong>BigCodeBench (BCB)</strong>、<strong>CRUXEval</strong>、<strong>MMLU-ProX</strong> 和 <strong>MultiPL-E</strong>。然而，所有片段均未提供具体的代码库或数据集的链接。</p>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>：Routesplain在准确性和成本效益方面，均能达到甚至超越现有的黑箱路由基线方法。</li>
+<li><strong>关键瓶颈识别</strong>：实验明确指出，“复杂度”预测是影响路由性能最关键的瓶颈。当提供真实的复杂度标签时，路由的准确性得到显著提升。</li>
+<li><strong>成本效益</strong>：在高成本敏感度的设置下，Routesplain表现尤为出色，能够有效地将任务分配给成本更低的LLM，同时保持较高的准确率。</li>
+<li><strong>可解释性优势</strong>：与黑箱模型不同，Routesplain能够清晰地展示其决策依据，为诊断和改进路由策略提供了可能。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出首个概念路由框架</strong>：提出了Routesplain，这是第一个专门为软件相关任务设计的、基于可解释概念的LLM路由架构。</li>
+<li><strong>提供诊断性洞见</strong>：通过其可解释性，成功识别出“复杂度预测”是路由性能的主要瓶颈，为未来路由系统的优化指明了方向。</li>
+<li><strong>开创新的评估方法</strong>：引入了概念消融和反事实操控等新的方法论，用于验证和理解LLM路由器的行为。</li>
+<li><strong>验证领域特定路由的必要性</strong>：通过广泛实验证明了LLMs在软件任务上存在巨大的性能差异，强调了开发领域特定路由策略的重要性。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.09373v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-13 23:47:06</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimodal Large Language Models for Low-Resource Languages: A Case Study for Basque</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multimodal Large Language Models for Low-Resource Languages: A Case Study for Basque</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">多模态大语言模型</span>
+                
+                <span class="keyword-badge">低资源语言</span>
+                
+                <span class="keyword-badge">巴斯克语</span>
+                
+                <span class="keyword-badge">数据混合策略</span>
+                
+                <span class="keyword-badge">晚融合架构</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> HiTZ Basque Center for Language Technology, Ixa NLP Group, University of the Basque Country UPV/EHU</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.448</span>
+                <span class="paper-id">arXiv ID: 2511.09396v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.09396v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-13/337768aaef355e2185e2b9eba6f418d9fc0ce322ce40663902a2a8a73445735d.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种针对低资源语言巴斯克语的多模态大语言模型（MLLM）开发方法。通过创建首个巴斯克语多模态数据集，并采用晚融合架构与数据混合策略，研究表明仅需20%的巴斯克数据即可实现优异性能，且无需特定的巴斯克基础模型。这一方法为其他低资源语言的MLLM开发提供了重要参考。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决多模态大语言模型（MLLM）在低资源语言（以巴斯克语为例）中表现不佳的核心挑战。该问题源于多个方面：首先，现有的MLLM和基准测试主要以英语为中心，导致在其他语言上存在显著的性能差距；其次，巴斯克语严重缺乏公开的多模态训练和评估数据集；最后，在对低资源语言进行微调时，模型容易出现“灾难性遗忘”现象，即其在英语等高资源语言上的能力会显著下降。因此，研究如何系统性地为低资源语言构建、训练和评估高效的MLLM是一个重要且紧迫的问题。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，通过采用优化的训练策略和数据混合方法，可以为巴斯G克语等低资源语言开发出强大的MLLM，而无需从头构建一个特定于该语言的基础大语言模型。具体假设包括：
+1.  仅需少量（如20%）的目标语言多模态数据，就足以在基准测试中取得良好结果。
+2.  在训练数据中保留一部分英语样本（如20%）对于防止模型在英语能力上的灾难性遗忘至关重要。
+3.  在多模态训练中加入文本指令（text-only instructions），可以有效缓解模型在纯文本任务上的性能下降，并促进多模态能力的跨语言迁移。
+4.  采用两阶段训练程序（视觉-语言对齐和多模态指令调优）结合晚融合（late-fusion）架构，是开发低资源MLLM的有效路径。</p>
+
+<h3>相关研究</h3>
+
+<p>本研究建立在多个相关领域之上，包括：
+-   多模态大语言模型（MLLM）的设计、架构（如晚融合）与训练方法。
+-   针对低资源语言的模型开发与多语言性能差距的研究。
+-   跨语言迁移学习，即如何将高资源语言中学习到的知识迁移到低资源语言中。
+-   缓解模型训练中“灾难性遗忘”问题的策略。
+-   标准的多模态评估基准，如VQAv2、A-OKVQA等。</p>
+
+<h3>面向低资源语言的多模态大语言模型开发：一个完整的解决方案</h3>
+
+<p>本论文提出了一个全面的解决方案，旨在为低资源语言（以巴斯克语为例）开发高性能的多模态大型语言模型（MLLM）。该方案覆盖了从数据集创建、模型架构设计、多阶段训练策略到全面评估方法的完整流程，并最终公开发布所有资源，以推动相关领域的研究。</p>
+
+<h4><strong>第一步：构建专门的多模态数据集与评估基准</strong></h4>
+
+<p>由于低资源语言缺乏现成的多模态数据，解决方案的第一步是创建高质量的训练和评估数据集。此过程完全依赖开放资源，确保了研究的可复现性。</p>
+
+<ol>
+<li><p><strong>训练数据集创建</strong>：</p>
+
+<ul>
+<li><strong>视觉-语言对齐数据</strong>：研究团队利用以英语为中心的<code>Conceptual Captions (CC3M)</code>数据集，通过一个句子级的神经翻译模型（<code>mt-hitzen-eu</code>）将其翻译成巴斯克语，用于模型的第一阶段训练。</li>
+<li><strong>多模态指令数据</strong>：为了进行指令微调，团队从多个来源（如<code>Pixmo-AMA</code>）提取数据，并使用一个基于大型语言模型（<code>Latxa-Llama-3.1-70B-Instruct</code>）的翻译程序。该程序采用2-shot提示（提供两个翻译示例）的方式，将英语的图像-问题-答案对高质量地翻译为巴斯克语，生成了超过300万条图像-文本实例。</li>
+</ul></li>
+<li><p><strong>评估基准创建</strong>：</p>
+
+<ul>
+<li><strong>迭代生成与人类反馈</strong>：为了生成高质量的评估基准（如<code>Pixmo-AMAEus</code>），研究采用了一种创新的迭代方法。首先由LLM生成多模态指令（图像、问题、答案），然后由人类标注者进行审核。标注者可以接受、拒绝或提供反馈，LLM根据反馈进行优化，直至生成可接受的答案。这个过程确保了评估数据的复杂性和一致性。</li>
+<li><strong>多样化的评估集</strong>：最终创建了四个评估基准，包括封闭式基准（如<code>VQAv2</code>, <code>A-OKVQA</code>）和开放式基准（如<code>WildVisionEus</code>），以全面评估模型的不同能力。所有基准都经过了巴斯克语母语者的验证，以确保翻译质量和文化适宜性。</li>
+</ul></li>
+</ol>
+
+<h4><strong>第二步：设计模型架构与两阶段训练程序</strong></h4>
+
+<p>该解决方案的核心是一种高效的模型架构和精心设计的训练流程。</p>
+
+<ol>
+<li><p><strong>模型架构：晚期融合（Late-Fusion）</strong></p>
+
+<ul>
+<li><strong>视觉编码器</strong>：采用预训练的<code>CLIP</code>视觉编码器，将输入图像转换为视觉特征嵌入。</li>
+<li><strong>连接器</strong>：使用一个简单的全连接线性层作为连接器，将视觉嵌入投影到LLM的文本嵌入空间中。</li>
+<li><strong>LLM主干</strong>：实验了两种LLM作为模型主干：一个是以英语为中心的<code>Llama-3.1-Instruct</code>，另一个是专为巴斯克语调整的<code>Latxa</code>。</li>
+</ul></li>
+<li><p><strong>两阶段训练程序</strong>：</p>
+
+<ul>
+<li><p><strong>阶段一：视觉-语言对齐</strong></p>
+
+<ul>
+<li><strong>目标</strong>：让LLM理解视觉信息。</li>
+<li><strong>方法</strong>：冻结视觉编码器和LLM的参数，仅训练连接器。这能高效地将视觉特征对齐到语言空间，同时避免了对LLM的干扰，稳定了后续训练。</li>
+<li><strong>硬件配置</strong>：此阶段在4个A100 GPU上训练了80个GPU小时。</li>
+</ul></li>
+<li><p><strong>阶段二：多模态指令调优</strong></p>
+
+<ul>
+<li><strong>目标</strong>：教会模型遵循复杂的多模态指令。</li>
+<li><strong>方法</strong>：同时对连接器和LLM进行微调。此阶段使用了更复杂的指令数据集。</li>
+<li><strong>硬件配置</strong>：此阶段在32个A100 GPU上进行训练，并采用梯度检查点等技术优化内存。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<h4><strong>第三步：优化训练策略与解决性能瓶颈</strong></h4>
+
+<p>在训练过程中，研究团队发现并解决了几个关键问题。</p>
+
+<ol>
+<li><p><strong>数据混合策略</strong>：</p>
+
+<ul>
+<li><strong>问题</strong>：如何平衡巴斯克语和英语数据以达到最佳性能？</li>
+<li><strong>解决方案</strong>：通过实验不同的数据混合比例（如0:100, 20:80, 80:20, 100:0），研究发现<strong>使用80%的巴斯克语数据和20%的英语数据</strong>进行指令微调时，模型在多模态任务上的表现最佳。仅使用巴斯克语数据会导致模型在英语基准上的“灾难性遗忘”。</li>
+</ul></li>
+<li><p><strong>文本任务性能下降问题</strong>：</p>
+
+<ul>
+<li><strong>问题</strong>：多模态训练后，模型在纯文本任务上的性能出现下降。</li>
+<li><strong>解决方案</strong>：在训练数据中<strong>引入文本-only指令</strong>。最终的训练集包含约17%的文本-only样本（同样按80%巴斯克语和20%英语的比例混合）。此举有效缓解了模型在文本任务上的性能衰退，甚至在某些情况下提升了多模态性能。</li>
+</ul></li>
+</ol>
+
+<h4><strong>第四步：全面的性能评估</strong></h4>
+
+<p>为了验证解决方案的有效性，研究采用了多维度的评估方法。</p>
+
+<ol>
+<li><p><strong>自动化基准测试</strong>：</p>
+
+<ul>
+<li><strong>封闭式基准</strong>：在<code>VQAv2</code>（简答）、<code>A-OKVQA</code>（多选）等基准上评估模型的准确性。</li>
+<li><strong>开放式基准</strong>：评估模型生成长文本的质量、相关性和连贯性。</li>
+<li><strong>文本-only基准</strong>：使用<code>BertaQA</code>等基准评估模型在纯文本任务上的表现。</li>
+</ul></li>
+<li><p><strong>人类评估与模型评估对比</strong>：</p>
+
+<ul>
+<li><strong>人类评估</strong>：邀请四位巴斯克语母语者对模型生成的内容进行打分，作为评估的黄金标准。</li>
+<li><strong>MLLM-as-a-judge</strong>：使用<code>GPT-4</code>等先进模型作为评估者，并将其结果与人类评估进行比较。研究发现，虽然模型评估具有潜力，但仍存在偏见，因此人类评估在当前阶段仍不可或缺。</li>
+</ul></li>
+</ol>
+
+<h3>实验设计</h3>
+
+<p>实验设计严谨，旨在系统地验证核心假设：
+-   <strong>模型对比</strong>：使用了两种基础LLM进行实验，包括通用的Llama-3.1-Instruct和经过巴斯克语适配的Latxa，以评估语言特定适应性的影响。
+-   <strong>数据配置</strong>：设计了多种训练配置，包括不同比例的巴斯克语与英语多模态数据混合（如0:100, 20:80, 80:20, 100:0），以及是否包含文本指令数据。
+-   <strong>评估基准</strong>：在多个新创建的巴斯克语多模态基准（如Pixmo-AMAEus, WildVisionEus）上进行评估，这些基准由标准英语基准翻译而来，并经过巴斯克语母语者验证。同时，使用BertaQA等基准评估模型的纯文本能力。</p>
+
+<h3>数据集和代码</h3>
+
+<p>本文贡献了多个公开资源以促进社区研究：
+-   <strong>数据集</strong>：创建并发布了多个巴斯克语数据集，包括超过300万实例的训练集，以及用于评估的Pixmo-AMAEus（146k实例）和WildVisionEus等基准。
+-   <strong>代码</strong>：所有用于实验的代码、数据集和模型都将公开发布，训练代码基于Llava框架。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了本文的假设：
+-   <strong>数据效率</strong>：仅使用20%的巴斯克多模态数据训练的模型，就在巴斯克基准上取得了优异的成绩，证明了数据的高效性。
+-   <strong>最佳混合比例</strong>：包含80%巴斯克语和20%英语数据的配置在各项基准上表现最佳，证实了保留部分英语数据对维持模型能力的必要性。
+-   <strong>文本指令的作用</strong>：加入文本指令数据有效地缓解了模型在纯文本任务上的性能下降。
+-   <strong>模型性能</strong>：经过专门训练的巴斯克MLLM在多模态任务上的表现优于通用模型，甚至可以与商业闭源模型竞争。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>资源</strong>：开发并发布了首个针对低资源语言巴斯克语的开放多模态大语言模型、大规模训练数据集和评估基准，填补了该领域的空白。
+2.  <strong>方法</strong>：提出并验证了一套系统的、可复现的低资源MLLM开发方法，包括数据创建、模型训练和评估策略。
+3.  <strong>见解</strong>：通过实验揭示了数据混合策略在多语言MLLM训练中的关键作用，为如何在资源有限的情况下有效进行跨语言能力迁移和避免灾难性遗忘提供了宝贵的经验。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.09396v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-13 23:47:06</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
