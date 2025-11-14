@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Assurance of LLM-generated Code: Addressing Non-Functional Quality Characteristics</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Quality Assurance of LLM-generated Code: Addressing Non-Functional Quality Characteristics</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">非功能质量特性</span>
+                
+                <span class="keyword-badge">质量保证</span>
+                
+                <span class="keyword-badge">代码生成</span>
+                
+                <span class="keyword-badge">性能效率</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Department of Computer and Information Science, Linköping University, Sweden</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.484</span>
+                <span class="paper-id">arXiv ID: 2511.10271v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.10271v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-14/ef8d21ca8cc40cd1b206bd6ed197ba59ee71a798d58b4a08f69474affb82ad7a.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种综合框架，系统评估和提升大型语言模型（LLM）生成代码的非功能质量特性（NFQCs），如安全性、可维护性和性能效率。通过文献回顾、行业研讨会和实证研究，揭示了LLM在NFQCs方面的不足，并强调了学术界与行业关注点的差异。研究结果显示，优化某一质量维度可能牺牲其他维度，呼吁在代码生成流程中整合质量保证机制。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <p>好的，我已经根据您提供的详细解决方案，替换了报告大纲中的相应部分。以下是更新后的完整报告大纲：</p>
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）生成的代码在非功能质量特性（Non-Functional Quality Characteristics, NFQCs）方面缺乏系统性理解、评估和优化的问题。尽管现有研究主要关注代码的功能正确性，但对安全性、可维护性、性能效率（运行时、内存使用）和可读性等关键质量维度的评估仍然不足。这是一个重要且日益凸显的问题，因为：
+- LLM生成的代码质量直接影响软件系统的可靠性、安全性和长期维护成本，可能引入和加剧技术债务。
+- 当前LLM缺乏对代码质量的内在“意识”，其目标通常是“通过测试”，而非“高质量地通过测试”。
+- 学术界与行业对NFQCs的关注点存在差异（例如，学术界偏重安全，行业更关心可维护性），且缺乏统一的评估框架和术语，阻碍了研究的可比性。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>: 当前的LLM缺乏对NFQCs的可靠内部表示，导致其生成的代码在质量上（如可维护性、安全性、性能）普遍劣于人类编写的“黄金标准”代码。</li>
+<li><strong>关键发现</strong>: 通过将静态分析等质量保证机制集成到代码生成流程中，并使用针对NFQCs的优化提示，可以引导LLM生成更高质量的代码。</li>
+<li><strong>初步结论</strong>: 优化某个NFQC往往会以牺牲其他NFQC或功能正确性为代价，这表明不同质量维度之间存在复杂的权衡关系。不同LLM在优化特定NFQC方面表现出不同的优势和劣势。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<p>本研究建立在多个研究领域之上，主要包括：
+- <strong>软件质量模型</strong>: 引用ISO/IEC 25010标准作为NFQCs的定义和分类框架。
+- <strong>LLM代码质量评估</strong>: 借鉴了多项关于LLM生成代码在安全性（Perry et al., Pearce et al.）、性能效率（Vartziotis et al.）和可维护性（Liu et al., Licorish et al.）方面的实证研究。
+- <strong>基准数据集和工具</strong>: 利用现有的基准（如SWE-bench Lite）进行代码补丁生成任务的评估，并使用静态代码分析工具（如CodeQL, SonarQube）来量化代码质量。</p>
+
+<h3>解决方案</h3>
+
+<h4><strong>面向大语言模型生成代码的综合质量保障解决方案</strong></h4>
+
+<h5><strong>一、 核心问题</strong></h5>
+
+<p>当前的大型语言模型（LLM）在生成代码时，主要关注于通过功能性测试（即“能运行”），但普遍缺乏对非功能质量特性（NFQCs）的“意识”。这导致生成的代码虽然功能正确，却可能在<strong>可维护性、安全性、性能效率</strong>等方面存在缺陷，引入潜在的<strong>技术债务</strong>。LLM倾向于学习代码的表面模式而非深层的工程原则，这成为其在自动化软件工程工作流中应用的主要障碍。</p>
+
+<h5><strong>二、 解决方案总体框架</strong></h5>
+
+<p>为解决上述问题，本研究提出了一套由<strong>理论研究、业界洞察和实证评估</strong>构成的三位一体综合解决方案。其核心目标是建立一个系统化的评估与优化框架，确保LLM生成的代码不仅功能正确，而且在非功能质量上同样可靠。</p>
+
+<p>该框架主要包含以下三个部分：</p>
+
+<ol>
+<li><strong>综合研究方法</strong>：通过系统文献回顾和行业研讨会，奠定理论与实践基础。</li>
+<li><strong>实证评估与优化流程</strong>：设计并执行一个三阶段的实验，量化评估和优化生成代码的NFQCs。</li>
+<li><strong>关键发现与最终建议</strong>：总结实验中的权衡关系，并提出将强验证机制集成到开发流程中的最终建议。</li>
+</ol>
+
+<hr />
+
+<h5><strong>三、 解决方案详细阐述</strong></h5>
+
+<h6><strong>1. 综合研究方法</strong></h6>
+
+<p><strong>A. 系统文献回顾 (Systematic Literature Review)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：识别现有研究在LLM生成代码的NFQCs方面的进展与不足，梳理关键问题和未来研究方向。</li>
+<li><strong>过程</strong>：遵循PRISMA方法论，系统性地分析了108篇相关论文，重点关注<strong>可维护性、安全性、性能效率、鲁棒性、隐私性</strong>等NFQCs。</li>
+<li><strong>发现</strong>：学术界与工业界对NFQCs的关注点存在差异。学术界更侧重于<strong>安全性和性能</strong>，而工业界实践者则更优先考虑<strong>可维护性和可读性</strong>。</li>
+</ul>
+
+<p><strong>B. 行业研讨会 (Industry Workshops)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：收集来自多家企业软件开发实践者对LLM生成代码质量保证的真实看法、痛点和期望。</li>
+<li><strong>过程</strong>：组织了两次行业研讨会，邀请专家分享在实际项目中集成LLM的经验，特别是关于生成代码导致的技术债务累积问题。</li>
+<li><strong>收获</strong>：验证了文献回顾的发现，并为后续的实证研究提供了重要的行业背景和现实需求。</li>
+</ul>
+
+<h6><strong>2. 实证评估与优化流程</strong></h6>
+
+<p>为了量化评估并尝试优化LLM生成代码的NFQCs，本研究设计了一个严谨的三阶段实验流程。</p>
+
+<p><strong>A. 实验设置与工具</strong></p>
+
+<ul>
+<li><strong>代码生成框架</strong>：使用 <strong>SWE-agent</strong> 框架，该框架允许LLM在无需人类指令的情况下自动化地生成代码补丁，确保了评估的客观性。</li>
+<li><strong>评估与分析工具</strong>：使用 <strong>CodeQL</strong>（GitHub发布的静态分析工具）对生成的代码进行全面的存储库分析，以检测潜在的<strong>安全性和可维护性</strong>问题。</li>
+<li><strong>数据集</strong>：采用 <strong>SWE-bench Lite</strong> 数据集，它包含来自11个Python库的300个真实世界的问题-拉取请求对。</li>
+<li><strong>实验模型</strong>：选取了三种具有代表性的LLM进行对比评估：<strong>GPT-4o、Claude 4 Sonnet 和 DeepSeek-Reasoner</strong>。</li>
+</ul>
+
+<p><strong>B. 三阶段实验流程</strong></p>
+
+<ul>
+<li><p><strong>第一阶段：基线评估 (Baseline Evaluation)</strong></p>
+
+<ul>
+<li><strong>任务</strong>：让各LLM针对数据集中的问题生成初始代码补丁。</li>
+<li><strong>评估</strong>：首先验证补丁的<strong>功能正确性</strong>。对于功能正确的补丁，进一步测量其基线性能指标，包括<strong>运行时、内存使用</strong>，并通过CodeQL扫描评估其<strong>安全性和可维护性</strong>分数。</li>
+</ul></li>
+<li><p><strong>第二阶段：过滤与提示设计 (Filter and Prompt Design)</strong></p>
+
+<ul>
+<li><strong>任务</strong>：从基线结果中筛选出所有模型都能正确解决的实例，以进行公平比较。</li>
+<li><strong>设计</strong>：基于CodeQL的分析报告和性能数据，设计出针对特定NFQC的<strong>优化提示（Optimization Prompts）</strong>。例如，为提升安全性，提示会包含显式的安全问题描述和改进要求。</li>
+</ul></li>
+<li><p><strong>第三阶段：特定NFQC的再生成与评估 (NFQC-specific Regeneration and Evaluation)</strong></p>
+
+<ul>
+<li><strong>任务</strong>：使用第二阶段设计的优化提示，引导LLM对同一问题重新生成代码补丁。</li>
+<li><strong>评估</strong>：对新生成的补丁重复第一阶段的完整评估流程。通过比较优化前后补丁在各项NFQC指标上的变化，量化分析优化提示的效果以及不同NFQCs之间的<strong>权衡（Trade-offs）</strong>。</li>
+</ul></li>
+</ul>
+
+<h6><strong>3. 主要发现与权衡分析</strong></h6>
+
+<ul>
+<li><p><strong>NFQC优化的复杂性与权衡</strong>：研究发现，对某一NFQC的优化往往以牺牲其他特性为代价。</p>
+
+<ul>
+<li><strong>运行时/内存优化</strong>：通常能取得积极效果，但运行时优化有时会显著增加内存消耗。</li>
+<li><strong>安全性/可维护性优化</strong>：效果不稳定，甚至常常导致<strong>功能正确性下降</strong>。例如，安全性优化提示下的补丁解决率显著降低，表明模型在优化安全性的同时难以维持原有功能。</li>
+</ul></li>
+<li><p><strong>模型间的性能差异</strong>：不同模型在特定优化任务上表现出各自的专长。</p>
+
+<ul>
+<li><strong>Claude-Sonnet 4</strong> 在可维护性、安全性和运行时优化下展现出较高的解决率。</li>
+<li><strong>DeepSeek-Reasoner</strong> 在内存优化方面表现最佳。</li>
+<li><strong>GPT-4o</strong> 在某些优化中表现出矛盾的结果，显示其在平衡NFQCs与功能正确性方面存在挑战。</li>
+</ul></li>
+<li><p><strong>质量风险</strong>：通过复合风险评分（<code>risk_score</code>）量化发现，LLM生成的补丁通常会触发比人类编写的“金标准补丁”更多的、尤其是高严重性的可维护性规则，这揭示了潜在的质量风险。</p></li>
+</ul>
+
+<hr />
+
+<h5><strong>四、 最终建议与未来展望</strong></h5>
+
+<p>基于以上研究，本论文提出的最终解决方案核心是：<strong>将强验证机制（如静态分析工具）深度集成到LLM的代码生成管道中，实现实时反馈和质量控制。</strong></p>
+
+<ol>
+<li><p><strong>集成强验证机制</strong>：在代码生成和优化的每个阶段，都应嵌入静态分析工具（如CodeQL）和自动化检测器。这能在代码被接受前就识别出NFQC问题，并提供结构化反馈，从而有效控制技术债务的累积。</p></li>
+<li><p><strong>开发NFQC感知工具</strong>：未来的研究应致力于开发更先进的评估工具和模型优化策略，帮助LLM更好地理解和平衡不同NFQCs之间的关系，而不是进行简单的零和博弈。</p></li>
+<li><p><strong>持续的产学研合作</strong>：继续与行业实践者合作，确保研究方向与实际开发需求保持一致，共同完善LLM生成代码的质量保证生态系统。</p></li>
+</ol>
+
+<p>通过这一系列系统化的方法，本研究为在现实软件工程实践中安全、可持续地应用AI生成代码奠定了坚实的基础。</p>
+
+<h3>实验设计</h3>
+
+<p>本研究采用混合方法进行，主要包括三个部分：
+1.  <strong>文献与行业调研</strong>: 进行了系统的文献回顾（涵盖超过100篇论文）和两次行业研讨会，以全面了解当前的研究现状和行业需求。
+2.  <strong>实证研究</strong>: 设计了一个三阶段的实验流程来评估多种LLM（如GPT-4o, Claude-Sonnet, DeepSeek）在SWE-bench Lite基准上的表现：
+    *   <strong>阶段一：基线评估</strong>: 生成代码补丁并评估其功能正确性及各项NFQC的基线水平。
+    *   <strong>阶段二：提示设计</strong>: 基于基线分析结果，设计针对特定NFQC的优化提示。
+    *   <strong>阶段三：优化后评估</strong>: 使用新提示重新生成补丁，并与基线结果进行比较，分析NFQC的改善情况及权衡关系。
+3.  <strong>环境控制</strong>: 所有实验在隔离的Docker环境中进行，以确保评估结果的一致性和可复现性。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验主要使用<strong>SWE-bench Lite</strong>数据集，该数据集包含来自11个真实Python开源项目的300个问题-拉取请求对。此外，研究还引用了其他用于评估安全性的数据集，如SecurityEval和DevGPT。</li>
+<li><strong>代码</strong>: 论文片段中未提供本研究的具体代码库链接，但提及了所用数据集的公开来源（如SWE-bench的GitHub仓库）。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果验证了核心假设，主要发现如下：
+- <strong>质量差距</strong>: LLM生成的代码补丁在NFQCs方面普遍劣于人类编写的黄金标准补丁，尤其是在运行时间、内存使用以及可维护性（触发更多静态分析警告）方面。
+- <strong>权衡效应</strong>: 优化一个NFQC（如可维护性）往往会导致其他方面（如功能正确性或性能）的下降，证实了NFQCs之间存在复杂的权衡关系。
+- <strong>模型差异</strong>: 不同的LLM在NFQC优化方面表现出不同的专长和弱点。例如，GPT-4o在某些指标上表现较好，但在另一些指标上则不如其他模型。
+- <strong>优化有效性</strong>: 针对性优化提示确实能在一定程度上改善特定NFQC，但效果不稳定，有时会牺牲功能正确性。</p>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>问题识别与系统化分析</strong>: 首次系统地揭示了LLM在代码生成中普遍缺乏NFQC“意识”的根本问题，并量化了其与人类编写代码的质量差距。</li>
+<li><strong>弥合产学差距</strong>: 通过文献综述和行业研讨会，明确了学术界和工业界在代码质量关注点上的差异，并为未来的研究指明了更贴近实践的方向。</li>
+<li><strong>提出评估与优化框架</strong>: 设计并验证了一套系统的实验流程，用于评估和优化LLM生成代码的NFQCs，为后续研究提供了可复用的方法论。</li>
+<li><strong>提供实证见解</strong>: 提供了关于不同NFQCs之间权衡关系的宝贵实证数据，为开发者在实际工作流中有效利用LLM并管理技术债务提供了重要指导。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.10271v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-14 16:33:32</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
