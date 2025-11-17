@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarsRL: Advancing Multi-Agent Reasoning System via Reinforcement Learning with Agentic Pipeline Parallelism</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MarsRL: Advancing Multi-Agent Reasoning System via Reinforcement Learning with Agentic Pipeline Parallelism</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">多代理推理系统</span>
+                
+                <span class="keyword-badge">强化学习</span>
+                
+                <span class="keyword-badge">个性化可验证奖励机制</span>
+                
+                <span class="keyword-badge">管道并行训练</span>
+                
+                <span class="keyword-badge">奖励噪声</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Tencent Hunyuan Team</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.511</span>
+                <span class="paper-id">arXiv ID: 2511.11373v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.11373v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-15/14119f2070f4017402c2aa12153690d99c293f1fab67d64d3ae40b97c538a8e1.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了MarsRL框架，通过强化学习优化多代理推理系统，解决了开源模型在复杂推理任务中的性能不足。MarsRL引入个性化可验证奖励机制和管道并行训练，显著减少奖励噪声并提高训练效率。实验结果显示，模型在AIME2025和BeyondAIME任务上的准确率分别提升至93.3%和73.8%，展示了该方法的有效性和广泛适用性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决多代理推理系统中的几个核心挑战：
+1.  <strong>推理深度与泛化能力</strong>：单一推理机制因输出长度限制导致推理深度不足。现有的多代理系统在开源大语言模型上泛化能力差，主要因为缺乏有效的批评和修正能力。
+2.  <strong>训练效率与奖励噪声</strong>：在处理长轨迹时，多代理系统的生成和训练过程计算效率低下，延迟显著。同时，在多阶段任务中，错误的判断会导致不合理的奖励分配（奖励噪声），影响训练效果。
+3.  <strong>采样策略</strong>：在验证-修正（V-C）推理系统中，如何选择有效的采样策略来提升验证者的性能，进而提高整个系统的表现，是一个关键问题。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>：通过强化学习（RL）联合优化多代理系统中的求解器（Solver）、验证器（Verifier）和修正器（Corrector），可以显著提高系统的整体推理性能。</li>
+<li><strong>关键机制</strong>：
+<ul>
+<li>引入代理特定的、可验证的奖励机制，可以减少奖励噪声，使奖励更准确地反映各代理的实际表现。</li>
+<li>采用管道并行（Pipeline Parallel）的训练方法，可以提高处理长轨迹的效率，减少训练延迟。</li>
+<li>使用自适应采样策略，优先处理错误样本，可以有效提升验证者的错误检测能力。</li>
+</ul></li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>多代理推理系统</strong>：特别是验证-修正（V–C）推理范式，如Huang &amp; Yang (2025)的研究。</li>
+<li><strong>强化学习（RL）应用</strong>：包括强化学习与可验证奖励（RLVR）、GRPO方法（一种PPO的替代方案）以及用于处理超长输出任务的UloRL框架。</li>
+<li><strong>奖励分配机制</strong>：强化学习中的奖励分配和噪声处理。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>MarsRL：一个用于多代理推理的强化学习框架的详细解决方案</strong></h3>
+
+<p>论文中提出的解决方案名为 <strong>MarsRL</strong>，它是一个创新的代理强化学习（Agentic Reinforcement Learning）框架。该框架的核心目标是通过引入<strong>代理管道并行性（Agentic Pipeline Parallelism）</strong>来优化多代理推理系统，从而显著提升开放源代码模型在复杂推理任务中的性能、准确性和训练效率。</p>
+
+<h4><strong>一、 核心架构：多代理推理系统</strong></h4>
+
+<p>MarsRL的基础是一个模仿人类解决复杂问题策略的多代理系统。该系统由三个关键角色的代理组成，它们协同工作，通过迭代的方式深化推理过程：</p>
+
+<ul>
+<li><strong>Solver (求解者)</strong>：负责接收原始问题，并生成一个初步的解决方案。</li>
+<li><strong>Verifier (验证者)</strong>：负责审查Solver（或后续Corrector）生成的解决方案，检测其中潜在的错误或缺陷。</li>
+<li><strong>Corrector (修正者)</strong>：根据Verifier提供的反馈，对存在错误的解决方案进行修正和优化。</li>
+</ul>
+
+<p><strong>工作流程</strong>如下：
+1.  <strong>初步生成</strong>：Solver生成初始解决方案。
+2.  <strong>错误检测</strong>：Verifier评估该方案，并识别出问题。
+3.  <strong>迭代修正</strong>：Corrector根据Verifier的反馈进行修正。这个过程可以迭代进行，直到生成满意的解决方案或达到预设的终止条件。</p>
+
+<p>这种结构通过分工合作，将复杂的推理任务分解为生成、验证和修正三个子任务，从而增强了推理的深度和鲁棒性。</p>
+
+<h4><strong>二、 关键创新与核心机制</strong></h4>
+
+<p>为了解决传统多代理系统面临的<strong>奖励噪声</strong>和<strong>训练效率低下</strong>两大挑战，MarsRL引入了两项核心创新：</p>
+
+<h5><strong>1. 代理式可验证奖励 (Agentic Verifiable Rewards)：解决奖励噪声问题</strong></h5>
+
+<p>在传统的多代理强化学习中，奖励通常在整个任务轨迹结束后统一分配，这会导致“信用分配”问题。例如，一个优秀的Solver可能因为一个糟糕的Verifier的错误判断而受到惩罚，这种奖励噪声会严重干扰训练过程。</p>
+
+<p>MarsRL通过为每个代理设计<strong>特定且可验证的奖励机制</strong>来解决此问题，奖励直接与参考答案（Ground Truth）挂钩：</p>
+
+<ul>
+<li><strong>Solver 和 Corrector 的奖励</strong>：它们的奖励取决于其生成的解决方案是否与参考答案一致。如果匹配，则获得正奖励；反之，则受到负奖励。</li>
+<li><strong>Verifier 的奖励</strong>：它的奖励基于其<strong>判断的准确性</strong>。如果Verifier正确地识别了方案中的错误，它会获得正奖励。然而，如果它错误地将一个正确的解决方案标记为错误（假阳性），则会受到严厉的负奖励。</li>
+</ul>
+
+<p>这种机制确保了每个代理的奖励都精确地反映其自身表现，极大地减少了奖励噪声，使训练信号更清晰、更有效。</p>
+
+<h5><strong>2. 代理管道并行性 (Agentic Pipeline Parallelism)：提升训练效率</strong></h5>
+
+<p>多代理系统的另一个挑战是长轨迹带来的计算效率问题。等待整个“生成-验证-修正”轨迹完成后再进行训练，会导致大量的计算资源闲置和时间延迟。</p>
+
+<p>MarsRL借鉴了计算领域的<strong>管道并行（Pipeline Parallelism）</strong>思想，将训练过程分解为代理级别的管道：</p>
+
+<ul>
+<li><strong>即时训练队列</strong>：一旦任何一个代理（如Solver）完成了其解码步骤，其输出（连同样本信息）会<strong>立即被添加</strong>到全局训练队列中，而无需等待后续代理完成工作。</li>
+<li><strong>并行处理</strong>：所有代理在每个时间步骤生成的结果被聚合起来，共同用于模型训练。这显著缩短了从生成样本到开始训练之间的时间延迟。</li>
+<li><strong>分段回滚 (Segment Rollout)</strong>：该框架还结合了分段回滚策略，有效处理长序列解码，进一步提升了在长尾分布任务上的训练效率。</li>
+</ul>
+
+<h4><strong>三、 实现细节与优化策略</strong></h4>
+
+<p>为了进一步提升框架性能，MarsRL还引入了以下关键的实现策略：</p>
+
+<h5><strong>1. 负-正自适应采样策略 (Negative-Positive Adaptive Sampling)</strong></h5>
+
+<p>如何为下游代理选择输入样本至关重要。MarsRL探索了三种采样策略，并发现<strong>自适应采样</strong>效果最佳：</p>
+
+<ul>
+<li><strong>策略描述</strong>：该策略让代理优先从前一个代理的输出中选择“有价值”的样本进行学习。
+<ul>
+<li><strong>Verifier</strong> 优先采样那些被判定为<strong>错误</strong>的解决方案（即来自Solver或Corrector的奖励为0的输出）。</li>
+<li><strong>Corrector</strong> 优先采样那些被Verifier<strong>正确识别出错误</strong>的轨迹（即来自Verifier的奖励为1的输出）。</li>
+</ul></li>
+<li><strong>优势</strong>：这种策略迫使模型专注于学习如何识别和修正错误，显著提高了Verifier的错误检测准确率和召回率，从而带动了整个系统的性能提升。</li>
+</ul>
+
+<h5><strong>2. 分组代理回滚 (Grouped Agentic Rollouts)</strong></h5>
+
+<p>为了确保不同代理生成的样本具有可比性，从而让模型能够学习到高质量响应与次优响应之间的细微差别，MarsRL采用了分组回滚机制。该机制确保同一组内的样本基于共享的输入进行解码，增强了训练的稳定性和辨别能力。</p>
+
+<h4><strong>四、 实验结果与验证</strong></h4>
+
+<p>论文通过在Qwen3-30B模型上应用MarsRL框架进行了实验验证。结果表明，该框架取得了显著的性能提升：
+*   在 <strong>AIME2025</strong> 数据集上，准确率从 <strong>86.5%</strong> 提升至 <strong>93.3%</strong>。
+*   在 <strong>BeyondAIME</strong> 数据集上，准确率从 <strong>64.9%</strong> 提升至 <strong>73.8%</strong>。</p>
+
+<p>这些结果有力地证明了MarsRL框架在增强多代理推理系统方面的有效性和巨大潜力。</p>
+
+<h3><strong>总结</strong></h3>
+
+<p><strong>MarsRL</strong> 通过一个结构化的<strong>多代理系统</strong>（Solver, Verifier, Corrector）、创新的<strong>代理式可验证奖励机制</strong>和高效的<strong>代理管道并行训练方法</strong>，成功地解决了多代理推理系统中的奖励噪声和训练效率低下的核心问题。结合<strong>自适应采样</strong>等优化策略，该框架显著提升了模型在复杂推理任务中的准确性和鲁棒性，为未来多代理系统的研究和应用开辟了新的方向。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型与基准</strong>：将MarsRL框架应用于Qwen3-30B-A3B-Thinking-2507模型，并在AIME2025和BeyondAIME这两个复杂的推理任务基准上进行评估。</li>
+<li><strong>评估方法</strong>：
+<ul>
+<li>比较应用MarsRL前后模型的准确率，以量化其改进效果。</li>
+<li>对比不同采样策略（自适应、随机、负-正平衡）对系统性能的影响。</li>
+<li>训练过程中，每个代理最多进行五次回滚迭代，并交替进行验证和修正。</li>
+</ul></li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了AIME-2025和BeyondAIME基准数据集。</li>
+<li><strong>代码</strong>：相关的训练模型、多代理系统和评估脚本均已开源，可在以下地址获取：https://github.com/liushulinle/MarsRL</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能显著提升</strong>：应用MarsRL后，模型在基准测试上的准确率大幅提高：
+<ul>
+<li>在AIME2025任务上，准确率从86.5%提升至93.3%。</li>
+<li>在BeyondAIME任务上，准确率从64.9%提升至73.8%。</li>
+</ul></li>
+<li><strong>组件有效性</strong>：实验证明，提出的可验证奖励机制有效减少了噪声，而自适应采样策略在准确性和召回率上显著优于其他策略。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li>提出了<strong>MarsRL框架</strong>，通过强化学习联合优化多代理系统，有效提升了开源模型在复杂推理任务上的性能。</li>
+<li>通过引入<strong>个性化可验证奖励</strong>和<strong>管道并行训练</strong>，成功解决了多代理系统中的奖励噪声和长轨迹训练效率低下的问题。</li>
+<li>验证了<strong>自适应采样策略</strong>在提升验证-修正（V-C）系统性能方面的有效性。</li>
+<li>通过在公开基准上的实验，证明了该框架的有效性，为多代理推理系统的研究和应用提供了新的思路和方法。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.11373v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-17 17:20:35</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

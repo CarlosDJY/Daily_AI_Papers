@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exposing Weak Links in Multi-Agent Systems under Adversarial Prompting</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Exposing Weak Links in Multi-Agent Systems under Adversarial Prompting</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">多智能体系统</span>
+                
+                <span class="keyword-badge">安全性评估</span>
+                
+                <span class="keyword-badge">安全脆弱性</span>
+                
+                <span class="keyword-badge">集中式架构</span>
+                
+                <span class="keyword-badge">去中心化架构</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Microsoft Research, EPFL, IIIT</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.351</span>
+                <span class="paper-id">arXiv ID: 2511.10949v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.10949v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-15/50dc56a16e402784a8fa1ab1d9a6b90a61f03f846ed8b17b754280967f6b56d6.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了SafeAgents框架和Dharma度量，旨在系统性评估多智能体系统（MAS）的安全性。通过分析不同设计选择对安全脆弱性的影响，SafeAgents揭示了集中式和去中心化架构的潜在风险，强调了安全设计的重要性。Dharma度量则帮助识别MAS中的薄弱环节，为未来的安全改进提供指导。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决多智能体系统（MAS）在面对对抗性提示时的安全脆弱性问题。当前的研究主要集中在单一智能体的安全评估，缺乏对MAS因其复杂架构和设计选择（如集中式vs去中心化、规划与执行分离）而引入的新型脆弱性的系统性理解。现有的评估框架和指标无法有效捕捉和定位这些架构设计中的弱点，这在MAS被广泛应用于金融、医疗等关键领域的背景下，构成了严重的安全隐患。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：多智能体系统的具体设计选择（如架构模式、子智能体的自主性、任务委派机制）显著影响其对抗性提示下的安全性和脆弱性。通过一个系统性的评估框架和细粒度的诊断度量，可以揭示这些设计选择如何导致安全漏洞，识别系统中的“薄弱环节”，并最终指导设计更安全的MAS。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>单智能体安全机制</strong>：包括对抗性提示的攻击成功率（ASR）和拒绝率（RR）等评估指标。</li>
+<li><strong>多智能体系统框架</strong>：如MAST，它引入了MAS失败的分类法。</li>
+<li><strong>LLM安全性研究</strong>：包括通过强化学习和指令调优进行的人类偏好对齐。</li>
+<li><strong>代理防御机制</strong>：如GuardAgent、AGRail和ShieldAgent等。</li>
+<li><strong>安全基准测试</strong>：如AgentHarm、RedCode、SafeArena和Agent Security Bench (ASB)。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>这篇论文提出了一套综合性的解决方案，旨在系统性地评估多代理系统（MAS）在面对对抗性提示时的安全性和脆弱性。该方案的核心在于，不仅要评估系统最终的输出结果，更要深入分析其内部架构和设计选择如何影响整体安全性。为此，论文引入了两个关键组件：<strong>SAFEAGENTS框架</strong> 和 <strong>DHARMA指标</strong>。</p>
+
+<hr />
+
+<h4><strong>1. SAFEAGENTS：一个统一的安全评估框架</strong></h4>
+
+<p>SAFEAGENTS是一个统一、模块化且可扩展的框架，专为多代理系统的细粒度安全评估而设计。它解决了现有评估方法中缺乏对系统内部结构进行分析的问题，提供了一个能够在架构层面进行系统性比较和脆弱性识别的平台。</p>
+
+<h5><strong>核心目的</strong></h5>
+
+<ul>
+<li><strong>识别“弱链接”</strong>：系统性地揭示MAS中的设计选择（如规划策略、任务委派、代理间上下文共享等）如何导致安全漏洞，并识别出允许不安全任务继续执行的脆弱点。</li>
+<li><strong>促进设计意识</strong>：通过强调架构设计在安全性中的关键作用，帮助开发者在构建MAS时避免常见的安全陷阱。</li>
+<li><strong>提供统一基准</strong>：创建一个公平的比较平台，使得不同架构（如集中式、去中心化、混合式）的MAS可以在相同的安全基准和任务上进行评估。</li>
+</ul>
+
+<h5><strong>实现与架构</strong></h5>
+
+<p>为了实现跨不同MAS库（如Magentic、LangGraph、Autogen）的一致性评估，SAFEAGENTS采用了一种框架无关的实现方法，其核心在于高层次的抽象设计：</p>
+
+<ol>
+<li><p><strong>设计原语抽象</strong>：框架将不同MAS架构中的核心操作（如规划、委派、通信、执行）抽象为标准化的“设计原语”。这使得研究人员可以抛开具体实现的差异，专注于设计决策本身对安全性的影响。</p></li>
+<li><p><strong>模块化实现层</strong>：SAFEAGENTS通过定义一系列核心类来封装代理、工具和任务，实现了模块化和可重用性。</p>
+
+<ul>
+<li><strong><code>Agent</code> 类</strong>：配置代理的能力，包括其可使用的工具、系统提示和任务委派目标。</li>
+<li><strong><code>Tool</code> 类</strong>：通过装饰器模式抽象代理可操作的环境，使其与具体实现解耦。</li>
+<li><strong><code>Team</code> 类</strong>：作为关键抽象，它提供了一个一致的接口来创建不同架构（如集中式或去中心化）的代理团队，确保了实验的一致性和可重复性。</li>
+<li><strong><code>Dataset</code> 类</strong>：定义任务集合和评估工作流，内置了对安全指标（如ARIA和DHARMA）的支持，简化了实验设置。</li>
+</ul></li>
+</ol>
+
+<p>通过这种设计，研究者可以灵活地组合和测试不同的设计选择，而无需为每个框架重写大量代码。</p>
+
+<hr />
+
+<h4><strong>2. DHARMA：一个设计意识的风险评估指标</strong></h4>
+
+<p>为了对评估结果进行深入的诊断分析，论文提出了DHARMA（Design-Aware Harm Assessment Metric，设计意识的危害评估指标）。与传统的仅关注成功率或拒绝率的指标不同，DHARMA是一个细粒度的诊断工具，旨在精确定位导致任务失败或不安全执行的具体原因。</p>
+
+<h5><strong>核心目的</strong></h5>
+
+<ul>
+<li><strong>细粒度故障归因</strong>：明确指出MAS中是哪个组件（如规划者、子代理）或哪个设计决策导致了对有害提示的错误处理。</li>
+<li><strong>揭示失败模式</strong>：通过对代理执行轨迹的分析，识别并分类不同的失败模式，例如“规划者发出了警告但子代理忽略了警告”。</li>
+<li><strong>指导设计改进</strong>：为开发者提供具体、可操作的反馈，帮助他们理解不同设计选择的安全影响，从而优化系统架构。</li>
+</ul>
+
+<h5><strong>实现与过程</strong></h5>
+
+<p>DHARMA通过一个决策树模型来分类代理的执行轨迹。它将代理的行为分为两个主要层面进行分析：</p>
+
+<ul>
+<li><strong>规划者级行为 (Planner-Level Behaviors)</strong>：评估顶层规划者或协调者在面对有害请求时的反应，例如是直接拒绝、发出警告还是生成了有害计划。</li>
+<li><strong>子代理级行为 (Sub-Agent-Level Behaviors)</strong>：评估执行具体任务的子代理是否具备识别和拒绝有害指令的能力，尤其是在上下文信息不完整的情况下。</li>
+</ul>
+
+<p>通过这种分层分类，DHARMA能够清晰地揭示出安全漏洞的根源，例如，一个系统可能因为“上下文碎片化”导致子代理盲目执行有害指令，即使规划者本身具备一定的安全意识。</p>
+
+<hr />
+
+<h4><strong>3. 实证分析与关键发现</strong></h4>
+
+<p>论文利用SAFEAGENTS框架和DHARMA指标，对五种主流的MAS架构在多个安全基准（如AgentHarm、ASB）上进行了广泛的实证分析。研究揭示了几个重要的发现：</p>
+
+<ul>
+<li><p><strong>集中式架构的脆弱性</strong>：研究发现，集中式架构（由一个中央协调者进行规划和任务分配）尤其容易受到攻击。其主要弱点包括：</p>
+
+<ol>
+<li><strong>缺乏有效的后备机制</strong>：当规划者拒绝生成计划时，系统没有明确的指令来停止后续流程，导致子代理可能继续执行危险操作。</li>
+<li><strong>上下文碎片化</strong>：子代理通常只接收到原子指令，缺乏对高层任务意图的理解，因此难以独立判断其行为的安全性。</li>
+<li><strong>规划与执行的分离</strong>：一旦计划生成，执行阶段往往会机械地遵循，缺乏在执行过程中对计划安全性的动态重评估。</li>
+</ol></li>
+<li><p><strong>设计选择的重要性</strong>：分析结果有力地证明了规划策略、代理自主性和提示工程等设计选择对系统整体安全性的巨大影响。简单的基于提示的缓解措施（例如，在指令中增加安全提醒）已经显示出显著的安全提升效果。</p></li>
+</ul>
+
+<hr />
+
+<h4><strong>结论与贡献</strong></h4>
+
+<p>综上所述，该论文的解决方案通过 <strong>SAFEAGENTS框架</strong> 和 <strong>DHARMA指标</strong> 的结合，为多代理系统的安全性研究提供了以下核心贡献：</p>
+
+<ol>
+<li><strong>一个系统性的评估框架</strong>：提供了一个统一的平台，用于在架构层面系统地评估和比较不同MAS的安全性。</li>
+<li><strong>一个精细化的诊断工具</strong>：通过DHARMA指标，实现了对安全故障的根本原因进行准确定位，从而指导具体的设计改进。</li>
+<li><strong>深刻的实证洞见</strong>：通过广泛的实验，揭示了特定设计模式（尤其是集中式架构）中普遍存在的安全弱点，并强调了在设计之初就融入安全考量的重要性。</li>
+</ol>
+
+<p>该解决方案不仅填补了现有研究的空白，也为开发更安全、更可靠的下一代多代理系统提供了坚实的理论基础和实践指导。</p>
+
+<h3>实验设计</h3>
+
+<p>实验使用SAFEAGENTS框架对五种广泛采用的多智能体架构（包括集中式、去中心化和混合变体，如Autogen, LangGraph, OpenAI Agents等）进行了综合评估。这些架构在四个不同的安全基准（如AgentHarm, ASB）上进行了测试，这些基准涵盖了网络任务、工具使用和代码生成等多种场景。实验通过DHARMA度量来分析和比较不同架构的执行轨迹，以揭示其各自的失败模式和安全脆弱性。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>代码</strong>：已在GitHub上公开：https://github.com/microsoft/SafeAgents</li>
+<li><strong>数据集</strong>：实验中使用了多个公开的安全基准，包括AgentHarm、RedCode和Agent Security Bench (ASB)。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果表明，SAFEAGENTS框架和DHARMA度量能够有效地识别由MAS设计选择引发的安全脆弱性。主要发现包括：
+- <strong>架构影响</strong>：集中式MAS并不天生比单智能体更安全，在某些基准测试中甚至表现出更高的攻击成功率。而去中心化架构在需要丰富上下文的任务中表现更佳。
+- <strong>失败模式</strong>：发现了规划阶段和执行阶段之间显著的安全性能差异。例如，某些模型在规划阶段很脆弱（容易制定有害计划），但在执行阶段的子代理却能有效识别并拒绝执行有害任务。
+- <strong>有效性</strong>：DHARMA度量成功地对失败原因进行了归因，揭示了系统中的薄弱环节。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出SAFEAGENTS框架</strong>：为多智能体系统的安全评估提供了一个统一、可扩展且与具体实现无关的解决方案。</li>
+<li><strong>引入DHARMA度量</strong>：创建了一种新颖的细粒度诊断工具，能够精确定位MAS中的安全弱点，并对不同架构的脆弱性进行量化比较。</li>
+<li><strong>提供实证见解</strong>：通过对多种主流MAS架构的综合研究，揭示了设计选择对安全性的关键影响，并为未来设计更安全、更鲁棒的多智能体系统提供了重要的指导和建议。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.10949v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-17 17:20:35</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
