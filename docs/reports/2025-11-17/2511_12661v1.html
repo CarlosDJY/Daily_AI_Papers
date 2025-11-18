@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reason-KE++: Aligning the Process, Not Just the Outcome, for Faithful LLM Knowledge Editing</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Reason-KE++: Aligning the Process, Not Just the Outcome, for Faithful LLM Knowledge Editing</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">忠实性差距</span>
+                
+                <span class="keyword-badge">推理过程</span>
+                
+                <span class="keyword-badge">阶段感知奖励机制</span>
+                
+                <span class="keyword-badge">推理准确性</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Shanghai Jiao Tong University, The University of Sydney, Shenzhen Campus of Sun Yat-sen University, Nanyang Technological University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.426</span>
+                <span class="paper-id">arXiv ID: 2511.12661v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.12661v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-17/1d093e088de1e42063c18e29179bb1a3edd77678e0278f231a2b0ef1c2200128.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Reason-KE++框架，旨在解决大型语言模型（LLMs）在复杂多跳推理任务中的“忠实性差距”问题。通过引入阶段感知奖励机制，该框架提供对推理过程的密集监督，显著提升了模型的推理准确性和鲁棒性，最终在MQUAKE-CF-3k数据集上实现了95.48%的准确率，超越了现有方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在复杂多跳推理和知识编辑任务中存在的“忠实性差距”或“可信度差距”问题。具体挑战包括：
+1.  <strong>事实幻觉</strong>：LLMs 强大的参数先验知识会覆盖更新后的新事实，导致模型输出与新知识不符的错误答案。
+2.  <strong>推理过程不可靠</strong>：现有的监督微调（SFT）方法倾向于优化格式模仿而非健全的推理，而传统的强化学习（RL）方法因奖励信号稀疏（只关注最终答案），无法有效指导中间推理步骤，导致模型可能通过“幸运猜测”得到正确答案，推理过程本身并不可靠。
+3.  <strong>鲁棒性差</strong>：现有模型在面对复杂场景（如多跳推理、多知识点编辑）以及冗余或无关的干扰信息时，性能会显著下降。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过对推理过程进行结构化分解，并引入过程级的密集监督，可以显著提升LLM在复杂推理任务中的忠实性、准确性和鲁棒性。具体来说：
+- <strong>过程监督优于结果监督</strong>：为推理的每个中间步骤（如问题分解、子问题回答）提供明确的奖励，比仅仅奖励最终答案更能引导模型学习到正确且可靠的推理路径。
+- <strong>阶段感知奖励机制</strong>：一个精心设计的“阶段感知奖励”（Stage-aware Reward）机制能够有效解决奖励稀疏问题，减少模型的“快捷学习”现象，并增强其处理复杂和带干扰信息场景的能力。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>知识编辑（KE）方法</strong>：包括参数修改方法（如 ROME, MEMIT）和参数保持方法。</li>
+<li><strong>多跳问答与推理模型</strong>：包括作为基线的 Reason-KE，以及 MeLLo, PokeMQA, EditCoT, RAE 等。</li>
+<li><strong>学习范式</strong>：监督微调（SFT）和强化学习（RL），如 RLHF, DPO 等。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出的解决方案是<strong>Reason-KE++</strong>，这是一个创新的两阶段框架，旨在解决大型语言模型（LLM）在处理多跳知识编辑任务时存在的“忠实性缺口”（Faithfulness Gap）或“可信度差距”（Credibility Gap）问题。传统方法，尤其是基于监督微调（SFT）的方法，常常导致模型产生事实幻觉或通过“捷径学习”得到正确答案，但其推理过程并不可靠。Reason-KE++通过结合<strong>监督微调（SFT）</strong>和<strong>强化学习（RL）</strong>，并引入一种新颖的<strong>阶段感知奖励（Stage-aware Reward）机制</strong>，来确保模型推理过程的逻辑一致性、可解释性和忠实性。</p>
+
+<h4><strong>一、 Reason-KE++ 框架概述</strong></h4>
+
+<p>Reason-KE++的核心目标是训练模型构建一个透明且可靠的推理链，而不仅仅是输出正确的最终答案。为此，它将复杂的推理任务结构化为三个主要步骤：</p>
+
+<ol>
+<li><strong>确认（Acknowledge）</strong>：模型首先确认更新后的新知识与输入查询的相关性。</li>
+<li><strong>分解（Decompose）</strong>：然后将复杂的多跳问题分解为一系列更简单、可独立验证的子问题。</li>
+<li><strong>行动（Act）</strong>：最后，模型依次回答这些子问题，并基于这些中间答案推导出最终解决方案。</li>
+</ol>
+
+<p>整个推理过程被封装在<code>&lt;think&gt;...&lt;/think&gt;</code>标签内，并通过特定的标记来区分以上三个阶段，确保了输出的结构化和可解析性。</p>
+
+<h4><strong>二、 两阶段训练管道</strong></h4>
+
+<p>为了实现上述目标，Reason-KE++采用了包含两个核心阶段的训练管道：</p>
+
+<p><strong>阶段一：冷启动监督微调（Cold-Start Supervised Fine-Tuning, SFT）</strong></p>
+
+<p>此阶段的目标是为模型“冷启动”，即教授其基本的结构化推理模式。</p>
+
+<ul>
+<li><strong>目的</strong>：让模型学习如何遵循预定义的“确认-分解-行动”推理格式，为后续的强化学习阶段奠定基础。</li>
+<li><strong>过程</strong>：研究人员使用高级教师模型（如GPT-4o-mini）和结构化提示模板，生成高质量的逐步推理示例。这些数据经过严格的验证协议，以纠正格式错误并剔除不合格样本，从而保证训练数据的质量和一致性。通过对这些高质量示例进行微调，模型初步掌握了生成连贯推理链的能力。</li>
+</ul>
+
+<p><strong>阶段二：阶段感知的强化学习（Stage-aware Reinforcement Learning, RL）</strong></p>
+
+<p>在模型具备了基础推理能力后，此阶段通过一个精细的奖励机制对其进行优化，以增强推理的忠实性和鲁棒性。这是Reason-KE++的核心创新所在。</p>
+
+<ul>
+<li><strong>目的</strong>：解决传统RL中奖励信号稀疏（只奖励最终结果）导致模型走捷径的问题。通过提供密集的过程级反馈，激励模型在推理的每一步都保持高质量。</li>
+<li><p><strong>核心机制：阶段感知奖励（Stage-aware Reward）</strong>：
+该机制将奖励函数分解为多个结构化组件，对推理过程进行全方位评估：</p>
+
+<ol>
+<li><p><strong>格式验证（Format Validation）</strong>：
+这是评估的第一步。系统会严格检查模型的输出是否遵循预定义的标签结构（如<code>&lt;think&gt;</code>, <code>&lt;decompose&gt;</code>, <code>&lt;action&gt;</code>等是否正确配对和排序）。任何格式违规都会导致一个固定的惩罚分数（如-1.0），并终止后续评估。这强制模型学习生成结构化、可解析的输出。</p></li>
+<li><p><strong>过程分数（Process Score）</strong>：
+这是奖励机制的核心，用于评估推理过程本身的质量。它由三个子分数构成：</p>
+
+<ul>
+<li><strong>跳数分数（Hop Score）</strong>：评估模型是否正确识别了解决问题所需的推理“跳数”（即子问题的数量）。</li>
+<li><strong>分解分数（Decomposition Score）</strong>：使用预训练的句子变换器，通过计算余弦相似度来评估模型生成的子问题与标准答案中子问题的质量和相关性。</li>
+<li><strong>子答案分数（Sub-answer Score）</strong>：检查模型对每个子问题的回答是否正确，分数与正确子答案的比例成正比。</li>
+</ul></li>
+<li><p><strong>结果分数（Outcome Score）</strong>：
+这部分评估最终答案的准确性，通常通过计算模型最终答案与标准答案之间的F1分数来实现。</p></li>
+</ol>
+
+<p><strong>最终奖励分数</strong>是过程分数和结果分数的加权组合。通过这种方式，训练信号从稀疏的“对或错”转变为密集的、多维度的反馈，使模型能够精确地知道其推理链中哪个环节存在缺陷，从而有效地学习复杂的推理策略。</p></li>
+</ul>
+
+<h4><strong>三、 性能、优势与贡献</strong></h4>
+
+<ul>
+<li><p><strong>显著的性能提升</strong>：在多个知识编辑基准测试中，Reason-KE++表现出色。例如，在MQuAKE-CF-3k数据集上，其多跳问答准确率达到了<strong>95.48%</strong>，相比之前的Reason-KE方法提升了5.28%。</p></li>
+<li><p><strong>增强的鲁棒性</strong>：该框架能够有效忽略无关的干扰信息。实验表明，在面对严重干扰时，其性能下降幅度远小于其他基线方法（如MeLLo、EditCoT），证明了其强大的鲁棒性。</p></li>
+<li><p><strong>缓解捷径学习</strong>：通过对中间推理步骤的明确奖励，Reason-KE++有效防止了模型为了得到正确答案而构建不合逻辑的推理路径，确保了推理过程的忠实性。例如，在处理NASA总部位置更新的问题时，传统模型可能依赖旧的参数知识错误地回答“休斯顿”，而Reason-KE++则能通过分解推理，正确利用新知识得出“华盛顿特区”。</p></li>
+<li><p><strong>主要贡献</strong>：</p>
+
+<ol>
+<li>提出了创新的两阶段框架，通过阶段感知奖励机制显著提升了LLM推理的忠实性。</li>
+<li>通过密集的过程级监督，有效增强了模型的鲁棒性并缓解了捷径学习问题。</li>
+<li>在复杂的知识编辑和多跳问答任务中取得了业界领先的性能，为构建更可信赖的LLM奠定了坚实的基础。</li>
+</ol></li>
+</ul>
+
+<p>总之，Reason-KE++通过其独特的两阶段训练管道和精细的阶段感知奖励机制，成功地将模型的优化重点从<strong>“结果正确”</strong>转移到了<strong>“过程忠实”</strong>，从而在复杂推理任务中实现了更高的准确性、鲁棒性和可解释性。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验主要在多个知识编辑基准上进行，核心数据集包括 <strong>MQuAKE</strong>（特别是 MQuAKE-CF-3k子集）和 <strong>DUNE</strong>。训练数据也使用了 <strong>COUNTERFACT</strong> 数据集。</li>
+<li><strong>评估方法</strong>：将 Reason-KE++ 与多个基线模型（如 Reason-KE, ROME, MeLLo, EditCoT）进行性能比较。</li>
+<li><strong>鲁棒性测试</strong>：通过在数据中引入干扰信息来评估模型的鲁棒性。</li>
+<li><strong>消融研究</strong>：通过逐步引入奖励机制的不同组件，分析每个部分对模型整体性能的贡献，以验证过程监督的必要性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：MQuAKE, DUNE, COUNTERFACT。</li>
+<li><strong>代码</strong>：相关代码和数据可在以下链接获取：https://github.com/YukinoshitaKaren/Reason-KE</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能卓越</strong>：Reason-KE++ 在多个知识编辑和多跳问答基准上均取得了最先进（SOTA）的性能，尤其是在高复杂度场景下表现远超其他方法。</li>
+<li><strong>准确率提升</strong>：在 MQuAKE-CF-3k 数据集上，Reason-KE++ 实现了 <strong>95.48%</strong> 的多跳问答准确率，相比基线 Reason-KE 提升了约5%。</li>
+<li><strong>鲁棒性强</strong>：在存在严重干扰信息的情况下，Reason-KE++ 仍能保持高性能，展现了其卓越的鲁棒性。</li>
+<li><strong>验证假设</strong>：消融实验证实，过程导向的奖励机制是提升模型推理能力的关键，简单地应用结果导向的强化学习反而可能导致推理完整性的崩溃。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出 Reason-KE++ 框架</strong>：通过引入过程级忠实性，有效解决了LLM在复杂知识编辑和多跳推理任务中的“忠实性差距”问题。</li>
+<li><strong>设计阶段感知奖励机制</strong>：将稀疏的奖励信号转化为密集、多维的过程监督，显著提升了模型学习复杂推理策略的能力，并有效减轻了快捷学习和事实幻觉。</li>
+<li><strong>实现 SOTA 性能</strong>：在多个具有挑战性的基准上取得了最先进的结果，为构建更可靠、更可信的LLM推理系统提供了新的思路和有效方法。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.12661v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-18 17:00:02</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

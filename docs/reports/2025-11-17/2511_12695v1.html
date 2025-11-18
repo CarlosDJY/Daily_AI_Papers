@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Closer Look at Personalized Fine-Tuning in Heterogeneous Federated Learning</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>A Closer Look at Personalized Fine-Tuning in Heterogeneous Federated Learning</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">个性化微调</span>
+                
+                <span class="keyword-badge">联邦学习</span>
+                
+                <span class="keyword-badge">异构数据</span>
+                
+                <span class="keyword-badge">特征失真</span>
+                
+                <span class="keyword-badge">线性探测后全参数微调</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of British Columbia, Vector Institute, McMaster University, University of Southern California</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.310</span>
+                <span class="paper-id">arXiv ID: 2511.12695v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.12695v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-17/faeef7018e1bb336b096974071f63cb0d36e57d9d78dd5625bc3f3dc66d47288.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为LP-FT（线性探测后全参数微调）的方法，旨在解决联邦学习中个性化与全局通用性之间的平衡问题。通过分阶段微调，LP-FT有效减轻了特征失真现象，提升了模型在异构数据环境下的性能。实验结果表明，LP-FT在多种数据集上优于传统微调方法，提供了稳健的个性化解决方案。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决联邦学习（FL）中的一个核心挑战：在客户端数据异构（非独立同分布，non-IID）的背景下，如何平衡模型的<strong>本地个性化</strong>（local personalization）与<strong>全局通用性</strong>（global generalization）。传统的个性化微调（PFT）方法在适应本地数据时，容易导致模型过拟合，进而引发“特征失真”（feature distortion）问题，即破坏了全局模型学习到的通用特征表示，最终损害了模型在全球未见数据上的性能。这是一个在联邦学习应用中长期存在且日益重要的问题。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，一种名为<strong>LP-FT（Linear Probing followed by Fine-Tuning）</strong>的两阶段微调策略，能够有效缓解本地过拟合和特征失真问题。通过首先进行线性探测（固定特征提取器，仅训练分类头）来稳定模型表示，然后再进行全参数微调，LP-FT可以更好地平衡个性化适应和全局知识的保持，从而在各种数据异质性（如协变量偏移和概念偏移）下，实现优于传统微调方法的本地和全局性能。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>联邦学习（FL）与个性化联邦学习（PFL）</strong>：包括FedAvg、FedProx等基础算法。</li>
+<li><strong>模型微调（Fine-Tuning）策略</strong>：涵盖了全参数微调（Full FT）、线性探测（Linear Probing）、稀疏微调（Sparse FT）、近端微调（Proximal FT）以及模型汤（Model Soup）等方法。</li>
+<li><strong>参数高效微调（PEFT）</strong>：如LoRA和Adapter等方法。</li>
+<li><strong>特征失真与分布偏移</strong>：涉及对协变量（covariate）和概念（concept）转变的理论分析和研究。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h4><strong>一、 问题背景：联邦学习中的个性化挑战</strong></h4>
+
+<p>在异构联邦学习（Heterogeneous Federated Learning）环境中，不同客户端（如不同医院或设备）的数据分布通常存在显著差异，即非独立同分布（non-IID）。这种数据异质性带来了两大核心挑战：</p>
+
+<ol>
+<li><strong>个性化过拟合（Personalization Overfitting）</strong>：当一个全局模型在客户端的本地数据上进行微调时，它很容易过度拟合本地数据的特性，从而损害其在其他客户端数据上的泛化能力。</li>
+<li><strong>联邦特征失真（Federated Feature Distortion）</strong>：全局模型通过联合训练学习到了通用的、鲁棒的特征表示。然而，在本地进行的全参数微调（Full Fine-Tuning）可能会破坏这些宝贵的共享特征，导致模型全局性能下降。</li>
+</ol>
+
+<p>传统的个性化联邦学习方法试图在“本地适应性”（个性化）和“全局泛化能力”之间找到平衡，但往往难以兼顾。本文提出的LP-FT策略正是为了系统性地解决这一难题。</p>
+
+<h4><strong>二、 核心解决方案：LP-FT 的两阶段微调策略</strong></h4>
+
+<p>LP-FT是一种简单而高效的<strong>后处理微调（Post-hoc Fine-Tuning, PFT）</strong>方法，它在标准的全局联邦学习训练结束之后，在每个客户端本地执行。其核心思想是将微调过程分为两个有序的阶段，以保护全局特征并实现稳健的个性化。</p>
+
+<h5><strong>阶段一：线性探测（Linear Probing, LP）</strong></h5>
+
+<p>这是LP-FT策略的第一步，也是最关键的一步。</p>
+
+<ul>
+<li><p><strong>目的</strong>：</p>
+
+<ul>
+<li><strong>保护全局特征</strong>：此阶段的核心目标是在不干扰或破坏全局模型学习到的通用特征表示的前提下，使模型初步适应客户端的本地数据分布。</li>
+<li><strong>稳定个性化过程</strong>：通过限制参数更新范围，避免因全参数微调带来的剧烈模型变化，从而降低个性化过拟合的风险。</li>
+</ul></li>
+<li><p><strong>过程</strong>：</p>
+
+<ol>
+<li><strong>初始化</strong>：客户端接收到训练好的全局模型，并将其作为本地模型的起点。</li>
+<li><strong>冻结特征提取器</strong>：客户端将模型的特征提取器部分（即除最后一层之外的所有层）的参数<strong>冻结</strong>，使其在训练中保持不变。</li>
+<li><strong>仅更新分类器</strong>：客户端仅使用其本地数据来训练和更新模型的最后一层，即<strong>线性分类器（或称为“头”）</strong>。</li>
+</ol></li>
+</ul>
+
+<p>通过这种方式，模型可以在保留全局知识的同时，快速调整其决策边界以适应本地数据的标签分布（概念转移）。</p>
+
+<h5><strong>阶段二：全参数微调（Full Fine-Tuning, FT）</strong></h5>
+
+<p>在线性探测完成后，模型进入第二个微调阶段。</p>
+
+<ul>
+<li><p><strong>目的</strong>：</p>
+
+<ul>
+<li><strong>深化局部适应</strong>：在已经通过LP阶段对齐了分类器的基础上，进一步微调所有参数，使整个模型（包括特征提取器）能够更精细地适应本地数据的特征（协变量转移）。</li>
+<li><strong>提升本地性能</strong>：允许模型进行更全面的调整，以在本地测试集上取得更高的性能。</li>
+</ul></li>
+<li><p><strong>过程</strong>：</p>
+
+<ol>
+<li><strong>解锁所有参数</strong>：在线性探测训练出的模型基础上，客户端解锁所有模型参数。</li>
+<li><strong>全面更新</strong>：使用本地数据对整个模型进行微调，通常进行数个训练周期，以实现最终的个性化。</li>
+</ol></li>
+</ul>
+
+<p>由于第一阶段的线性探测已经为模型提供了一个良好的起点，第二阶段的全参数微调引发的特征失真风险被大大降低，从而实现了更优的平衡。</p>
+
+<h4><strong>三、 理论支撑与分析</strong></h4>
+
+<p>论文通过理论分析证明了LP-FT的优越性。研究表明：
+*   传统的全参数微调（FT）在梯度更新时，可能会导致特征提取器显著偏离其预训练状态，尤其是在存在<strong>概念转移（Concept Shift）</strong>的情况下，这对全局性能是毁灭性的。
+*   LP-FT通过先进行线性探测，有效地保持了共享特征的稳定性，从而在理论上能够更好地应对概念转移，并获得更低的全局损失。</p>
+
+<h4><strong>四、 实验评估与结果</strong></h4>
+
+<p>为了验证LP-FT的有效性，论文在多个数据集（如Digit5, CIFAR10-C, CheXpert等）和多种个性化微调基线（如Proximal FT, Sparse FT, Soup FT等）上进行了系统性评估。</p>
+
+<ul>
+<li><p><strong>评估指标</strong>：</p>
+
+<ul>
+<li><strong>局部准确率 (Local Accuracy)</strong>：衡量模型在客户端自身测试集上的性能，反映个性化程度。</li>
+<li><strong>全局准确率 (Global Accuracy)</strong>：衡量模型在所有其他客户端测试集上的平均性能，反映泛化能力。</li>
+<li><strong>平均准确率 (Average)</strong>：上述两者的平均值，用于评估个性化与泛化之间的整体权衡。</li>
+</ul></li>
+<li><p><strong>实验结论</strong>：
+实验结果一致表明，LP-FT在大多数数据集和异质性设置下，均取得了<strong>最高或接近最高的全局准确率和平均准确率</strong>。这证明了LP-FT在有效缓解联邦特征失真、平衡个性化与泛化方面，显著优于其他微调方法。</p></li>
+</ul>
+
+<h4><strong>五、 优势与应用场景</strong></h4>
+
+<ul>
+<li><p><strong>核心优势</strong>：</p>
+
+<ul>
+<li><strong>简单高效</strong>：相比于需要复杂服务器-客户端协调的集成式个性化方法，LP-FT实现简单，仅需在客户端本地进行两阶段微调。</li>
+<li><strong>灵活性与可扩展性</strong>：LP-FT是一种“即插即用”的框架，可以轻松集成到任何标准的联邦学习流程之后。</li>
+<li><strong>性能卓越</strong>：在极端数据异质性下依然表现稳健，有效解决了特征失真问题。</li>
+</ul></li>
+<li><p><strong>应用场景</strong>：</p>
+
+<ul>
+<li><strong>医疗健康</strong>：在不同医院间进行联邦学习时，模型既要适应本院患者的数据特性，又要能泛化到其他医院的患者群体。</li>
+<li><strong>金融风控</strong>：不同地区或机构的金融数据分布不同，LP-FT可以帮助构建既具本地特色又具全局视野的风控模型。</li>
+<li><strong>多客户端学习</strong>：任何数据分布不均的多客户端环境，如移动设备上的个性化推荐、物联网设备的数据分析等。</li>
+</ul></li>
+</ul>
+
+<h4><strong>六、 总结</strong></h4>
+
+<p>综上所述，<strong>LP-FT</strong>通过一个巧妙的<strong>“先探测、后微调”</strong>的两阶段策略，为异构联邦学习中的个性化问题提供了一个理论坚实、实证有效且易于实施的解决方案。它通过优先保护全局共享特征，成功地缓解了局部微调带来的特征失真问题，从而在模型的本地适应性和全局泛化能力之间取得了出色的平衡。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验在多个公开数据集上进行，以模拟不同的数据分布和异质性场景，主要包括Digit5、CIFAR10-C、CIFAR100-C、CheXpert和CelebA。</li>
+<li><strong>实验设置</strong>：在标准的联邦学习（如FedAvg）训练得到一个全局模型后，在各个客户端上应用LP-FT策略，并与其他多种微调基线方法（如Full FT, Sparse FT, Proximal FT等）进行比较。</li>
+<li><strong>评估场景</strong>：实验涵盖了不同的数据分布偏移情况，如协变量偏移和概念偏移（通过标签翻转等方式模拟），以全面评估不同方法的鲁棒性。</li>
+<li><strong>评估指标</strong>：同时评估模型的本地性能（在客户端本地测试集上的准确率）和全局性能（在全局统一测试集上的准确率）。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<p>论文的代码和实验数据公开在以下地址：
+<a href="https://github.com/MinghuiChen43/PFT">https://github.com/MinghuiChen43/PFT</a></p>
+
+<h3>实验结果</h3>
+
+<p>实验结果一致表明，<strong>LP-FT</strong>在多个数据集和各种异质性设置下，其综合性能（本地和全局准确率）均优于其他被比较的微调方法。具体而言：
+- LP-FT能够有效缓解本地微调带来的过拟合和全局性能下降问题。
+- 相比于直接进行全参数微调，LP-FT在保持甚至提升全局性能的同时，也实现了良好的本地个性化效果。
+- 实验结果强有力地支持了LP-FT能够有效减轻特征失真，并成功平衡个性化与通用性的核心假设。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>问题识别与分析</strong>：系统地识别并分析了个性化联邦学习中，传统微调方法导致的“特征失真”问题，并阐明了其对全局性能的负面影响。</li>
+<li><strong>提出LP-FT方法</strong>：提出了一种简单而有效的两阶段微调策略（LP-FT），作为解决上述问题的强有力基线。</li>
+<li><strong>广泛的实证验证</strong>：通过在多个数据集和多样化的异质性场景下的广泛实验，证明了LP-FT相较于其他微调方法的优越性。</li>
+<li><strong>提供实践指导</strong>：为在联邦学习中部署稳健、高效的个性化模型提供了可行的指导原则和新的研究思路。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.12695v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-18 17:00:02</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
