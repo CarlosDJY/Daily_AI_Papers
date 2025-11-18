@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangam: Chiplet-Based DRAM-PIM Accelerator with CXL Integration for LLM Inferencing</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sangam: Chiplet-Based DRAM-PIM Accelerator with CXL Integration for LLM Inferencing</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">芯粒</span>
+                
+                <span class="keyword-badge">存内计算</span>
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">CXL集成</span>
+                
+                <span class="keyword-badge">内存瓶颈</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of Virginia, University of California, San Diego</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.460</span>
+                <span class="paper-id">arXiv ID: 2511.12286v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.12286v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-16/b0f61df7eaad7aa8f7fbfb1acea7b1871a667f250560d0a1aa2d8fe52ffce331.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为Sangam的基于芯粒的存内计算（PIM）架构，旨在解决大型语言模型推理中的内存瓶颈问题。通过将逻辑和内存解耦，并集成先进的处理组件，Sangam显著提升了查询延迟和解码吞吐量，分别实现了最高3.93倍和10.3倍的加速，同时降低了能耗，展示了其在LLM推理中的优越性能。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）推理过程中日益严重的<strong>内存瓶颈</strong>问题。随着模型规模的扩大，推理过程变得高度依赖内存带宽，导致现有硬件（如GPU）面临性能、能效和成本方面的挑战。具体问题包括：
+- <strong>性能瓶颈</strong>：内存带宽限制了关键计算（如GEMM）的速度，导致高延迟和低吞吐量。
+- <strong>效率低下</strong>：传统架构在处理特定形状的计算任务时，计算单元利用率不高，且大量数据在计算和内存单元之间的移动造成了性能损失。
+- <strong>高能耗与成本</strong>：数据移动是主要的能量消耗来源，而当前依赖昂贵多GPU集群的解决方案成本高昂。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过采用一种<strong>基于芯粒（Chiplet）的存内计算（Processing-In-Memory, PIM）架构</strong>，可以有效缓解内存瓶颈，从而显著提升LLM推理的性能（降低延迟、提高吞吐量）和能效。该架构通过将计算单元更紧密地集成到内存旁，减少了数据移动，并利用专门的设计优化了内存密集型计算。实验结果表明，该架构（名为Sangam）在多种LLM模型和配置下，其查询延迟和解码吞吐量均显著优于NVIDIA H100 GPU。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的相关研究涵盖了多个领域：
+- <strong>存内计算（PIM）技术</strong>：借鉴了先前的PIM架构设计，包括基于DRAM和GDDR的解决方案。
+- <strong>LLM加速器</strong>：与现有的LLM推理硬件进行比较，如NVIDIA H100 GPU以及其他专用加速器（TPU、Cerebras、Graphcore）。
+- <strong>硬件架构与互联技术</strong>：涉及芯粒（Chiplet）设计、脉动阵列（Systolic Arrays）优化以及用于连接计算和内存资源的CXL（Compute Express Link）技术。
+- <strong>性能建模与仿真</strong>：利用DRAM模拟工具和任务图调度算法来构建和评估新架构。</p>
+
+<h3>解决方案</h3>
+
+<h3><strong>面向大语言模型推理的完整解决方案：Sangam 架构</strong></h3>
+
+<p>本文提出了一种名为 <strong>Sangam</strong> 的创新计算架构，它是一个基于芯片组（Chiplet）的DRAM-PIM（Processing-In-Memory，内存中处理）加速器，旨在从根本上解决当前大语言模型（LLM）推理平台面临的内存带宽与容量瓶颈问题。通过将计算单元更紧密地集成到内存中，Sangam提供了一种高性能、高能效且成本效益显著的解决方案，可作为高端GPU的替代或补充。</p>
+
+<hr />
+
+<h4><strong>一、核心挑战与 Sangam 的设计目标</strong></h4>
+
+<p>当前LLM推理平台主要面临三大挑战：
+1.  <strong>内存瓶颈</strong>：LLM庞大的模型权重和KV缓存需求超出了传统加速器（如GPU）的内存容量和带宽，导致计算单元利用率低下。
+2.  <strong>高昂成本</strong>：依赖多个高端GPU和服务器的部署方案成本高昂，限制了LLM应用的普及。
+3.  <strong>计算效率</strong>：LLM推理中的某些计算（如解码阶段的GEMV）是内存绑定而非计算绑定的，传统架构难以高效处理。</p>
+
+<p>Sangam的设计目标正是为了应对这些挑战，通过创新的PIM架构提供一个可扩展、高效且经济的计算增强内存系统。</p>
+
+<hr />
+
+<h4><strong>二、Sangam 的核心架构设计</strong></h4>
+
+<p>Sangam的核心在于其模块化的芯片组设计，它将逻辑和内存分离，并通过先进的接口技术实现高效协同。</p>
+
+<ol>
+<li><p><strong>创新的芯片组（Chiplet）设计</strong></p>
+
+<ul>
+<li><strong>逻辑与内存分离</strong>：Sangam将传统的单片DRAM设计分解为独立的<strong>逻辑芯片组</strong>和<strong>内存芯片组</strong>，两者通过一个中介层（Interposer）连接。这种设计允许逻辑和内存在各自最优的工艺节点上制造，从而最大化性能和成本效益。</li>
+<li><strong>高带宽内部访问</strong>：通过将传统DRAM芯片的中央控制逻辑（如列解码器、银行接口）移至逻辑芯片组，Sangam能够直接访问所有DRAM银行的全部内部带宽，提供高达 <strong>400 GB/s</strong> 的聚合带宽给计算单元，消除了传统架构中昂贵的银行间通信开销。</li>
+</ul></li>
+<li><p><strong>先进的处理组件</strong></p>
+
+<ul>
+<li><strong>小型并行脉冲阵列 (Systolic Arrays)</strong>：逻辑芯片组内集成了多个小型的8x8脉冲阵列。这种设计特别适合处理LLM推理中常见的“扁平”GEMM（通用矩阵乘法）操作，即使在批量较小的情况下也能保持高并行性和计算单元利用率。</li>
+<li><strong>专用计算单元</strong>：除了脉冲阵列，逻辑芯片还集成了FP16 SIMD乘法器、加法树、最大值归约树等专用单元，用于高效处理元素级操作、激活函数（如Softmax）和注意力计算，避免了资源浪费。</li>
+</ul></li>
+<li><p><strong>灵活的CXL接口与可扩展性</strong></p>
+
+<ul>
+<li>Sangam模块通过 <strong>CXL (Compute Express Link)</strong> 接口与主机CPU和存储系统连接。这使得Sangam可以作为一种计算增强的内存设备，被主机直接访问，从而简化了模型权重和推理请求的加载流程。</li>
+<li>相比于占用CPU内存控制器通道的传统DIMM形态PIM，CXL连接的Sangam模块具有更强的可扩展性，允许系统轻松扩展内存容量和计算能力。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>三、工作原理：执行流程与数据映射</strong></h4>
+
+<p>为了充分发挥硬件潜力，Sangam采用了一套高效的执行流程和分层的数据映射方案。</p>
+
+<ol>
+<li><p><strong>执行流程</strong></p>
+
+<ul>
+<li><strong>初始化</strong>：启动时，Sangam驱动程序通过板载的<strong>DMA（直接内存访问）引擎</strong>将模型权重和推理程序从主存加载到Sangam模块的DRAM中。</li>
+<li><strong>推理请求</strong>：主机接收到推理请求后，通过驱动将输入数据传输到Sangam模块。</li>
+<li><strong>执行与完成</strong>：Sangam模块独立执行推理计算，完成后通过中断通知主机。这种离散的内存空间设计和高效的数据传输机制确保了低延迟响应。</li>
+</ul></li>
+<li><p><strong>分层张量映射与分区方案</strong>
+为了高效执行GEMM等操作，Sangam采用了一套数据放置感知的层次化映射策略，以最大化并行性并最小化数据移动：</p>
+
+<ul>
+<li><strong>排名级（Rank-level）分区</strong>：将模型权重和KV缓存分配到不同的物理排名上，例如，两个排名专用于注意力计算（存储KV缓存），另外两个专用于投影计算（存储权重），实现了计算和存储的解耦。</li>
+<li><strong>芯片级（Chip-level）分区</strong>：在一个排名内部，利用16个芯片的并行性，通过头分区（Head Partitioning）或列分区（Columnar Partitioning）等策略，将计算任务分解到各个芯片，避免了不必要的芯片间通信。</li>
+<li><strong>银行级（Bank-level）分区</strong>：在芯片内部，权重矩阵按行进行分区，并以轮询方式分配到各个DRAM银行，确保每个银行的脉冲阵列负载均衡。</li>
+</ul></li>
+</ol>
+
+<p>此外，Sangam采用<strong>输入静态（Input-Static）数据流</strong>策略，最大化输入数据的重用率，进一步降低了对内存带宽的需求。</p>
+
+<hr />
+
+<h4><strong>四、性能评估框架：HARMONI</strong></h4>
+
+<p>为了准确评估Sangam架构的性能，论文开发了一个名为 <strong>HARMONI</strong> 的自定义分层PIM架构评估框架。
+*   <strong>功能</strong>：HARMONI能够对内存系统（DRAM配置、网络）、LLM推理程序（张量分配）和任务映射进行建模。
+*   <strong>流程</strong>：它将LLM推理过程编译成一个任务图，并将图中的计算节点映射到Sangam的硬件单元上，最终通过模拟估算出端到端延迟、吞吐量、功耗和成本。
+*   <strong>作用</strong>：HARMONI不仅验证了Sangam设计的有效性，也为未来PIM架构的研究提供了一个强大的评估工具。</p>
+
+<hr />
+
+<h4><strong>五、性能表现与核心优势</strong></h4>
+
+<p>通过HARMONI框架的评估，Sangam在与NVIDIA H100 GPU等顶级加速器的对比中展现出显著优势：</p>
+
+<ol>
+<li><p><strong>卓越的性能提升</strong>：</p>
+
+<ul>
+<li><strong>查询延迟</strong>：在不同输入、输出和批量大小下，Sangam实现了 <strong>3.93倍至4.22倍</strong> 的端到端查询延迟加速。</li>
+<li><strong>解码吞吐量</strong>：解码性能提升尤为突出，达到了 <strong>9.5倍至10.3倍</strong> 的提升，有效解决了GPU在解码阶段内存带宽受限的问题。</li>
+</ul></li>
+<li><p><strong>出色的能源效率</strong>：</p>
+
+<ul>
+<li>分析表明，系统 <strong>85%-95%</strong> 的能耗来自于DRAM数据访问。Sangam通过PIM架构将计算移到数据附近，极大地减少了数据移动，从而实现了显著的能量节省。</li>
+<li>其逻辑芯片的整体功率密度仅为 <strong>0.19 W/mm²</strong>，完全符合商业加速器的散热标准。</li>
+</ul></li>
+<li><p><strong>显著的成本效益与可扩展性</strong>：</p>
+
+<ul>
+<li>Sangam提供了一个可作为GPU直接替代品的计算增强内存系统，降低了数据中心在AI推理方面的硬件投入。</li>
+<li>其模块化和基于CXL的设计，为构建具有TB级可扩展内存容量的系统提供了经济高效的途径。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>六、结论</strong></h4>
+
+<p><strong>Sangam</strong> 通过其创新的<strong>芯片组DRAM-PIM架构</strong>，成功地将大容量DDR内存与高性能计算单元（如脉冲阵列）相结合，有效攻克了LLM推理中的“内存墙”问题。它不仅在<strong>查询延迟</strong>和<strong>解码吞吐量</strong>上远超现有顶级GPU，同时在<strong>能效</strong>和<strong>成本</strong>方面也展现出巨大优势。Sangam为未来大规模AI计算平台提供了一个极具竞争力的解决方案，指明了突破内存瓶颈的新方向。</p>
+
+<h3>实验设计</h3>
+
+<p>实验旨在全面评估Sangam架构相对于业界领先基准的性能和能效。
+- <strong>对比基准</strong>：主要与NVIDIA H100 GPU以及先前的PIM架构（如CENT）进行比较。
+- <strong>测试模型</strong>：在多个主流LLM上进行测试，包括LLaMA 2-7B、Mistral-7B和LLaMA 3-70B。
+- <strong>评估负载</strong>：在多种不同的输入长度、输出长度和批量大小（Batch Size）组合下进行测试，以模拟真实的推理场景。
+- <strong>评估指标</strong>：核心指标包括端到端查询延迟、解码吞吐量以及总能量消耗。</p>
+
+<h3>数据集和代码</h3>
+
+<p>在提供的所有论文片段中，均<strong>未提及</strong>具体使用的数据集或提供公开的代码链接。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地证明了Sangam架构的优越性：
+- <strong>性能提升</strong>：与NVIDIA H100 GPU相比，Sangam在端到端查询延迟上实现了最高<strong>3.93倍</strong>的加速，在解码吞吐量上实现了最高<strong>10.3倍</strong>的提升。
+- <strong>能效优势</strong>：Sangam的能耗显著低于H100 GPU和CENT架构。分析表明，数据访问是能耗的主要来源，这凸显了Sangam通过减少数据移动来提升能效的有效性。
+- <strong>广泛适用性</strong>：在所有测试的模型和负载配置下，Sangam均表现出一致的性能优势。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出Sangam架构</strong>：设计并提出了一种新颖、可扩展的基于芯粒的DRAM-PIM加速器，为解决LLM推理的内存瓶颈问题提供了有效的硬件解决方案。
+2.  <strong>引入HARMONI框架</strong>：开发了一个配套的软件和性能建模框架，通过数据放置感知的任务映射和调度策略，充分发挥了PIM硬件的潜力。
+3.  <strong>提供详尽的实验验证</strong>：通过与顶尖商用GPU的全面比较，用实验数据证明了Sangam架构在LLM推理任务的延迟、吞吐量和能效方面的显著优势。</p>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.12286v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-18 16:13:35</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
