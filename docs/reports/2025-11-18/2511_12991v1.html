@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fine-Tuned LLMs Know They Don't Know: A Parameter-Efficient Approach to Recovering Honesty</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fine-Tuned LLMs Know They Don't Know: A Parameter-Efficient Approach to Recovering Honesty</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大语言模型</span>
+                
+                <span class="keyword-badge">诚实性关键神经元恢复</span>
+                
+                <span class="keyword-badge">监督微调</span>
+                
+                <span class="keyword-badge">Hessian引导</span>
+                
+                <span class="keyword-badge">参数效率</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> SKLCCSE, School of Computer Science and Engineering, Beihang University, School of Software, Beihang University, Zhongguancun Laboratory, Beijing</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.500</span>
+                <span class="paper-id">arXiv ID: 2511.12991v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.12991v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-18/ff211390937b279c182a48929eb834fedc4d77880b914809921dd9321fee79b0.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了一种名为“诚实性关键神经元恢复”（HCNR）的方法，旨在解决大语言模型（LLM）在监督微调后诚实性下降的问题。HCNR通过识别并恢复对诚实性至关重要的神经元，同时应用Hessian引导的补偿机制，显著提高模型的诚实性，恢复率达33.25%，且在数据使用和速度上均优于传统方法。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决一个核心问题：大语言模型（LLM）在经过监督微调（SFT）后，其诚实性（即识别并承认自身知识边界的能力）会显著下降。尽管模型内部可能仍然保留着对其知识局限性的认知，但其表达这种不确定性的能力却受到了损害。这是一个重要的问题，因为在金融、医疗等高风险领域，LLM的虚假陈述可能导致严重后果。现有恢复诚实性的方法通常需要大规模的参数调整和大量数据，并且往往以牺牲模型在特定任务上的性能为代价。</p>
+
+<h3>Hypothesis</h3>
+
+<p>论文的核心假设是：LLM在SFT后诚实性的下降，并非源于其自我认知能力的丧失，而是表达能力的受损。因此，可以通过识别并选择性地恢复一小部分对诚实性至关重要的神经元（Honesty-Critical Neurons）到它们预训练时的状态，来有效恢复模型的诚实性，同时通过补偿机制，确保这一过程不会损害模型在下游任务上的性能。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>全局参数调整方法</strong>：先前的工作（如Zhang et al. 2023; Cheng et al. 2024）主要依赖于对模型进行广泛的参数调整来恢复诚实性。</li>
+<li><strong>对齐技术</strong>：研究了如强化学习从人类反馈（RLHF）、直接偏好优化（DPO）、拒绝意识指令调优（RAIT）等技术，用于提升模型的诚实性和安全性。</li>
+<li><strong>神经元功能研究</strong>：相关研究表明，模型中的特定神经元与特定的知识或能力相关联，这为通过神经元层面的干预来修改模型行为提供了理论基础。</li>
+</ul>
+
+<h3><strong>完整的详细解决方案：Honesty-Critical Neurons Restoration (HCNR)</strong></h3>
+
+<h4><strong>引言：问题与核心思想</strong></h4>
+
+<p>大型语言模型（LLMs）在经过监督微调（Supervised Fine-Tuning, SFT）以提升特定任务性能后，常常会丧失其“诚实性”，即无法承认自己知识的边界，倾向于捏造答案。论文提出的解决方案 <strong>Honesty-Critical Neurons Restoration (HCNR)</strong>，旨在精准地解决这一问题。</p>
+
+<p>HCNR的核心思想基于一个关键观察：经过SFT的模型，其<strong>自我知识（self-knowledge）</strong>的能力通常依然保留，但其<strong>自我表达（self-expression）</strong>的能力受到了损害。换言之，模型内心“知道”自己不知道答案，却无法诚实地表达出来。因此，HCNR采取了一种高效的“神经元手术”方法，通过针对性地修复负责诚实性表达的关键神经元，来恢复模型的诚实性，而不是进行代价高昂的全局参数重训练。</p>
+
+<h4><strong>HCNR 框架详解</strong></h4>
+
+<p>HCNR框架通过一个分为两个主要阶段的系统化流程，实现对模型诚实性的恢复，同时最大限度地保留其在下游任务上的性能。</p>
+
+<h5><strong>第一阶段：识别与恢复诚实性关键神经元 (Identification and Restoration)</strong></h5>
+
+<p>此阶段的目标是精确地定位并修复那些在微调过程中受损的、对诚实性表达至关重要的神经元。</p>
+
+<ol>
+<li><p><strong>神经元重要性评估与筛选</strong>：</p>
+
+<ul>
+<li>首先，框架使用<strong>费雪信息矩阵（Fisher Information Matrix）</strong>或二阶泰勒展开式来评估每个神经元对“诚实性任务”和“下游任务”的贡献度。</li>
+<li>通过计算每个神经元在这两类任务中的重要性分数，定义一个优先级。HCNR会优先选择那些<strong>在诚实性任务中贡献高，但在下游任务中贡献低</strong>的神经元作为候选。这一策略确保了恢复过程能精准地作用于诚实性，同时尽量减少对任务性能的干扰。</li>
+</ul></li>
+<li><p><strong>扰动强度量化与识别</strong>：</p>
+
+<ul>
+<li>在候选神经元中，框架会进一步量化它们在SFT过程中所受到的<strong>扰动强度</strong>，即其参数与预训练状态的差异。</li>
+<li>最终，选择那些被严重干扰的神经元作为“诚实性关键神经元（Honesty-Critical Neurons）”。</li>
+</ul></li>
+<li><p><strong>神经元状态恢复</strong>：</p>
+
+<ul>
+<li>将识别出的诚实性关键神经元的参数<strong>恢复到其预训练时的状态</strong>。与此同时，其他负责下游任务的神经元则保持其微调后的参数不变。</li>
+</ul></li>
+</ol>
+
+<h5><strong>第二阶段：Hessian引导的诚实性补偿 (Honesty Compensation)</strong></h5>
+
+<p>简单地恢复神经元会导致新的问题：这些恢复到预训练状态的“诚实”神经元与已经适应了新任务的“任务导向”神经元之间存在<strong>参数不协调（parameter disharmony）</strong>的问题。这可能导致模型性能下降。</p>
+
+<p>为解决此问题，HCNR引入了Hessian引导的补偿机制：</p>
+
+<ol>
+<li><strong>目标</strong>：在不改变已恢复的诚实性关键神经元参数的前提下，对<strong>其他未被恢复的神经元</strong>进行微小、精确的调整，以补偿因恢复操作而引起的性能损失。</li>
+<li><strong>方法</strong>：
+<ul>
+<li>利用<strong>Hessian矩阵的逆</strong>来近似计算模型损失函数对参数的二阶导数。这使得框架能够理解参数间的相互作用关系。</li>
+<li>通过这种方式，HCNR可以进行高效的<strong>二阶优化</strong>，对任务导向的神经元进行微调，使其与恢复后的诚实性神经元重新协调，从而在恢复诚实性的同时，保持甚至提升模型在下游任务上的表现。</li>
+</ul></li>
+</ol>
+
+<h4><strong>总结：HCNR的优势</strong></h4>
+
+<ul>
+<li><strong>精准高效</strong>：通过“神经元手术”而非全局重训练，精准定位并修复问题，大大降低了计算成本和数据需求。</li>
+<li><strong>性能保持</strong>：Hessian引导的补偿机制确保了在恢复诚实性的同时，不会牺牲模型在特定任务上的性能。</li>
+<li><strong>机制洞察</strong>：该方法基于对模型内部工作机制的深刻理解，揭示了SFT对模型诚实性影响的本质。</li>
+</ul>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型与任务</strong>：实验在多个开源LLM（如Llama和Mistral系列）上进行，这些模型在问答数据集（如HotpotQA、MedMCQA）上进行了微调。</li>
+<li><strong>评估基准</strong>：使用专门的诚实性评估基准（如FalseQA和自定义数据集Dhon）来衡量模型的诚实性恢复效果。</li>
+<li><strong>对比实验</strong>：将HCNR与多种基线方法（如RAIT、DPO）进行性能对比。</li>
+<li><strong>消融研究</strong>：通过消融实验验证HCNR框架中各个组件（如神经元识别、补偿机制）的有效性，并测试了不同数据量下的性能。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验中使用了<strong>HotpotQA</strong>和<strong>MedMCQA</strong>进行微调，并使用<strong>FalseQA</strong>和专门构建的<strong>Dhon</strong>数据集进行诚实性评估。</li>
+<li><strong>代码</strong>：论文片段中未提供代码的直接链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的假设。HCNR框架在多个诚实性基准测试中均优于所有基线方法。
+- <strong>高效性</strong>：HCNR在仅使用极少量数据（例如256个样本）和修改少量参数（例如20%）的情况下，就能实现显著的诚实性恢复（恢复率达33.25%），且速度比基线方法快2.23倍以上。
+- <strong>性能平衡</strong>：该方法在显著提升模型诚实性的同时，成功地保持了其在下游任务上的高准确性，实现了诚实性与任务性能的最佳平衡。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>揭示了新机制</strong>：首次提出并验证了SFT导致的模型不诚实行为是表层的“表达能力”问题，而非深层的“自我认知”丧失。</li>
+<li><strong>提出了新框架</strong>：设计并实现了HCNR框架，为恢复LLM的诚实性提供了一种高效、数据节约且性能保持良好的新方法。</li>
+<li><strong>提供了实用方案</strong>：为在高风险领域部署更可信、更安全的AI系统提供了切实可行的技术解决方案，推动了可信AI的发展。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.12991v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 17:24:53</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

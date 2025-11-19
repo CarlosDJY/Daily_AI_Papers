@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCoach: Self-Evolving Web Agents with Cross-Session Memory Guidance</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WebCoach: Self-Evolving Web Agents with Cross-Session Memory Guidance</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">自我演化</span>
+                
+                <span class="keyword-badge">网页代理</span>
+                
+                <span class="keyword-badge">跨会话记忆</span>
+                
+                <span class="keyword-badge">持久记忆</span>
+                
+                <span class="keyword-badge">动态网页环境</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of California, Los Angeles, Amazon</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.523</span>
+                <span class="paper-id">arXiv ID: 2511.12997v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.12997v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-18/1896b672fecdf1add2fbbf1d42485d0b738972420e45012b4ffd44e042b4b27a.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了WebCoach，一个自我演化的框架，旨在解决网页代理在复杂任务中缺乏跨会话记忆的问题。WebCoach通过三个组件（WebCondenser、外部记忆存储和教练）实现持久记忆，支持代理从历史经验中学习，显著提高任务成功率和执行效率。实验结果显示，WebCoach在多个LLM模型上均有效提升了代理性能，展示了其在动态网页环境中的应用潜力。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h3>现有问题</h3>
+
+<p>本文旨在解决当前由大语言模型（LLM）驱动的网页代理在执行长时间、复杂任务时普遍存在的<strong>记忆缺失</strong>问题。现有代理缺乏跨会话学习的能力，导致它们会重复犯错，无法从过去的经验中吸取教训。这限制了代理的长期鲁棒性、适应性和样本效率，尤其是在动态和复杂的真实网页环境中（如UI变化、登录门等），导致其决策效率和成功率低下。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过为网页代理引入一个<strong>持久的、跨会话的记忆框架</strong>，代理可以从自身的历史轨迹（包括成功和失败的经验）中学习和<strong>自我演化</strong>，而无需重新训练基础模型。这种经验驱动的指导机制能够显著提升代理在复杂网页导航任务中的决策质量、任务成功率和执行效率。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域之上，主要包括：
+- <strong>网页自动化与交互代理</strong>：包括传统的网页导航代理、单次会话的错误修正机制等。
+- <strong>代理记忆与学习</strong>：涉及情景重播、情节反思、上下文管理以及自我演化代理等，这些代理能从经验中自我优化。
+- <strong>内存检索机制</strong>：借鉴了高效检索技术（如FAISS、HNSW）来管理和查询经验。
+- <strong>世界模型与过渡抽象</strong>：与代理通过内部模型进行规划和想象的相关研究。</p>
+
+<h3><strong>WebCoach 框架：一个以记忆为中心的网络代理增强解决方案</strong></h3>
+
+<h4><strong>一、 核心问题与目标</strong></h4>
+
+<p>传统的网络浏览代理（Agent）通常缺乏长期记忆，导致它们在执行多步骤、跨会话的复杂任务时，会重复犯错、效率低下，并且无法从过去的经验中学习。</p>
+
+<p>WebCoach 框架旨在解决这一核心问题。其目标是构建一个能够<strong>记住、反思并从自身经验中学习</strong>的智能代理。通过引入持久的跨会话记忆，WebCoach 能够显著增强代理的长期规划、反思和持续学习能力，从而提高其在复杂动态网页环境中的任务成功率和效率。</p>
+
+<h4><strong>二、 整体架构：三大核心组件</strong></h4>
+
+<p>WebCoach 框架采用模块化设计，由三个解耦的核心组件构成。这些组件通过函数调用进行通信，可以在不修改代理内部工作流程的情况下，实现对任何基础模型（如 GPT-4o, Qwen-VL 等）的增强，具有模型无关性。</p>
+
+<ol>
+<li><strong>WebCondenser (信息压缩器)</strong>: 负责将原始、低级的代理导航日志（轨迹）处理并压缩成结构化、语义化的简洁摘要。</li>
+<li><strong>External Memory Store (EMS, 外部记忆存储)</strong>: 一个可扩展的向量数据库，用于持久化存储所有由 WebCondenser 处理过的完整导航经验（情节记忆）。</li>
+<li><strong>Coach (教练)</strong>: 框架的推理和决策引擎。它在运行时检索相关历史经验，并决定是否向代理注入实时的、基于证据的指导建议。</li>
+</ol>
+
+<p><em>（这是一个概念图示，说明了三个组件如何协同工作）</em></p>
+
+<hr />
+
+<h4><strong>三、 组件详解</strong></h4>
+
+<h5><strong>1. WebCondenser：将原始轨迹转化为智慧结晶</strong></h5>
+
+<p>WebCondenser 是数据处理的第一步，其核心功能是将冗长的交互日志转化为有意义的、可供机器理解的摘要。</p>
+
+<ul>
+<li><p><strong>目的</strong>:</p>
+
+<ul>
+<li><strong>规范化与语义化</strong>: 将包含观察、动作和中间状态的低级 JSON 日志，转换为高级的、结构化的语义总结。</li>
+<li><strong>降噪与减负</strong>: 提取关键事件，识别成功/失败模式，减少存储负担，同时保留核心信息以供后续检索和分析。</li>
+</ul></li>
+<li><p><strong>处理过程</strong>:</p>
+
+<ul>
+<li><strong>输入</strong>: 代理在每个环境步骤后生成的 JSON 格式的轨迹文件。</li>
+<li><strong>处理</strong>: 使用一个小型语言模型（LLM）将原始轨迹转换为一个包含以下内容的固定格式摘要：
+<ul>
+<li><strong>概述文本</strong>: 3-5句话总结当前导航阶段的高层结果。</li>
+<li><strong>嵌入向量</strong>: 使用 OpenAI 等模型生成的高维（如1536维）嵌入向量，用于语义相似性搜索。</li>
+<li><strong>最终状态</strong>: 明确标记任务是成功（<code>True</code>）还是失败（<code>False</code>）。</li>
+<li><strong>模式证据</strong>: 记录导致成功的工作流或导致失败的模式（如陷入验证码、页面循环、死胡同等）。</li>
+</ul></li>
+<li><strong>路由</strong>: WebCondenser 会区分<strong>部分轨迹</strong>和<strong>已完成的轨迹</strong>。只有已完成的轨迹（即任务结束，有明确的成功/失败状态）才会被发送到 EMS 进行存储，这确保了记忆库中只包含高质量的完整经验，避免了中间过程的噪声积累。</li>
+</ul></li>
+</ul>
+
+<h5><strong>2. External Memory Store (EMS)：代理的长期记忆大脑</strong></h5>
+
+<p>EMS 是 WebCoach 框架的记忆基础，它积累并组织了代理所有的历史经验。</p>
+
+<ul>
+<li><p><strong>结构与存储</strong>:</p>
+
+<ul>
+<li>EMS 通常实现为一个向量数据库（如使用 FAISS）。</li>
+<li>每个存储的“情节经验”记录都包含：
+<ul>
+<li><strong>嵌入向量</strong>: 用于快速相似性检索。</li>
+<li><strong>摘要文本</strong>: WebCondenser 生成的自然语言摘要。</li>
+<li><strong>元数据</strong>: 包括 <code>episode_id</code>、任务目标、域名/URL、所用模型、总步骤数、时间戳、成功/失败标签等。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>检索机制</strong>:</p>
+
+<ul>
+<li>当代理执行新任务时，其当前的部分轨迹会被 WebCondenser 处理成一个临时摘要和嵌入向量。</li>
+<li>该嵌入向量被用于在 EMS 中进行高效的相似性搜索（如使用 HNSW 算法和归一化点积计算相似度），以检索出最相关的前 K 个（例如 K=5）历史经验。</li>
+</ul></li>
+<li><p><strong>冷启动与可扩展性</strong>:</p>
+
+<ul>
+<li>EMS 可以用来自其他代理的高质量经验进行初始化，解决“冷启动”问题，确保代理从一开始就具备一定的指导能力。</li>
+<li>其设计支持随着经验的不断增加而平滑扩展。</li>
+</ul></li>
+</ul>
+
+<h5><strong>3. Coach：实时决策的智慧向导</strong></h5>
+
+<p>Coach 是框架的“大脑”，它利用从 EMS 检索到的记忆，在运行时为代理提供决策支持。</p>
+
+<ul>
+<li><p><strong>功能</strong>:</p>
+
+<ul>
+<li><strong>实时决策干预</strong>: 在代理的每个决策步骤，Coach 都会接收当前的部分轨迹摘要和检索到的 K 个相关历史记忆。</li>
+<li><strong>建议生成与注入</strong>: Coach 使用一个独立的 LLM（如 8B 模型）来分析这些输入，并决定是否需要干预。
+<ul>
+<li><strong>何时干预？</strong> 当检测到当前情境与历史上的失败模式高度相似时（如遇到 CAPTCHA），或当历史经验中存在明显更优的成功路径时。</li>
+<li><strong>如何干预？</strong> 如果决定干预，Coach 会生成一条简短、明确的指导建议（例如：“避免点击‘下一步’——之前的代理在这里卡住了”或“建议直接使用搜索框查找‘颜色选项’”），并以 JSON 格式作为一条“系统消息”非侵入式地注入到代理的消息历史中。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>优势</strong>:</p>
+
+<ul>
+<li><strong>非侵入性</strong>: Coach 的建议作为外部信息提供给代理，不改变代理本身的内部策略网络，保持了原模型的完整性。</li>
+<li><strong>基于证据</strong>: 所有建议都源自真实的历史经验，具有很强的说服力和实用性。</li>
+<li><strong>提高可靠性</strong>: 通过实时反馈，有效避免重复错误，引导代理走向更优的解决方案，从而在无需重新训练的情况下持续提升其性能。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 自我演变与持续学习</strong></h4>
+
+<p>WebCoach 最强大的特性之一是其<strong>动态自我演变</strong>的能力。</p>
+
+<ul>
+<li><strong>过程</strong>: 代理每完成一个新任务，其完整的导航轨迹就会经过 WebCondenser 处理后存入 EMS。这个过程是自动且持续的。</li>
+<li><strong>效果</strong>:
+<ul>
+<li>代理的记忆库会随着执行任务数量的增加而动态丰富。</li>
+<li>代理能够从自己最近的成功和失败中学习，形成一个与其自身行为模式（归纳偏见）高度一致的经验库。</li>
+<li>这种自我生成的经验比外部提供的示范更具可操作性和适应性，使代理能够随着时间的推移变得越来越“聪明”。</li>
+</ul></li>
+</ul>
+
+<h4><strong>五、 实验效果与结论</strong></h4>
+
+<ul>
+<li><strong>性能提升</strong>: 在 WebVoyager 基准测试中，WebCoach 框架显著提升了多种基础模型（如 Qwen, Skywork）的任务成功率。例如，将一个 38B 模型的任务成功率从 47% 提升到 61%，且不增加平均任务步骤。</li>
+<li><strong>效率优化</strong>: 框架设计中考虑了评估效率，通过并行任务处理（如最长处理时间优先调度）和异步评估策略，可将大规模基准测试的总评估时间减少超过80%。</li>
+</ul>
+
+<p><strong>结论</strong>: WebCoach 框架提供了一个实用且可扩展的架构，成功地为网络代理赋予了长期记忆和从经验中学习的能力。它标志着网络代理设计从单纯依赖即时上下文，转向了<strong>以记忆为中心的指导范式</strong>，是构建能够持续改进、自我反思的智能代理的关键一步。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准测试</strong>：实验主要在 <strong>WebVoyager</strong> 基准上进行，该基准包含643个需要在真实在线环境中完成的浏览任务。</li>
+<li><strong>实验环境</strong>：所有评估均在真实的 Chrome 浏览器环境中进行，以确保结果的现实性和有效性。</li>
+<li><strong>评估配置</strong>：实验比较了多种配置下的代理性能：
+<ul>
+<li><strong>基线</strong>：没有 WebCoach 的代理。</li>
+<li><strong>静态记忆</strong>：使用 WebCoach，但 EMS 是预先填充好且固定的（Frozen EMS）。</li>
+<li><strong>动态记忆</strong>：使用 WebCoach，且代理在完成任务后会用新的经验动态更新 EMS（Dynamic EMS），实现自我演化。</li>
+</ul></li>
+<li><strong>模型对比</strong>：在多个不同的 LLM 基础模型（如 Qwen 系列、Skywork-38B、GPT-4o）上验证了 WebCoach 的通用性和有效性。</li>
+<li><strong>分析方法</strong>：除了定量的成功率和步骤数统计，还对代理在复杂网站（如 Apple、Amazon）上的行为进行了定性分析。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了 <strong>WebVoyager</strong> 基准测试。</li>
+<li><strong>代码</strong>：代码和相关资源已在 GitHub 上公开：<a href="https://github.com/genglinliu/WebCoach">https://github.com/genglinliu/WebCoach</a></li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能显著提升</strong>：WebCoach 显著提高了代理的任务成功率。例如，在使用 Skywork-38B 模型时，成功率从 <strong>47.3% 提升至 61.4%</strong>，增加了14.1个百分点。</li>
+<li><strong>效率更高</strong>：在提高成功率的同时，代理完成任务所需的平均步骤数也得到减少或保持在较低水平，证明了效率的提升。</li>
+<li><strong>自我演化有效</strong>：动态 EMS 的表现优于静态 EMS，表明代理通过自我生成的经验进行持续学习是有效的。</li>
+<li><strong>通用性强</strong>：WebCoach 在多个不同的开源 LLM 上均展现出了一致的性能提升。</li>
+<li><strong>行为改进</strong>：定性分析表明，配备 WebCoach 的代理在执行任务时表现出更清晰的高层规划能力和更少的冗余行为。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li>提出了 <strong>WebCoach</strong>，一个新颖的、无需重新训练即可让网页代理实现<strong>跨会话学习和自我演化</strong>的框架。</li>
+<li>引入了一种<strong>以记忆为中心</strong>的网页代理设计新范式，并详细阐述了其三大核心组件（WebCondenser, EMS, Coach）的功能和协同机制。</li>
+<li>通过在 WebVoyager 基准上的大规模真实环境实验，有力地证明了该框架能够<strong>显著提升代理的成功率、效率和鲁棒性</strong>。</li>
+<li>展示了持久记忆可以有效缩小开源 LLM 代理与顶尖专有模型（如 GPT-4o）在复杂网页任务中的性能差距，为构建更强大、更具适应性的自主代理提供了新的方向。</li>
+</ol>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.12997v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 17:24:53</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

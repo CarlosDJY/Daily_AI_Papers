@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live-SWE-agent: Can Software Engineering Agents Self-Evolve on the Fly?</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Live-SWE-agent: Can Software Engineering Agents Self-Evolve on the Fly?</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">软件工程代理</span>
+                
+                <span class="keyword-badge">自主演化</span>
+                
+                <span class="keyword-badge">动态创建</span>
+                
+                <span class="keyword-badge">适应性</span>
+                
+                <span class="keyword-badge">复杂软件问题</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of Illinois Urbana-Champaign</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.588</span>
+                <span class="paper-id">arXiv ID: 2511.13646v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.13646v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-18/503a988181c76a1a2458775ffa5e4878ffe98fb38225c762fe2d9657a01d752f.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了Live-SWE-agent，一种能够在运行时自主演化的软件工程代理。该方法解决了传统软件代理在设计和适应性上的局限性，通过动态创建和修改工具，显著提高了解决复杂软件问题的能力，达到75.4%的解决率，超越现有开源代理，展示了在线自我演化的有效性。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h1>LIVE-SWE-AGENT</h1>
+
+<h2>现有问题</h2>
+
+<p>本文旨在解决传统软件工程代理在设计和实现上的局限性，尤其是其固定的设计、静态的行动空间以及高昂的离线训练成本。这个问题在现代软件开发中依然重要，因为：
+- 现有代理通常需要专门的手动设计，且在应对复杂、动态的任务时表现不佳，无法灵活调整能力。
+- 传统代理依赖固定的工具集，在面对突发或特定问题时适应性差，效率低下。
+- 自我演化的软件代理虽然是发展方向，但在实际应用中仍面临高昂的训练成本和泛化能力不足的问题。</p>
+
+<h2>Hypothesis</h2>
+
+<ul>
+<li><strong>核心假设</strong>: 软件代理可以通过在任务执行过程中（运行时）进行工具创建和自我修改，实现在线演化，从而无需昂贵的离线训练即可高效解决真实世界的软件问题。</li>
+<li><strong>关键发现</strong>: LIVE-SWE-AGENT能够在运行时自主、连续地自我演化，通过创建和修改自定义工具来适应特定问题。</li>
+<li><strong>实验验证</strong>: 在多个SWE-bench基准测试中，LIVE-SWE-AGENT的性能显著超越了现有的开源代理和手动设计的代理，验证了在线演化方法的有效性。</li>
+</ul>
+
+<h2>相关研究</h2>
+
+<ul>
+<li><strong>自我演化/改进代理</strong>: 如Darwin-Gödel Machine (DGM), Self-Improving Coding Agent (SICA)等。</li>
+<li><strong>软件工程代理</strong>: 如SWE-agent, mini-SWE-agent, OpenHands等，它们通常依赖固定的工具集或工作流。</li>
+<li><strong>人机交互(HCI)</strong>: 涉及工程师如何与计算机交互以高效完成软件修改任务。</li>
+</ul>
+
+<h2>解决方案</h2>
+
+<h3><strong>完整解决方案：LIVE-SWE-AGENT——一个能够自我进化的实时软件工程代理</strong></h3>
+
+<h4><strong>引言：核心理念</strong></h4>
+
+<p>论文提出的核心解决方案是 <strong>LIVE-SWE-AGENT</strong>，一个创新的软件工程智能代理。其核心思想是赋予代理在解决软件问题的过程中<strong>实时自我进化（On-the-fly Self-Evolution）</strong>的能力。与传统依赖固定工具集或需要昂贵离线训练的代理不同，LIVE-SWE-AGENT 能够在运行时根据遇到的具体问题，动态地创建、修改和扩展自身的能力，尤其是其工具集。</p>
+
+<h4><strong>关键机制与实现流程</strong></h4>
+
+<p>LIVE-SWE-AGENT 的自我进化能力依赖于以下几个紧密相连的关键机制：</p>
+
+<h5><strong>1. 最小化基础架构与在线进化</strong></h5>
+
+<ul>
+<li><strong>起始状态</strong>: 代理从一个极其简单的基础架构开始，通常只提供对基础 <code>bash</code> 命令的访问权限（例如，基于 mini-SWE-agent 框架）。它没有预先设计的复杂工具集。</li>
+<li><strong>在线进化而非离线训练</strong>: 该代理的设计完全摒弃了昂贵的离线训练过程。它的所有能力进化都发生在解决实际问题的“在线”过程中。新能力的形成源于代理从遇到的具体问题中学习，而非在固定的基准测试上进行预训练，这使其具有更强的适应性和通用性。</li>
+</ul>
+
+<h5><strong>2. 动态工具创建与合成 (Dynamic Tool Synthesis)</strong></h5>
+
+<p>这是 LIVE-SWE-AGENT 实现自我进化的核心手段。代理能够根据任务需求，自主合成自定义工具。</p>
+
+<ul>
+<li><strong>工具的定义</strong>: 自定义工具被实现为可以在环境中执行的脚本（例如 Python 脚本）。这种设计非常直观：创建工具即是编写一个脚本文件，使用工具即是执行该脚本。</li>
+<li><strong>工具的类型</strong>:
+<ul>
+<li><strong>通用工具</strong>: 代理可以创建提高通用工作流程效率的工具。例如，一个定制的<strong>代码搜索工具</strong>，可以自动忽略无关目录（如 <code>__pycache__</code>, <code>.git</code>）并显示匹配代码的上下文；或是一个复杂的 <strong>Go 文件分析器</strong>（<code>go_analyzer.py</code>），用于查找结构体、函数定义和引用。</li>
+<li><strong>问题特定工具</strong>: 代理还能创建仅用于解决当前特定问题的专用工具。例如，在处理一个涉及 MARC 文件（一种二进制格式）的问题时，代理创建了一个专门的分析工具，将二进制内容以人类可读的格式打印出来，帮助其理解问题并评估解决方案。</li>
+</ul></li>
+<li><strong>优势</strong>: 相比使用复杂的 <code>bash</code> 命令链，这些自定义工具目的明确、易于使用，并且能够提供更清晰的反馈（例如，报告替换操作是否成功），避免了因缺乏反馈而导致的误导。</li>
+</ul>
+
+<h5><strong>3. 反思机制与迭代决策 (Reflection Mechanism)</strong></h5>
+
+<p>为了让工具创建更加智能和有目的性，LIVE-SWE-AGENT 引入了一个轻量级的反思机制。</p>
+
+<ul>
+<li><strong>触发方式</strong>: 在代理的每个操作循环中，当环境返回结果后，系统会附加一个简单的<strong>反思提示</strong>（Step Reflection Prompt），明确地询问代理：“创建一个新工具或修改一个现有工具是否能加速解决当前问题？”</li>
+<li><strong>作用</strong>: 这一机制将“创建工具”提升为一个与“运行测试”或“编辑文件”并列的显式决策点。它促使代理在每一步都评估自身能力，并思考如何通过创造新工具来克服障碍，从而显著提高了有用工具的创建频率和针对性。</li>
+</ul>
+
+<h5><strong>4. 交互式工作流程</strong></h5>
+
+<p>代理的每一步操作都遵循一个结构化的交互模式，以确保思维的清晰性和操作的准确性。</p>
+
+<ul>
+<li><strong>“THOUGHT” + “bash command” 结构</strong>: 在执行任何操作前，代理必须首先输出一段 <code>THOUGHT</code> 文本，阐述其思考过程和下一步的目标。随后，它会提供一个可执行的 <code>bash</code> 命令来完成该目标。</li>
+<li><strong>推荐工作流程</strong>: 系统建议代理遵循一个标准的问题解决流程：分析代码库 -> 创建脚本复现问题 -> 编辑源代码 -> 运行脚本验证修复 -> 测试边界情况。</li>
+</ul>
+
+<h4><strong>性能评估</strong></h4>
+
+<p>LIVE-SWE-AGENT 在多个行业标准基准测试中展示了其卓越的性能：</p>
+
+<ul>
+<li>在 <strong>SWE-bench Verified</strong> 基准上，它达到了 <strong>75.4%</strong> 的问题解决率，超越了所有已知的开源软件代理，并接近顶级专有解决方案的性能。</li>
+<li>在更具挑战性的 <strong>SWE-Bench Pro</strong> 基准上，它也达到了 <strong>45.8%</strong> 的解决率，同样是已知的最佳水平。</li>
+</ul>
+
+<p>这些结果证明，通过实时自我进化和动态工具创建，代理的解决问题的效率和效果得到了显著提升。</p>
+
+<h4><strong>优势与贡献</strong></h4>
+
+<ol>
+<li><strong>极高的灵活性与适应性</strong>: 能够为每个问题量身定制工具，有效应对多样化和未曾见过的问题。</li>
+<li><strong>高效性与低成本</strong>: 无需昂贵的离线训练和繁琐的手动工具设计，大大降低了代理的开发和维护成本。</li>
+<li><strong>强大的通用性</strong>: 该方法与具体的代理循环或大型语言模型（LLM）后端解耦，可以作为一种轻量级改进集成到任何现有代理框架中。</li>
+<li><strong>提升解决效率</strong>: 定制工具能够将复杂的多步任务封装成单一命令，显著简化操作流程，提高解决问题的效率。</li>
+</ol>
+
+<h4><strong>应用场景与未来展望</strong></h4>
+
+<p>LIVE-SWE-AGENT 的应用场景不仅限于修复 bug 或添加功能，其核心理念可以扩展到更广泛的软件工程任务，例如：</p>
+
+<ul>
+<li>自动化测试用例生成</li>
+<li>安全漏洞检测与修补</li>
+<li>从零开始合成生产就绪的软件</li>
+</ul>
+
+<p>此外，这种自我演化的思想也可以被整合到 LLM 的训练过程中，为模型提供额外的学习信号，从而提升其在复杂任务上的推理和规划能力。</p>
+
+<h4><strong>总结</strong></h4>
+
+<p><strong>LIVE-SWE-AGENT</strong> 通过引入<strong>在线自我进化</strong>和<strong>动态工具创建</strong>的核心机制，开创了一种全新的软件工程代理设计范式。它让代理从一个被动的工具使用者转变为一个主动的能力创造者，通过在解决问题的实战中不断反思和改进，展现出强大的适应性、高效性和卓越的性能，为智能软件工程的未来发展指明了新的方向。</p>
+
+<h2>框架优势</h2>
+
+<ul>
+<li><strong>高适应性与灵活性</strong>: 能够在运行时动态演化，以应对复杂多变的软件工程任务。</li>
+<li><strong>高效率与低成本</strong>: 无需昂贵且耗时的离线训练，显著降低了代理的开发和部署成本。</li>
+<li><strong>强大的问题解决能力</strong>: 通过创建针对特定问题的定制工具，显著提升了任务解决率。</li>
+<li><strong>通用性</strong>: 能够与不同的LLM后端集成，并在多种基准测试中展现出优越性能。</li>
+</ul>
+
+<h2>实验设计</h2>
+
+<p>实验在多个权威的软件工程基准数据集上进行，以全面评估LIVE-SWE-AGENT的性能：
+- <strong>主要基准</strong>: SWE-bench Verified, SWE-bench Pro, SWE-bench Multilingual。
+- <strong>对比方法</strong>: 与最先进的开源代理（如SWE-agent, mini-SWE-agent）和手动设计的代理进行性能比较。
+- <strong>消融研究</strong>: 分析不同组件（如工具创建、反思机制）对代理性能的具体影响。</p>
+
+<h2>数据集和代码</h2>
+
+<ul>
+<li><strong>数据集</strong>: 使用了SWE-bench系列的多个数据集，包含数千个源自真实GitHub问题的软件工程任务。</li>
+<li><strong>代码</strong>: 项目代码已在GitHub上开源：https://github.com/OpenAutoCoder/live-swe-agent</li>
+</ul>
+
+<h2>性能表现</h2>
+
+<ul>
+<li>在 <strong>SWE-bench Verified</strong> 基准上，实现了 <strong>75.4%</strong> 的解决率，超越了所有现有的开源软件代理。</li>
+<li>在更复杂的 <strong>SWE-bench Pro</strong> 基准上，达到了 <strong>45.8%</strong> 的解决率，超越了手动设计的最先进代理。</li>
+<li>在 <strong>SWE-bench Multilingual</strong> 基准上，解决率达到 <strong>46.0%</strong>，显著优于基线方法。</li>
+</ul>
+
+<h2>实验结果</h2>
+
+<ul>
+<li>实验结果有力地证明，LIVE-SWE-AGENT通过在线自我演化（特别是运行时工具创建）能够显著提升在复杂软件工程任务中的问题解决能力。</li>
+<li>引入反思机制能有效促进代理创建更高效的定制工具。</li>
+<li>相比于依赖固定工具集的代理，LIVE-SWE-AGENT在解决率和效率上均表现出明显优势。</li>
+</ul>
+
+<h2>论文贡献</h2>
+
+<ul>
+<li><strong>提出LIVE-SWE-AGENT</strong>: 这是第一个能够在运行时自主、持续地进行自我演化的软件工程代理。</li>
+<li><strong>验证了在线演化范式</strong>: 证明了通过运行时工具创建和自我修改，代理可以在无需昂贵离线训练的情况下获得强大的性能。</li>
+<li><strong>提供了新的代理设计思路</strong>: 为开发更高效、灵活、低成本的自动化软件工程工具提供了新的方向和统一的评估框架。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.13646v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 17:24:53</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-SAR: A Full-Stack Co-design for CPU-Only Ternary LLM Inference via In-Place SIMD ALU Reorganization</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>T-SAR: A Full-Stack Co-design for CPU-Only Ternary LLM Inference via In-Place SIMD ALU Reorganization</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">三元大语言模型</span>
+                
+                <span class="keyword-badge">LLM推理</span>
+                
+                <span class="keyword-badge">SIMD寄存器</span>
+                
+                <span class="keyword-badge">GEMM操作</span>
+                
+                <span class="keyword-badge">能效优化</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Department of Computer Science, University of California, Irvine</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.389</span>
+                <span class="paper-id">arXiv ID: 2511.13676v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.13676v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-18/51fe307d8ba96caf5309a7aabb2b7797d1e380f8be0637222299f2a38a7bfcfe.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了T-SAR框架，解决了边缘设备上三元大语言模型（LLM）推理中的计算和内存瓶颈问题。通过在CPU的SIMD寄存器内动态生成查找表，T-SAR显著提高了GEMM和GEMV操作的性能，分别实现了5.6-24.5倍和1.1-86.2倍的速度提升，同时保持低功耗和硬件开销，展现出优于现有解决方案的能效。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h1>T-SAR</h1>
+
+<p> </p>
+
+<h2>现有问题</h2>
+
+<p> 
+本文旨在解决在边缘设备上高效运行三元大语言模型 (LLM) 所遇到的<strong>计算和内存瓶颈问题</strong>。虽然三元LLM（将权重化为{-1, 0, 1}）有望实现高效推理，但现有基于查找表 (LUT) 的方法会引入显著的内存访问开销，导致性能低下。随着LLM在边缘设备上部署需求的增加，这个问题日益重要，因为：
+- 边缘设备（如移动设备）的计算资源和内存带宽有限，难以支持大规模LLM推理。
+- 传统的CPU解决方案依赖内存中的查找表，可扩展性差，而GPU或专用加速器在成本和能耗上不切实际。
+- 现有SOTA（最先进）的三元网络方法因内存瓶颈，无法充分发挥其计算效率优势，尤其是在处理GEMM（矩阵乘法）和GEMV（矩阵-向量乘法）操作时。
+ </p>
+
+<h2>Hypothesis</h2>
+
+<ul>
+<li><strong>核心假设</strong>: T-SAR框架能够通过在CPU的SIMD寄存器文件中动态生成查找表，将内存绑定的计算任务转变为计算绑定的任务，从而消除内存瓶颈并最大化数据级并行性。</li>
+<li><strong>关键发现</strong>: 将三元权重分解为稠密和稀疏的二进制形式，可以显著减少LUT的存储需求，并提高计算效率。</li>
+<li><strong>初步结论</strong>: T-SAR能够显著提升LLM在预填充（GEMM）和解码（GEMV）阶段的端到端速度，同时保持较低的功耗和面积开销。</li>
+<li><p><strong>实验验证</strong>: 实验表明T-SAR在GEMM延迟和GEMV吞吐量上分别实现了高达5.6–24.5倍和1.1–86.2倍的改进，且能效优于NVIDIA Jetson AGX Orin GPU。
+ </p>
+
+<h2>相关研究</h2>
+
+<p> </p></li>
+<li>基于查找表（LUT）的方法，如T-MAC和BitNet.cpp。</li>
+<li>边缘计算加速器，如FPGA和专用AI加速器。</li>
+<li>SIMD架构优化和内存管理策略。</li>
+<li>稠密和稀疏编码方法的研究。
+ 
+<h2>解决方案</h2></li>
+</ul>
+
+<h3><strong>引言：问题与目标</strong></h3>
+
+<p>传统的中央处理器（CPU）在执行三元量化（Ternary Quantized）的大型语言模型（LLM）推理时，面临着严重的性能瓶JG。这主要是由于基于查找表（Look-Up Table, LUT）的计算方法严重依赖内存访问，导致高延迟和带宽饱和，使得计算效率低下，尤其是在计算资源有限的边缘设备上。</p>
+
+<p>为了解决这一问题，论文提出了一种名为 <strong>T-SAR (Ternary-SIMD Adaptive Reconfiguration)</strong> 的全栈协同设计框架。T-SAR的核心目标是通过重新利用现有的SIMD（单指令多数据）硬件，将LUT的生成和查找操作从内存密集型任务转变为寄存器内的计算密集型任务，从而消除内存瓶颈，实现可扩展、高吞吐量和高能效的三元LLM推理。</p>
+
+<h3><strong>T-SAR 完整解决方案</strong></h3>
+
+<p>T-SAR框架通过一个覆盖算法、指令集（ISA）、微架构和软件四个层面的紧密集成设计，提供了一个系统性的解决方案。</p>
+
+<h4><strong>1. 算法层：创新的三元到二元分解与数据打包</strong></h4>
+
+<p>为了在SIMD寄存器中高效生成和使用LUT，T-SAR首先在算法层面引入了一种创新的权重分解和打包方案。</p>
+
+<ul>
+<li><p><strong>三元到二元分解 (Ternary-to-Binary Decomposition)</strong>：
+该算法将一个三元权重块（其值在 <code>{-1, 0, 1}</code> 集合中）分解为两个二元（Binary）部分：</p>
+
+<ul>
+<li><strong>稠密权重 (Dense Weights, $w_D$)</strong>: 将所有非零权重（-1或1）保留，而将原始权重中的0替换为+1。结果是一个只包含 <code>{-1, +1}</code> 的向量。</li>
+<li><strong>稀疏权重 (Sparse Weights, $w_S$)</strong>: 这是一个掩码（mask），用于标记原始权重中0的位置。当原始权重为0时，其值为1，否则为0。</li>
+</ul></li>
+<li><p><strong>计算优势</strong>：
+通过这种分解，原始的点积运算可以被转换为两个更高效的二元点积运算的差值。这种方法巧妙地消除了对零权重元素的处理，并显著优化了存储。</p></li>
+<li><p><strong>存储优化</strong>：
+传统的三元LUT需要 <code>3^c</code> 的存储空间（<code>c</code>为块大小），而T-SAR通过分解，仅需要两个 <code>2^c</code> 大小的二元LUT。这使得总存储需求降为 <code>2^(c+1)</code>，与SIMD寄存器的二次幂宽度完美匹配，避免了复杂的硬件改造。</p></li>
+</ul>
+
+<h4><strong>2. 指令集架构 (ISA) 层：最小化的寄存器内LUT支持扩展</strong></h4>
+
+<p>为了将上述算法落地到硬件，T-SAR对现有的指令集架构（如x86 AVX2）进行了最小化的扩展。</p>
+
+<ul>
+<li><p><strong>核心思想</strong>：设计新的指令，允许在SIMD单元内动态生成和使用LUT，从而实现“寄存器到寄存器”的计算模式。</p></li>
+<li><p><strong>新增指令原语</strong>:</p>
+
+<ol>
+<li><code>TLUT_{c \times s}</code>：该指令负责根据输入激活，在SIMD寄存器中直接生成上述的两个二元LUT。</li>
+<li><code>TGEMV_{k \times m}</code>：该指令利用寄存器中已生成的LUT，执行高效的通用矩阵-向量乘法（GEMV）或矩阵-矩阵乘法（GEMM）计算，并完成结果的累加。</li>
+</ol></li>
+<li><p><strong>优势</strong>：这种设计将LUT的查找操作从缓慢的内存访问转变为高速的寄存器内计算，彻底消除了传统方法中的内存访问瓶颈，并最大限度地发挥了SIMD的数据级并行能力。</p></li>
+</ul>
+
+<h4><strong>3. 微架构层：低开销的硬件实现</strong></h4>
+
+<p>T-SAR的设计哲学是在不进行大规模硬件改造的前提下实现性能飞跃。</p>
+
+<ul>
+<li><strong>硬件重用</strong>: T-SAR的实现巧妙地重用了现有的SIMD算术逻辑单元（ALU）、加法器树和寄存器文件。它不需要增加新的算术单元或临时存储。</li>
+<li><strong>轻量级调整</strong>: 实现新的指令功能仅需对SIMD单元进行轻量级的布线（wiring）和多路复用器（MUX）调整。</li>
+<li><strong>功耗与面积开销分析</strong>: 经过ASIC（专用集成电路）合成验证，引入T-SAR带来的额外硬件开销极小，仅增加了约 <strong>1.4% 的芯片面积</strong>和 <strong>3.2% 的功耗</strong>。这证明了该方案在硬件上的高可行性和经济性。</li>
+</ul>
+
+<h4><strong>4. 软件层：自适应内核数据流与编译优化</strong></h4>
+
+<p>为了充分发挥硬件潜力并适应不同模型和平台的特性，T-SAR在软件层面实现了智能调度。</p>
+
+<ul>
+<li><p><strong>自适应内核数据流</strong>:
+T-SAR设计了两种不同的微内核数据流策略，并能在编译时根据网络层的具体特性自动选择最优策略：</p>
+
+<ol>
+<li><strong>激活持久型 (Activation-Persistent, AP)</strong>：在内循环中将输入激活保留在寄存器中，以最大化其重用率，减少LUT的重复计算。此策略适用于激活和权重重用率高的层。</li>
+<li><strong>输出持久型 (Output-Persistent, OP)</strong>：在计算完成前，将中间累加结果保留在本地寄存器中，从而减少对主内存的写回次数。此策略适用于输出通道数较多的层，能有效降低内存写带宽压力。</li>
+</ol></li>
+<li><p><strong>编译器与运行时支持</strong>:
+T-SAR框架包含优化的编译器和运行时环境，负责分析LLM的每一层，并自动选择AP或OP内核，从而在整个模型的推理过程中实现端到端的性能最大化。</p></li>
+</ul>
+
+<h3><strong>核心优势与实现效果</strong></h3>
+
+<ol>
+<li><strong>消除内存瓶颈</strong>：通过在寄存器内生成LUT，T-SAR将计算从内存带宽限制转变为数据通路限制，在GEMM中减少了8.7-13.8倍的内存请求，在GEMV中则完全消除了LUT的内存访问。</li>
+<li><strong>显著的性能提升</strong>：
+<ul>
+<li><strong>GEMM延迟</strong>：降低了 <strong>5.6 至 24.5 倍</strong>。</li>
+<li><strong>GEMV吞吐量</strong>：提升了 <strong>1.1 至 86.2 倍</strong>。</li>
+<li><strong>端到端预填充速度</strong>：在工作站、笔记本和移动设备上分别实现了 <strong>8.8倍、8.4倍和12.4倍</strong> 的加速。在移动设备上，预填充时间从超过20秒缩短至1.7秒以内，实现了交互式LLM体验。</li>
+</ul></li>
+<li><strong>卓越的能源效率</strong>：与专门的加速器相比，T-SAR展现了极高的能效。实验表明，其能效比 <strong>NVIDIA Jetson AGX Orin GPU高出2.5至4.9倍</strong>，使其成为边缘和移动设备上部署LLM的理想选择。</li>
+<li><strong>平台可移植性</strong>：T-SAR的设计理念具有普适性，虽然主要在x86 AVX2上实现和验证，但通过简单调整参数（如块大小c, s, k, m），即可轻松迁移到其他SIMD架构，如 <strong>ARM NEON</strong> 和 <strong>RISC-V Vector (RVV)</strong>。</li>
+</ol>
+
+<h3><strong>结论</strong></h3>
+
+<p><strong>T-SAR</strong> 提供了一个开创性的、从算法到硬件的全栈协同设计解决方案，成功解决了CPU在执行三元LLM推理时面临的内存瓶颈问题。通过将查找表操作巧妙地转化为SIMD寄存器内的计算，该框架在仅增加极小硬件开销的情况下，实现了数量级的性能提升和能效飞跃。这不仅使得在通用CPU上实现高性能、交互式的LLM推理成为可能，也为未来在资源受限的边缘设备上部署复杂AI模型铺平了道路，有效缩小了通用处理器与专用AI加速器之间的性能差距。</p>
+
+<h2>框架优势</h2>
+
+<ul>
+<li><strong>消除内存瓶颈</strong>: 通过在寄存器内生成LUT，将内存密集型任务转变为计算密集型任务，显著减少了内存请求。</li>
+<li><strong>高效率和高性能</strong>: 大幅提升了GEMM和GEMV的计算性能，在多个平台上实现了显著的速度提升。</li>
+<li><strong>高能效</strong>: 在边缘CPU上实现了比NVIDIA Jetson AGX Orin GPU高2.5–4.9倍的能效。</li>
+<li><strong>低硬件开销</strong>: 仅需对现有SIMD硬件进行微小修改，无需复杂的计算阵列或数据路径扩展，易于集成。</li>
+<li><p><strong>可扩展性</strong>: 能够高效支持从125M到100B参数规模的LLM模型。
+ </p>
+
+<h2>实验设计</h2>
+
+<p> </p></li>
+<li><strong>多层次设计与评估</strong>: 采用算法、指令集架构(ISA)、微架构和软件层四个紧密集成的层次进行设计，并使用ASIC综合来验证微架构的功耗和面积开销。</li>
+<li><strong>模拟与实现</strong>: 通过扩展gem5-AVX模拟器来建模T-SAR ISA，并使用C++和内联汇编实现内核。</li>
+<li><strong>多平台对比</strong>: 在多种CPU平台（工作站、笔记本、移动设备）上进行评估，并与SOTA基线（如Bitnet.cpp, T-MAC）以及NVIDIA Jetson AGX Orin GPU进行性能和能效对比。</li>
+<li><p><strong>内核变体测试</strong>: 设计了包括激活持久性和输出持久性在内的多种内核变体以评估不同数据流策略的性能。
+ </p>
+
+<h2>数据集和代码</h2>
+
+<p> </p></li>
+<li>论文中未提供公开的数据集或代码链接。</li>
+<li><p>实验涉及从125M到100B参数规模的BitNet模型。
+ </p>
+
+<h2>性能表现</h2></li>
+<li><p><strong>GEMM/GEMV性能</strong>: GEMM延迟减少5.6-24.5倍，GEMV吞吐量提升1.1-86.2倍。</p></li>
+<li><strong>端到端速度</strong>: 在工作站上，预填充阶段平均速度提升8.8倍。与SOTA CPU基线相比，工作站速度提升6.4倍，移动设备提升4.2倍。</li>
+<li><strong>能效</strong>: 在移动CPU上，能效比NVIDIA Jetson AGX Orin高出2.5–4.9倍。</li>
+<li><p><strong>内存访问</strong>: 在不同设备上实现了高达13.8倍的内存请求减少。
+ </p>
+
+<h2>实验结果</h2>
+
+<p> 
+实验结果有力地支持了核心假设。T-SAR框架通过在SIMD寄存器内动态生成LUT，成功地将内存瓶颈问题转化为计算问题，在多种硬件平台上均展现出优于现有CPU基线和特定GPU解决方案的性能与能效。
+ </p>
+
+<h2>论文贡献</h2>
+
+<p> </p></li>
+<li>提出了<strong>T-SAR框架</strong>，首次在边缘CPU上实现了可扩展且高效的三元LLM推理。</li>
+<li>创新地提出了<strong>在寄存器内动态生成查找表</strong>的方法，有效解决了三元网络推理中的内存访问瓶颈。</li>
+<li>通过全栈协同设计，展示了如何利用现有SIMD硬件，以最小的硬件修改实现显著的性能和能效提升，为边缘AI推理提供了新的思路。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.13676v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 17:24:53</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
