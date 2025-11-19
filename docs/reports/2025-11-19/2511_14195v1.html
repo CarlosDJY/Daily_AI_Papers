@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-GLARE: An Non-Generative Latent Representation-Efficient LLM Safety Evaluator</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>N-GLARE: An Non-Generative Latent Representation-Efficient LLM Safety Evaluator</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">安全性评估</span>
+                
+                <span class="keyword-badge">潜在表示</span>
+                
+                <span class="keyword-badge">Jensen-Shannon分离度</span>
+                
+                <span class="keyword-badge">实时监控</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> University of California, Riverside, Fudan University</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.478</span>
+                <span class="paper-id">arXiv ID: 2511.14195v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.14195v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-19/4b89993fec11f77de36fc05061daa442e9ce87ec629777053613fceef6c0129a.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了N-GLARE框架，旨在高效评估大型语言模型（LLM）的安全性，解决了传统红队方法的高成本和反馈延迟问题。N-GLARE通过分析模型的潜在表示，使用Jensen-Shannon分离度（JSS）指标，能够在不到1%的成本下复现传统评估的安全排名，实现实时诊断和动态监控。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <p>好的，我已经根据您提供的详细解决方案，替换了报告大纲中的相应部分。</p>
+
+<p>以下是更新后的完整报告大纲：</p>
+
+<h1>N-GLARE</h1>
+
+<h2>现有问题</h2>
+
+<p>本文旨在解决评估大型语言模型 (LLM) 安全性与鲁棒性的核心问题，特别是现有主流红队评估方法的<strong>高成本、低效率和延迟反馈</strong>的局限性。随着 LLM 的广泛应用，确保其安全并与人类价值观对齐变得至关重要。这个问题依然重要，因为：
+- 传统的红队方法依赖于在线文本生成和黑箱输出分析，这不仅计算和时间开销巨大，而且难以扩展。
+- 评估结果反馈延迟，无法在模型训练或迭代后进行快速诊断。
+- 仅分析表面文本输出，难以完整、准确地反映模型的内部安全状态和潜在风险。</p>
+
+<h2>Hypothesis</h2>
+
+<ul>
+<li><strong>关键发现</strong>: 模型的安全状态是一个可以在其潜在表示空间（隐层）中被动态追踪和量化的几何过程。</li>
+<li><strong>初步结论</strong>: 通过分析模型隐层表示的轨迹，可以有效评估其安全性，并能以极低的成本复现传统红队评估的安全排名。</li>
+<li><strong>实验验证</strong>: 在超过40个模型和20种红队策略的广泛实验中，提出的JSS指标与传统红队评估的安全排名始终保持高度一致。</li>
+<li><strong>核心假设</strong>: 可以在不生成任何输出文本的情况下，仅通过分析模型的潜在表示来有效评估其安全性，从而实现低成本、高效率的敏捷诊断。</li>
+</ul>
+
+<h2>相关研究</h2>
+
+<ul>
+<li><strong>传统红队方法</strong>: 通过设计多样化的攻击提示（单轮或多轮对话）来发现模型的安全漏洞。</li>
+<li><strong>潜在表示分析</strong>: 研究模型隐层激活在不同概念下的结构化模式，包括表示工程 (RepE) 等技术。</li>
+<li><strong>行为偏好优化</strong>: 如 DPO (Direct Preference Optimization) 等影响模型行为和对齐的方法。</li>
+</ul>
+
+<h2>解决方案</h2>
+
+<h3><strong>完整解决方案：N-GLARE——基于潜在表示的高效LLM安全评估框架</strong></h3>
+
+<h4><strong>一、 问题背景与目标</strong></h4>
+
+<p>传统的评估大型语言模型（LLM）安全性的方法，如“红队测试”（Red Teaming），严重依赖于大规模的文本生成和人工或模型评估。这种方法存在三大痛点：
+1.  <strong>成本高昂</strong>：需要大量的计算资源（Token消耗）和时间（运行时长）来生成和评估响应。
+2.  <strong>反馈延迟</strong>：评估周期长，无法为快速迭代的模型训练和安全机制更新提供实时诊断。
+3.  <strong>表面化</strong>：仅评估最终输出，难以洞察模型内部的安全状态和决策动态。</p>
+
+<p>为了解决这些问题，本研究提出了一个名为 <strong>N-GLARE（非生成性潜在表示高效LLM安全评估器）</strong> 的创新解决方案，其核心目标是<strong>在不生成任何文本的情况下，通过分析模型内部的潜在表示来高效、准确地评估LLM的安全性</strong>。</p>
+
+<hr />
+
+<h4><strong>二、 N-GLARE 框架核心理念</strong></h4>
+
+<p>N-GLARE 的基本假设是：<strong>模型的安全状态不仅体现在其最终输出，更深刻地反映在其处理不同类型输入时，内部潜在表示（hidden states）的几何轨迹和动态变化中。</strong> 一个安全的模型在面对良性输入和恶意（如越狱）输入时，其内部激活状态的演化路径应该是可区分的。</p>
+
+<hr />
+
+<h4><strong>三、 详细方法论与实施步骤</strong></h4>
+
+<p>N-GLARE框架的实施主要包含以下三个核心阶段：</p>
+
+<p><strong>1. 轨迹提取与标准化（Trajectory Extraction &amp; Standardization）</strong></p>
+
+<ul>
+<li><strong>定义探测条件</strong>：首先定义几组不同性质的输入序列（探测条件），主要包括：
+<ul>
+<li><strong>良性/基线（Benign/Baseline, B）</strong>：代表正常的、无害的交互。</li>
+<li><strong>越狱/恶意（Jailbreak, J）</strong>：包含试图绕过安全护栏的对抗性提示。</li>
+<li><strong>理想拒绝（Ideal Refusal, R）</strong>：模型对有害请求的理想、标准化的拒绝回答。</li>
+<li><strong>普通查询（Plain Query, P）</strong>：普通的、非对抗性的用户查询。</li>
+</ul></li>
+<li><strong>提取潜在表示轨迹</strong>：对于每种探测条件，通过一次前向传播（forward pass）将输入序列喂给模型。在此过程中，提取模型所有变换器层（transformer layers）在每个时间步（token）的最后一个token的隐藏状态。这些按顺序排列的隐藏状态构成了一条高维空间中的“潜在表示轨迹”。</li>
+</ul>
+
+<p><strong>2. 构建良性流形与测量几何偏离（Benign Manifold &amp; Geometric Deviation）</strong></p>
+
+<ul>
+<li><strong>构建良性流形</strong>：使用在“良性”条件下收集到的大量潜在表示，构建一个“良性流形”（Benign Manifold）。这本质上是定义了一个代表模型“正常、安全”行为的基准子空间。具体技术上，通常采用<strong>白化主成分分析（Whitened PCA）</strong>，它能消除数据尺度和相关性的影响，创建一个标准化的坐标系。</li>
+<li><strong>量化轨迹偏离</strong>：当模型处理其他条件（如越狱）的输入时，其生成的轨迹会偏离这个良性流形。N-GLARE通过计算<strong>几何转角（Turning Angle）</strong>来精确量化这种偏离程度。这个角度衡量了轨迹在每个时间点上相对于良性流形切向方向的偏离。一个向不安全区域移动的轨迹通常会表现出特定的角度变化。</li>
+</ul>
+
+<p><strong>3. 计算詹森-香农可分离性（JSS）并生成安全评分</strong></p>
+
+<ul>
+<li><strong>计算角度分布</strong>：将整个轨迹划分为多个切片（slices），并计算在每个切片内，不同探测条件下（如良性 vs. 越狱）的转角分布。</li>
+<li><strong>引入JSS指标</strong>：使用<strong>詹森-香农散度（Jensen-Shannon Divergence, JSD）</strong>来比较这些角度分布的差异。将所有切片的JSD值聚合起来，就得到了<strong>詹森-香农可分离性（Jensen-Shannon Separability, JSS）</strong>指标。
+<ul>
+<li><strong><code>JSS(J, B)</code></strong>：衡量越狱轨迹与良性轨迹的可分离性。高分表示模型能很好地在内部区分良性和恶意输入，是安全性的一个积极信号。</li>
+<li><strong><code>JSS(J, R)</code></strong>：衡量越狱轨迹与理想拒绝轨迹的可分离性。低分表示模型在处理越狱请求时，其内部状态更接近于生成拒绝回答，同样是安全性的积极信号。</li>
+</ul></li>
+<li><strong>生成统一安全代理评分</strong>：将不同方面的JSS指标（如 <code>JB/PB</code> 比例和 <code>JR</code> 稳定性）结合起来，创建一个标准化的、可跨模型比较的<strong>统一安全评分（JSS Proxy Score）</strong>。该评分作为一个连续的量表，直观地反映了模型的安全对齐水平。</li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 实验验证与核心优势</strong></h4>
+
+<p><strong>1. 实验验证</strong>
+*   <strong>广泛测试</strong>：该方法在超过40个不同的LLM和20多种红队攻击策略上进行了验证。
+*   <strong>高度一致性</strong>：实验结果表明，由N-GLARE生成的安全排名与传统大规模红队测试得出的安全排名表现出<strong>强一致性</strong>。
+*   <strong>动态响应验证</strong>：通过对模型进行DPO（直接偏好优化）微调来增强或减弱安全性，N-GLARE的JSS评分能够单调地、准确地反映这些权重变化导致的安全水平演变。</p>
+
+<p><strong>2. 核心优势</strong>
+*   <strong>极高效率</strong>：与传统红队测试相比，N-GLARE将评估所需的<strong>令牌和运行时成本降低了99%以上</strong>（两个数量级），因为它仅需一次前向传播，无需生成文本。
+*   <strong>非生成性</strong>：完全避免了在线文本生成和外部评估器的瓶颈，评估过程更快、更稳定。
+*   <strong>深度洞察与细粒度分析</strong>：能够揭示模型内部的动态安全机制，例如越狱过程中的相位结构、模型拒绝倾向的演变等，提供了超越表面行为的深刻理解。
+*   <strong>早期预警能力</strong>：JSS指标的变化通常领先于模型输出行为的变化。研究发现，它可以在模型安全性开始下降的<strong>前几轮训练中就检测到信号</strong>，为开发者提供了宝贵的干预窗口。</p>
+
+<hr />
+
+<h4><strong>五、 应用场景</strong></h4>
+
+<p>N-GLARE的设计使其非常适合在快速发展的LLM生态中发挥作用：
+*   <strong>实时安全诊断</strong>：在模型训练或安全微调后，快速评估新检查点的安全性。
+*   <strong>持续对齐监测</strong>：在模型部署后，进行低成本的持续监控，防止安全性能漂移。
+*   <strong>模型选型与比较</strong>：为开发者提供一个统一、高效的标尺，以比较不同模型的安全性能。
+*   <strong>安全机制研究</strong>：作为一种分析工具，帮助研究人员理解安全对齐的内在机制，推动未来对齐技术的发展。</p>
+
+<h3><strong>总结</strong></h3>
+
+<p><strong>N-GLARE通过分析LLM在处理不同任务时其内部潜在表示的几何动态，提出了一种革命性的、非生成性的安全评估框架。通过引入角度概率轨迹（APT）和詹森-香农可分离性（JSS）指标，该方法以极低的成本（不到传统方法的1%）准确复现了大规模红队测试的安全评估结果，并提供了传统方法无法企及的深度洞察和早期预警能力。它为快速、经济、深入地诊断和保障大型语言模型的安全性提供了强有力的工具。</strong></p>
+
+<h2>框架优势</h2>
+
+<ul>
+<li><strong>极高效率</strong>: 将评估的 token 和时间成本降低了两个数量级（降至不足1%），实现了敏捷诊断。</li>
+<li><strong>深入洞察</strong>: 超越表面文本分析，通过分析模型内部动态来评估安全性，可作为训练过程中的早期预警信号。</li>
+<li><strong>非生成性</strong>: 完全绕过在线文本生成和外部评估器，避免了相关成本和噪声。</li>
+<li><strong>高一致性</strong>: 评估结果与昂贵的传统红队评估排名高度一致，证明了其有效性。</li>
+<li><strong>可比性</strong>: JSS 指标提供了一个统一的、可跨不同模型进行比较的安全性尺度。</li>
+</ul>
+
+<h2>实验设计</h2>
+
+<ul>
+<li><strong>大规模评估</strong>: 在超过40个不同的 LLM 和20种红队策略上进行了验证。</li>
+<li><strong>排名一致性分析</strong>: 使用斯皮尔曼 (Spearman) 和肯德尔 (Kendall) 相关性系数，系统性地比较 JSS 代理排名与传统红队评估排名的一致性。</li>
+<li><strong>动态追踪</strong>: 分析模型在训练不同阶段（如 LoRA 微调）或面对不同攻击阶段时，JSS 指标如何动态反映其安全性的变化。</li>
+<li><strong>消融研究</strong>: 通过变化样本大小和攻击数据集，测试 JSS 指标的稳定性和敏感性。</li>
+</ul>
+
+<h2>数据集和代码</h2>
+
+<p>论文片段中未明确提供具体的数据集和代码位置。</p>
+
+<h2>性能表现</h2>
+
+<ul>
+<li><strong>成本效益</strong>: 在不到传统红队评估 <strong>1%</strong> 的代币和运行时间成本下，完成了安全性评估。</li>
+<li><strong>排名准确性</strong>: 在大规模模型集上，JSS 衍生的安全排名与传统红队评估结果表现出强烈的、统计上显著的一致性。</li>
+<li><strong>敏感性</strong>: JSS 指标能准确追踪因安全对齐训练（或破坏）而导致模型安全性的强化或削弱。实验显示，安全对齐模型的阶段分离性强 (0.86–0.97)，而对齐被破坏后则显著降低 (约0.33)。</li>
+</ul>
+
+<h2>实验结果</h2>
+
+<ul>
+<li>实验结果有力地证实，N-GLARE 框架及其核心 JSS 指标，能够在极低的成本下有效、稳定地复现传统红队方法的安全评估排名。</li>
+<li>JSS 指标不仅能区分不同模型的安全性水平，还能动态追踪单个模型在训练过程中的安全性变化，可作为对齐过程的早期预警信号。</li>
+<li>模型的潜在表示几何特性（可分离性）与其外在的安全行为（如拒绝有害指令）之间存在着紧密的联系。</li>
+</ul>
+
+<h2>论文贡献</h2>
+
+<ul>
+<li><strong>提出 N-GLARE 框架</strong>: 提出了一种新颖的、高效的非生成式 LLM 安全评估方法，极大地降低了评估成本。</li>
+<li><strong>引入 JSS 指标</strong>: 提出并验证了 Jensen-Shannon 分离度 (JSS) 作为一个可量化的、跨模型可比的安全性指标，并引入了“几何化安全对齐”的概念。</li>
+<li><strong>提供新范式</strong>: 为 LLM 安全性评估提供了超越传统文本生成分析的新思路，为敏捷安全诊断、实时对齐监控和未来研究奠定了基础。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.14195v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 19:38:42</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

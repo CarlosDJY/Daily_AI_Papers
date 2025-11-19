@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS: A High-Difficulty, Multidisciplinary Benchmark for Frontier Scientific Reasoning</title>
+    <style>
+        body {
+            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 26px;
+            line-height: 1.4;
+        }
+        .paper-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .paper-meta strong {
+            color: #333;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+        }
+        .nav-links a {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-links a[style*="background-color: #007bff"]:hover {
+            background-color: #0056b3 !important;
+        }
+        .paper-score {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .paper-id {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-content {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 16px;
+        }
+        /* Markdown 内容区域样式 */
+        .section-content > * {
+            margin-bottom: 1rem;
+        }
+        .section-content h1,
+        .section-content h2,
+        .section-content h3,
+        .section-content h4,
+        .section-content h5,
+        .section-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .section-content pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .section-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .section-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #666;
+        }
+        .section-content ul,
+        .section-content ol {
+            padding-left: 2em;
+        }
+        .section-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .paper-image {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .paper-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .paper-warning {
+            color: #e67e22;
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #fff4e6;
+            border-left: 4px solid #e67e22;
+            border-radius: 4px;
+        }
+        .keywords-container {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .keyword-badge {
+            display: inline-block;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #90caf9;
+            cursor: default;
+            user-select: none;
+        }
+        .links {
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ATLAS: A High-Difficulty, Multidisciplinary Benchmark for Frontier Scientific Reasoning</h1>
+            
+            <div class="keywords-container">
+                
+                <span class="keyword-badge">科学推理</span>
+                
+                <span class="keyword-badge">大型语言模型</span>
+                
+                <span class="keyword-badge">跨学科评估</span>
+                
+                <span class="keyword-badge">基准测试</span>
+                
+                <span class="keyword-badge">专家评审</span>
+                
+            </div>
+            
+            
+            <div class="paper-meta"><strong>作者单位:</strong> Shanghai AI Laboratory</div>
+            
+            <div>
+                <span class="paper-score">推荐分数: 0.505</span>
+                <span class="paper-id">arXiv ID: 2511.14366v1</span>
+            </div>
+            
+        </div>
+        
+        <div class="nav-links">
+            <a href="http://arxiv.org/abs/2511.14366v1" target="_blank" style="background-color: #007bff;">📄 查看 arXiv 原文</a>
+            <a href="index.html">← 返回每日报告</a>
+            <a href="../../index.html">← 返回汇总页</a>
+            <a href="../../search.html">🔍 搜索历史归档</a>
+        </div>
+        
+        
+        <div class="paper-image">
+            
+            <img src="../../images/2025-11-19/6730ea0b988ae984c5ec0a9ffc00097449a0163eff9fd3f3675bdfbb0c459e92.jpg" alt="核心思路示意图" />
+        </div>
+        
+        
+        <div class="section">
+            <h2>📖 简介</h2>
+            <div class="section-content">
+                本文提出了ATLAS，一个高难度、跨学科的科学推理评估基准，旨在解决现有大型语言模型（LLM）评估中的基准饱和和数据污染问题。ATLAS包含约800个原创问题，强调复杂推理和高保真度，采用严格的专家评审流程，能够有效区分不同模型的科学推理能力，并量化AI与人类专家之间的能力差距。
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 详细解读</h2>
+            
+            <style>
+                /* 确保页面的 body 样式不被 report_css 中的全局样式覆盖 */
+                body {
+                    max-width: 900px !important;
+                    margin: 0 auto !important;
+                    padding: 20px !important;
+                    font-size: 16px !important;
+                    line-height: 1.6 !important;
+                    background-color: #f8f9fa !important;
+                    background-image: none !important;
+                    word-break: normal !important;
+                }
+                
+                /* Markdown 渲染样式 - 作用域限定在 .markdown-content */
+                .markdown-content {
+                    min-width: 200px;
+                    max-width: 100% !important;  /* 覆盖 CSS 文件中的 1800px */
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 1em;
+                    font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+                    color: #595959;
+                    font-size: 18px !important;  /* 覆盖 CSS 文件中的 40px */
+                    line-height: 1.8em;
+                    background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+                    background-size: 20px 20px;
+                    background-position: 50%;
+                    word-break: break-word !important;  /* 覆盖 CSS 文件中的 break-all */
+                    box-sizing: border-box;
+                }
+                
+                /* 将 report_css 中的全局样式作用域限定到 .markdown-content */
+                /* 使用正则表达式替换 body { 为 .markdown-content { */
+                
+                @charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+.markdown-content {
+  min-width: 200px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1em;
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  color: #595959;
+  font-size: 40px;
+  line-height: 1.8em;
+  background-image: linear-gradient(90deg, rgba(60, 10, 30, 0.05) 3%, transparent 0), linear-gradient(1turn, rgba(60, 10, 30, 0.05) 3%, transparent 0);
+  background-size: 20px 20px;
+  background-position: 50%;
+  word-break: break-all;
+}
+
+/* 主题自定义 */
+blockquote {
+  margin-left: 0;
+  background-color: #ebf4ff;
+  border-color: #7f9cf5;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #667eea;
+}
+
+strong {
+  color: #5a67d8;
+}
+
+code, a {
+  color: #5a67d8;
+}
+
+a {
+  border-color: #667eea;
+}
+
+code {
+  background-color: #ebf4ff;
+}
+
+blockquote, details, dl, ol, p, pre, table, ul {
+  margin-bottom: 1rem;
+}
+
+ol {
+  list-style: decimal;
+}
+
+ul {
+  list-style: disc;
+}
+
+ol, ul {
+  padding-left: 2em;
+}
+
+h1, h2 {
+  border-color: #5a67d8;
+  border-style: solid;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  font-weight: 500;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+}
+
+/* 主题自定义 end */
+/* 布局，一般不需要改动 */
+h1, h2 {
+  border-bottom: 1px solid #eaecef !important;
+  border-left-width: 6px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+blockquote {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 0.25em solid;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+strong::before {
+  content: "「";
+}
+
+strong::after {
+  content: "」";
+}
+
+code, a {
+  font-weight: 500;
+}
+
+code, a {
+  font-size: unset;
+}
+
+a {
+  text-decoration: none;
+  border-bottom: 1px solid;
+}
+
+.footnote-ref {
+  border-width: 0px;
+}
+
+code {
+  font-family: '圆体-简', 'Yuanti SC', Segoe UI, Helvetica, Arial, sans-serif;
+  font-size: 1.07em;
+}
+
+pre > code {
+  font-weight: 400;
+  color: unset;
+  line-height: 1.6;
+}
+
+picture img {
+  border-radius: 6px;
+  display: block;
+  margin: 10px auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  box-shadow: 2px 4px 7px #999;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 10px auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 2px 4px 7px #999;
+}
+
+picture {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+pre, pre code[class*=language-] {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  /* color: #abb2bf; */
+}
+
+pre code[class*=language-] {
+  padding: 12px;
+  padding-top: 6px;
+}
+
+pre::before {
+  content: "";
+  display: block;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDU0IDE0Ij4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPgogICAgPGNpcmNsZSBjeD0iNiIgY3k9IjYiIHI9IjYiIGZpbGw9IiNGRjVGNTYiIHN0cm9rZT0iI0UwNDQzRSIgc3Ryb2tlLXdpZHRoPSIuNSIvPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSI2IiByPSI2IiBmaWxsPSIjRkZCRDJFIiBzdHJva2U9IiNERUExMjMiIHN0cm9rZS13aWR0aD0iLjUiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNiIgcj0iNiIgZmlsbD0iIzI3QzkzRiIgc3Ryb2tlPSIjMUFBQjI5IiBzdHJva2Utd2lkdGg9Ii41Ii8+CiAgPC9nPgo8L3N2Zz4K");
+  height: 30px;
+  width: 100%;
+  margin-bottom: -7px;
+  background-size: 40px;
+  background-repeat: no-repeat;
+  /* border-radius: 5px; */
+  /* background-color: #282c34; */
+  /* background-position: 10px 10px; */
+}
+
+.svg-markmap-box {
+  min-height: 20rem;
+  width: 100%;
+}
+
+.footnotes {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* 布局 end */
+/* prism-js 样式 */
+/* PrismJS 1.23.0
+https://prismjs.com/download.html#themes=prism-okaidia&languages=markup+css+clike+javascript */
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+code[class*=language-],
+pre[class*=language-] {
+  color: #f8f8f2;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: '圆体-简', 'Yuanti SC', Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*=language-] {
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+
+:not(pre) > code[class*=language-],
+pre[class*=language-] {
+  background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*=language-] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8292a2;
+}
+
+.token.punctuation {
+  color: #f8f8f2;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+  color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #e6db74;
+}
+
+.token.keyword {
+  color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* prism-js end */
+                
+                /* 覆盖一些全局样式，确保不影响页面其他部分 */
+                .markdown-content h1,
+                .markdown-content h2,
+                .markdown-content h3,
+                .markdown-content h4,
+                .markdown-content h5,
+                .markdown-content h6 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 1rem;
+                }
+                
+                /* 确保 .markdown-content 不会超出父容器 */
+                .section-content {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                
+                /* 覆盖 report_css 中可能影响宽度的其他样式 */
+                .markdown-content * {
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <div class="section-content">
+                
+                    <div class="markdown-content" style="max-width: 100%; width: 100%;">
+                        <h1>ATLAS: A High-Difficulty, Cross-Disciplinary Benchmark for Scientific Reasoning</h1>
+
+<h2>现有问题</h2>
+
+<p>本文旨在解决当前评估大型语言模型（LLM）在科学推理能力方面存在的<strong>基准饱和、数据污染和评估维度单一</strong>的问题。随着AI在科学研究中的应用日益重要，开发能准确评估其能力的工具至关重要。这个问题依然重要：
+- <strong>基准饱和与数据污染</strong>：现有高难度基准（如MMLU、AGIEval）多源于公开考试，易受数据污染影响，导致模型高分可能来自记忆而非真实推理。
+- <strong>难度与综合性不足</strong>：现有基准往往难度不够，或过于狭窄，缺乏对跨学科复杂推理能力的有效测试，难以区分前沿模型的真实水平。
+- <strong>评估保真度低</strong>：许多基准将复杂问题简化为多项选择题，与科学研究中需要生成精确文本、数值或数学表达式的真实场景脱节。
+- <strong>能力差距未知</strong>：迫切需要一个可靠的工具来准确评估并量化顶尖AI模型与人类专家在深度科学推理上的能力差距。</p>
+
+<h2>Hypothesis</h2>
+
+<ul>
+<li>一个高难度、多学科、原创的评估基准（ATLAS）能够更准确地评估和区分不同LLM的真实科学推理能力。</li>
+<li>通过专家创建原创问题并结合严格的多阶段评审流程，可以有效避免数据污染，测试模型的真实推理能力而非记忆。</li>
+<li>当前最先进的LLM在面对专家级别的科学问题时仍存在显著的能力差距，该基准能够清晰地量化这一差距。</li>
+</ul>
+
+<h2>相关研究</h2>
+
+<ul>
+<li><strong>高难度推理基准</strong>：MATH, MMLU, GPQA, HLE (Humanity’s Last Exam), OlympiadBench。</li>
+<li><strong>评估套件</strong>：AGIEval, C-eval, OpenCompass。</li>
+<li><strong>AI for Science (AI4S)</strong> 及相关社区协作项目。</li>
+</ul>
+
+<h2>解决方案</h2>
+
+<h3><strong>ATLAS 解决方案：一个高难度、多学科的科学推理评估框架</strong></h3>
+
+<p>该论文提出的核心解决方案是 <strong>ATLAS (AGI-Oriented Testbed for Logical Application in Science)</strong>，一个旨在解决当前评估基准在衡量前沿大型语言模型（LLM）高难度科学推理能力方面存在的不足（如基准饱和、数据污染）而构建的创新评估框架。ATLAS 不仅仅是一个静态的数据集，而是一个集问题构建、模型评估、社区协作于一体的综合性、可持续发展的平台。</p>
+
+<p>以下是该解决方案的详细组成部分：</p>
+
+<h4><strong>一、 核心设计原则与关键特性</strong></h4>
+
+<p>ATLAS 的构建遵循四大核心原则，以确保其作为评估“标尺”的严谨性、原创性和现实性。</p>
+
+<ol>
+<li><p><strong>高原创性与抗污染性 (Frontier Originality &amp; Contamination Resistance)</strong>：</p>
+
+<ul>
+<li>所有问题均由博士级领域专家全新创作或经过实质性改编，确保在网络、学术论文及现有基准中均无迹可寻，从根本上杜绝了数据泄漏和模型“背题”的可能性。</li>
+</ul></li>
+<li><p><strong>前沿难度与现实性 (Frontier Difficulty &amp; Realism)</strong>：</p>
+
+<ul>
+<li><strong>难度定位</strong>：问题难度设定在研究生及以上水平，目标是让当前最先进模型的通过率低于20%，以有效区分顶尖模型的能力上限。</li>
+<li><strong>问题设计</strong>：优先采用简答题和填空题，而非简单的选择题。超过50%的问题为包含多个子部分的复合问题，考验模型处理复杂指令、维持长上下文和进行多步骤推理的能力。</li>
+<li><strong>答案保真度</strong>：要求模型生成复杂的答案实体，如完整的LaTeX方程、化学产物列表或简化证明，真实反映了科学研究中的表达需求。</li>
+</ul></li>
+<li><p><strong>跨学科焦点 (Cross-Disciplinary Focus)</strong>：</p>
+
+<ul>
+<li>基准内容横跨七个核心科学领域：数学、物理、化学、生物、计算机科学、地球科学和材料科学，旨在评估模型整合和应用跨学科知识的综合能力。</li>
+</ul></li>
+<li><p><strong>严格的质量控制与双语支持 (Rigorous Quality Control &amp; Bilingual Support)</strong>：</p>
+
+<ul>
+<li>采用了复杂的多阶段人机协作流程（详见第二部分）来保证问题的质量、难度和科学价值。</li>
+<li>所有问题均提供中英双语版本，以支持全球研究社区，确保更广泛的适用性。</li>
+</ul></li>
+</ol>
+
+<h4><strong>二、 创新的“双重过滤”问题构建流程</strong></h4>
+
+<p>ATLAS 的独到之处在于其系统化、多阶段的问题生成与验证流程，该流程深度结合了人类专家的智慧与大型模型的对抗性测试能力。</p>
+
+<ol>
+<li><p><strong>阶段一：专家源问题生成与预筛选</strong></p>
+
+<ul>
+<li><strong>生成</strong>：来自全球25个不同机构的博士级专家提交原创问题，并附带详细的解题步骤和典型答案。</li>
+<li><strong>预筛选</strong>：自动化管道对提交的问题进行格式化，并与现有数据库进行相似度检查，初步过滤掉重复或格式不符的问题。</li>
+</ul></li>
+<li><p><strong>阶段二：对抗性过滤与迭代精炼（核心过滤）</strong></p>
+
+<ul>
+<li><strong>原创性验证</strong>：利用检索增强生成（RAG）系统，将问题与网络内容、学术论文和现有基准进行语义相似度比对。由一个大型语言模型（LLM）评估相似度，并为问题分配原创性分数，有效防止内容泄露。</li>
+<li><strong>难度校准</strong>：将问题交给一组最先进的模型（Large Reasoning Models, LRMs）进行解答。只有当这些模型在多次尝试中的解决准确率低于40%时，问题才被认为达到了“前沿难度”标准并得以通过。</li>
+</ul></li>
+<li><p><strong>阶段三：多层次人类专家验证（同行评审）</strong></p>
+
+<ul>
+<li><strong>双盲同行评审</strong>：通过对抗性过滤的问题将被送至2-3名匿名的同行专家处进行双盲评审。评审维度包括<strong>内容与格式</strong>、<strong>科学价值</strong>和<strong>难度</strong>。</li>
+<li><strong>元评审 (Meta Review)</strong>：若评审员意见不一，由一位高级元评审员介入，做出最终裁决，确保评估的公正性。</li>
+<li><strong>最终检查</strong>：在正式接纳前，还会进行最后的搜索引擎检查，确保问题未被公开披露。</li>
+</ul></li>
+<li><p><strong>阶段四：最终答案的精炼与验证</strong></p>
+
+<ul>
+<li>问题被接纳后，其答案会经过一个由LLM代理辅助的精炼流程，包括提取核心组件、进行事实与科学准确性核查，并最终重构成清晰、结构化的逐步格式，以提高其作为评估标准的教学价值和可用性。</li>
+</ul></li>
+</ol>
+
+<h4><strong>三、 新颖的“LLM-as-Judge”自动化评估范式</strong></h4>
+
+<p>为了高效、可扩展地评估模型在开放式问题上的表现，ATLAS 引入了“大型推理模型作为评判者”（LRM-as-Judge）的评估工作流程。</p>
+
+<ol>
+<li><strong>预测生成 (Prediction Generation)</strong>：提示待评估的LLM进行逐步解题，并要求其以结构化的JSON格式输出最终答案，便于后续的自动化解析。</li>
+<li><strong>答案解析 (Answer Parsing)</strong>：系统自动解析模型输出的JSON文件，提取出最终答案。</li>
+<li><strong>判断生成 (Judgment Generation)</strong>：将原始问题、模型答案和标准答案一同输入到一个强大的“评判LLM”中。该评判LLM根据指令（强调考虑合理的误差范围）对模型的答案进行评估，并以JSON格式输出评判结果。</li>
+<li><strong>判断解析 (Judgment Parsing)</strong>：解析评判结果，计算准确率等评估指标。这种细粒度的评估结果不仅能量化模型表现，还可用于可验证奖励的强化学习等下游任务。</li>
+</ol>
+
+<h4><strong>四、 应用场景与长期愿景</strong></h4>
+
+<p>ATLAS 的最终目标是成为推动人工智能科学（AI4S）发展的长期、开放、社区驱动的平台。</p>
+
+<ol>
+<li><strong>当前应用</strong>：作为可靠的“标尺”，帮助研究人员和开发者诊断当前模型的优缺点，特别是在高级科学推理方面的差距，从而推动模型的进一步发展。</li>
+<li><strong>未来路线图</strong>：
+<ul>
+<li><strong>持续内容更新</strong>：定期发布新的问题包，以跟上模型发展的步伐，防止基准失效。</li>
+<li><strong>扩展评估范围</strong>：未来将涵盖更多科学领域（如神经科学、药学）、更多语言以及新的任务格式（如假设生成、实验设计）。</li>
+<li><strong>建立社区生态</strong>：构建一个协作平台，邀请全球专家参与问题创建和评审，使其成为由科学界和AI社区共同维护的公共资源，稳健地推动AI迈向通用智能。</li>
+</ul></li>
+</ol>
+
+<p>综上所述，ATLAS通过其严谨的设计原则、创新的构建流程和自动化的评估范式，为评估和提升AI在复杂科学领域的推理能力提供了一个全面、可靠且可持续的解决方案。</p>
+
+<h2>框架优势</h2>
+
+<ul>
+<li><strong>高原创性与高质量</strong>：通过专家原创和严格评审，杜绝数据污染，确保评估的有效性。</li>
+<li><strong>高难度与跨学科性</strong>：能有效区分顶尖模型的性能，推动模型能力上限的提升。</li>
+<li><strong>高保真度</strong>：评估方式更接近真实世界的科学问题，而非简化的选择题。</li>
+<li><strong>可靠的诊断工具</strong>：为改进AI模型提供具体的诊断信息和研究方向。</li>
+<li><strong>社区驱动</strong>：旨在建立一个开放、持续更新的平台，以长期跟踪AI进展。</li>
+</ul>
+
+<h2>实验设计</h2>
+
+<ul>
+<li><strong>基准构建</strong>：由来自七个核心科学领域的专家团队，通过问题创建、对抗性测试和多阶段同行评审，开发了包含约800个问题的ATLAS基准。</li>
+<li><strong>模型评估</strong>：在ATLAS验证集上对多种前沿LLM（包括闭源的GPT-5-High、Gemini-2.5-Pro和多种开源模型）进行了广泛评估。</li>
+<li><strong>评估指标</strong>：采用准确率（Accuracy）和mG-Pass@k等指标，不仅衡量答案的正确性，还评估模型生成结果的稳定性和一致性。</li>
+</ul>
+
+<h2>数据集和代码</h2>
+
+<ul>
+<li>ATLAS基准包含约800个高质量科学推理问题（例如300个验证集和500个测试集），涵盖七大学科。</li>
+<li>论文片段中未提供具体的数据集和代码链接，但提到了项目旨在建立一个开放、协作的平台，并会持续发布内容。</li>
+</ul>
+
+<h2>性能表现</h2>
+
+<ul>
+<li><strong>普遍表现不佳</strong>：所有被测试的模型在ATLAS上的表现普遍较差（如通过率低于20%），这有力地证实了该基准的高难度和前沿性。</li>
+<li><strong>有效区分模型</strong>：ATLAS能有效地区分不同顶尖模型的性能。实验表明，OpenAI GPT-5-High在准确率和稳定性上均显著优于其他模型。</li>
+<li><strong>揭示能力差距</strong>：实验结果定量地揭示了当前最先进的LLM与人类专家在深度科学推理能力上存在的巨大差距，表明实现可靠的科学发现AI仍有很长的路要走。</li>
+</ul>
+
+<h2>实验结果</h2>
+
+<ul>
+<li>ATLAS的高难度和原创性使其成为衡量前沿AI模型科学推理能力的“试金石”。</li>
+<li>实验结果显示，模型的准确性与其在多次预测中的稳定性（由mG-Pass分数衡量）呈正相关。</li>
+<li>实验中也观察到，一些模型在生成长答案时会因输出长度限制而出现截断问题，这影响了评估的准确性并带来了推理开销的挑战。</li>
+</ul>
+
+<h2>论文贡献</h2>
+
+<ul>
+<li><strong>提出ATLAS基准</strong>：提出了一个全新的高难度、高质量、跨学科的科学推理基准ATLAS，填补了现有评估生态系统中的重要空白。</li>
+<li><strong>建立高质量构建流程</strong>：开创了一套包含专家创建、对抗性过滤和多阶段同行评审的严谨方法论，为未来高质量基准的开发提供了范例。</li>
+<li><strong>全面评估前沿模型</strong>：对当前最先进的LLM进行了系统性评估，量化了它们在复杂科学推理任务中的能力上限和局限性。</li>
+<li><strong>指明未来方向</strong>：评估结果揭示了AI模型与人类专家之间的能力差距，为推动AI在科学发现领域的发展提供了清晰的诊断信息和研究方向。</li>
+</ul>
+
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="http://arxiv.org/abs/2511.14366v1" class="btn" target="_blank">📄 查看 arXiv 原文</a>
+            <a href="index.html" class="btn btn-secondary">← 返回每日报告</a>
+            <a href="../../index.html" class="btn btn-secondary">← 返回汇总页</a>
+        </div>
+        
+        <div class="footer">
+            <p>📧 这是由智能论文简报系统自动生成的页面</p>
+            <p>生成时间: 2025-11-19 19:38:42</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
