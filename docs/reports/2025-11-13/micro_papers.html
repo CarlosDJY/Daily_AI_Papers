@@ -5,454 +5,717 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微观深度解读 - 2025-11-13</title>
     <style>
+        :root {
+            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
+            --primary-color: #4f46e5;
+            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --tag-bg: #f0f9ff;
+            --tag-text: #0369a1;
+            
+            --warn-bg: #fff7ed;
+            --warn-text: #c2410c;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
         }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 50px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
+            color: var(--text-main);
             font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .nav-links {
+        
+        .header h1 .icon { color: var(--micro-color); width: 32px; height: 32px; }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* 论文卡片列表 */
+        .paper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .paper-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .paper-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        /* 序号水印 */
+        .paper-index {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: 900;
+            color: #f1f5f9;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 卡片头部 */
+        .card-header {
+            position: relative;
+            z-index: 1;
             margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
         }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
-            font-size: 14px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .content-section {
-            background-color: #f8f9fa;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #6c757d;
-        }
-        .paper {
-            margin: 25px 0;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            transition: box-shadow 0.3s ease;
-        }
-        .paper:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+
         .paper-title {
             font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
             line-height: 1.4;
+            padding-right: 40px; /* 给序号留位 */
         }
+
         .paper-title a {
-            color: #2c3e50;
+            color: var(--text-main);
             text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-size: 0 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.3s;
         }
-        .paper-title a:hover {
-            color: #007bff;
-            text-decoration: underline;
+
+        .paper-card:hover .paper-title a {
+            background-size: 100% 10px;
+            color: var(--primary-color);
         }
-        .paper-meta {
-            color: #666;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-        .paper-summary {
-            color: #495057;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        .paper-score {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        .keywords-container {
-            margin: 8px 0;
+
+        /* 元数据行 */
+        .meta-row {
             display: flex;
             flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
             gap: 6px;
         }
-        .keyword-badge {
-            display: inline-block;
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #90caf9;
-            cursor: default;
-            user-select: none;
+
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
         }
-        .paper-image {
-            margin: 15px 0;
+
+        /* 关键词 */
+        .keywords-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .keyword-tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 摘要内容 */
+        .summary-content {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .summary-label {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 4px;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+
+        /* 图片容器 */
+        .image-wrapper {
+            margin: 20px 0;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
         }
-        .paper-image img {
+
+        .image-wrapper img {
             max-width: 100%;
             height: auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-        .paper-warning {
-            color: #e67e22;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 8px;
-            background-color: #fff4e6;
-            border-left: 3px solid #e67e22;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
-        .paper-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .paper-link:hover {
-            background-color: #5a6268;
-            text-decoration: none;
-        }
-        .footer {
-            margin-top: 40px;
+
+        /* 底部操作栏 */
+        .card-footer {
+            margin-top: 25px;
             padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            text-align: center;
-            color: #6c757d;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-read {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-read:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .page-footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .paper-card { padding: 20px; }
+            .paper-index { font-size: 30px; top: 15px; right: 15px; }
+            .paper-title { font-size: 18px; padding-right: 30px; }
+            .card-footer { justify-content: stretch; }
+            .btn-read { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📝 微观深度解读</h1>
-            <div class="date">2025-11-13</div>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                微观深度解读
+            </h1>
+            <div class="subtitle">为您精选了 6 篇高质量 AI 论文的深度解析</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
+        <div class="paper-list">
+            
+            <div class="paper-card">
+                <div class="paper-index">#1</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09030v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09030v1.html">
+                            Solving a Million-Step LLM Task with Zero Errors
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.544 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Cognizant AI Lab, UT Austin
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">MAKER框架</span>
+                        
+                        <span class="keyword-tag">任务分解</span>
+                        
+                        <span class="keyword-tag">多代理投票机制</span>
+                        
+                        <span class="keyword-tag">大型语言模型</span>
+                        
+                        <span class="keyword-tag">高精度应用</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了MAKER框架，通过极端任务分解和多代理投票机制，成功解决了大型语言模型在执行复杂长时程任务时的高错误率问题。该方法实现了在超过一百万个步骤的任务中零错误执行，展示了显著的可扩展性和可靠性，为高精度领域的应用提供了新的解决方案。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/d8be16512d350b257c0d6193100835ac4b9c641d41a1c1e684ddc2cef78ffec6.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09030v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09030v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#2</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09488v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09488v1.html">
+                            2511-09488v1.pdf
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.483 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Shanghai Innovation Institute, Shanghai Institute of AI for Education, East China Normal University, Department of Education Information Technology, School of Computer Science and Technology
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">合成训练数据生成</span>
+                        
+                        <span class="keyword-tag">AutoSynth框架</span>
+                        
+                        <span class="keyword-tag">无参考数据</span>
+                        
+                        <span class="keyword-tag">混合奖励信号</span>
+                        
+                        <span class="keyword-tag">自动化内容生成</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了AutoSynth框架，旨在解决缺乏标注数据集时的合成训练数据生成问题。通过将数据生成重构为工作流搜索问题，并引入无参考数据的混合奖励信号，AutoSynth显著提升了生成数据的质量和效率，减少了90%以上的人力投入，推动了主观任务领域的自动化内容生成。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/a974dcf81ab381d883f3ca5ebd412fe22903676dfbcedcfe20093e6da880311f.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09488v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09488v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#3</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09373v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09373v1.html">
+                            Routesplain: Towards Faithful and Intervenable Routing for Software-related Tasks
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.479 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Columbia University, Oracle AI
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">路由框架</span>
+                        
+                        <span class="keyword-tag">软件相关任务</span>
+                        
+                        <span class="keyword-tag">可解释性</span>
+                        
+                        <span class="keyword-tag">黑箱路由</span>
+                        
+                        <span class="keyword-tag">诊断能力</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了Routesplain，一个专为软件相关任务设计的LLM路由框架。它通过提取人类可解释的概念（如任务类型和复杂度）来优化用户查询的路由，提升了响应的准确性和成本效益。实验结果显示，Routesplain在多个软件任务上超越了现有黑箱路由方法，提供了更高的可解释性和诊断能力。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/8d8ad609c8fe028f0fc7f1c401aeb76e109d6d4e85d2f0be5a2bc06fcc733fd7.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09373v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09373v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#4</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.08873v1&redirect_url=%2Freports%2F2025-11-13%2F2511_08873v1.html">
+                            UCO: A Multi-Turn Interactive Reinforcement Learning Method for Adaptive Teaching with Large Language Models
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.476 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            East China Normal University, Zhejiang University, The Chinese University of Hong Kong, Shenzhen
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">多轮强化学习</span>
+                        
+                        <span class="keyword-tag">大型语言模型</span>
+                        
+                        <span class="keyword-tag">动态适应性</span>
+                        
+                        <span class="keyword-tag">教学策略</span>
+                        
+                        <span class="keyword-tag">双目标奖励机制</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了单向认知优化（UCO）框架，旨在解决大型语言模型在教育中缺乏动态适应性的挑战。UCO通过多轮强化学习和创新的双目标奖励机制（进展奖励和支架奖励），有效评估学生认知进步并动态调整教学策略。实验结果显示，UCO在教学效果、质量和避免答案泄露方面均优于现有模型，展现出卓越的性能和实用性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/5bcdc3775a405990f65c99e2f4e6a7147acbf3a8c4b58fdfd1774fe8eca168e4.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.08873v1&redirect_url=%2Freports%2F2025-11-13%2F2511_08873v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#5</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09008v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09008v1.html">
+                            A Neurosymbolic Approach to Natural Language Formalization and Verification
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.475 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Amazon Web Services, University College London, University of Toronto
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">神经符号框架</span>
+                        
+                        <span class="keyword-tag">自然语言形式化</span>
+                        
+                        <span class="keyword-tag">逻辑一致性验证</span>
+                        
+                        <span class="keyword-tag">冗余翻译</span>
+                        
+                        <span class="keyword-tag">假阳性率</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为AUTOMATED REASONING CHECKS (ARC)的神经符号框架，旨在解决大型语言模型在金融和医疗等受监管行业中的应用限制。该框架通过两阶段方法：首先将自然语言政策形式化，其次通过冗余翻译和符号推理验证逻辑一致性，实现超过99%的声望，显著降低假阳性率，确保输出的准确性和合规性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/9c9ccb85dc874fc25c84a9c5a5f547296c72380be7c099d25b050b6c65048d09.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09008v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09008v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#6</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09396v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09396v1.html">
+                            Multimodal Large Language Models for Low-Resource Languages: A Case Study for Basque
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.448 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            HiTZ Basque Center for Language Technology, Ixa NLP Group, University of the Basque Country UPV/EHU
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">多模态大语言模型</span>
+                        
+                        <span class="keyword-tag">低资源语言</span>
+                        
+                        <span class="keyword-tag">巴斯克语</span>
+                        
+                        <span class="keyword-tag">数据混合策略</span>
+                        
+                        <span class="keyword-tag">晚融合架构</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种针对低资源语言巴斯克语的多模态大语言模型（MLLM）开发方法。通过创建首个巴斯克语多模态数据集，并采用晚融合架构与数据混合策略，研究表明仅需20%的巴斯克数据即可实现优异性能，且无需特定的巴斯克基础模型。这一方法为其他低资源语言的MLLM开发提供了重要参考。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-13/337768aaef355e2185e2b9eba6f418d9fc0ce322ce40663902a2a8a73445735d.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09396v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09396v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
         </div>
 
-        <div class="content-section">
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">为您精选了 6 篇高质量 AI 论文的深度解读</p>
-            
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09030v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09030v1.html">
-                        1. Solving a Million-Step LLM Task with Zero Errors
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">MAKER框架</span>
-                    
-                    <span class="keyword-badge">任务分解</span>
-                    
-                    <span class="keyword-badge">多代理投票机制</span>
-                    
-                    <span class="keyword-badge">大型语言模型</span>
-                    
-                    <span class="keyword-badge">高精度应用</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Cognizant AI Lab, UT Austin</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.544</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了MAKER框架，通过极端任务分解和多代理投票机制，成功解决了大型语言模型在执行复杂长时程任务时的高错误率问题。该方法实现了在超过一百万个步骤的任务中零错误执行，展示了显著的可扩展性和可靠性，为高精度领域的应用提供了新的解决方案。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/d8be16512d350b257c0d6193100835ac4b9c641d41a1c1e684ddc2cef78ffec6.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09030v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09030v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09488v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09488v1.html">
-                        2. 2511-09488v1.pdf
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">合成训练数据生成</span>
-                    
-                    <span class="keyword-badge">AutoSynth框架</span>
-                    
-                    <span class="keyword-badge">无参考数据</span>
-                    
-                    <span class="keyword-badge">混合奖励信号</span>
-                    
-                    <span class="keyword-badge">自动化内容生成</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Shanghai Innovation Institute, Shanghai Institute of AI for Education, East China Normal University, Department of Education Information Technology, School of Computer Science and Technology</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.483</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了AutoSynth框架，旨在解决缺乏标注数据集时的合成训练数据生成问题。通过将数据生成重构为工作流搜索问题，并引入无参考数据的混合奖励信号，AutoSynth显著提升了生成数据的质量和效率，减少了90%以上的人力投入，推动了主观任务领域的自动化内容生成。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/a974dcf81ab381d883f3ca5ebd412fe22903676dfbcedcfe20093e6da880311f.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09488v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09488v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09373v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09373v1.html">
-                        3. Routesplain: Towards Faithful and Intervenable Routing for Software-related Tasks
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">路由框架</span>
-                    
-                    <span class="keyword-badge">软件相关任务</span>
-                    
-                    <span class="keyword-badge">可解释性</span>
-                    
-                    <span class="keyword-badge">黑箱路由</span>
-                    
-                    <span class="keyword-badge">诊断能力</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Columbia University, Oracle AI</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.479</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了Routesplain，一个专为软件相关任务设计的LLM路由框架。它通过提取人类可解释的概念（如任务类型和复杂度）来优化用户查询的路由，提升了响应的准确性和成本效益。实验结果显示，Routesplain在多个软件任务上超越了现有黑箱路由方法，提供了更高的可解释性和诊断能力。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/8d8ad609c8fe028f0fc7f1c401aeb76e109d6d4e85d2f0be5a2bc06fcc733fd7.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09373v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09373v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.08873v1&redirect_url=%2Freports%2F2025-11-13%2F2511_08873v1.html">
-                        4. UCO: A Multi-Turn Interactive Reinforcement Learning Method for Adaptive Teaching with Large Language Models
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">多轮强化学习</span>
-                    
-                    <span class="keyword-badge">大型语言模型</span>
-                    
-                    <span class="keyword-badge">动态适应性</span>
-                    
-                    <span class="keyword-badge">教学策略</span>
-                    
-                    <span class="keyword-badge">双目标奖励机制</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: East China Normal University, Zhejiang University, The Chinese University of Hong Kong, Shenzhen</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.476</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了单向认知优化（UCO）框架，旨在解决大型语言模型在教育中缺乏动态适应性的挑战。UCO通过多轮强化学习和创新的双目标奖励机制（进展奖励和支架奖励），有效评估学生认知进步并动态调整教学策略。实验结果显示，UCO在教学效果、质量和避免答案泄露方面均优于现有模型，展现出卓越的性能和实用性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/5bcdc3775a405990f65c99e2f4e6a7147acbf3a8c4b58fdfd1774fe8eca168e4.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.08873v1&redirect_url=%2Freports%2F2025-11-13%2F2511_08873v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09008v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09008v1.html">
-                        5. A Neurosymbolic Approach to Natural Language Formalization and Verification
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">神经符号框架</span>
-                    
-                    <span class="keyword-badge">自然语言形式化</span>
-                    
-                    <span class="keyword-badge">逻辑一致性验证</span>
-                    
-                    <span class="keyword-badge">冗余翻译</span>
-                    
-                    <span class="keyword-badge">假阳性率</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Amazon Web Services, University College London, University of Toronto</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.475</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为AUTOMATED REASONING CHECKS (ARC)的神经符号框架，旨在解决大型语言模型在金融和医疗等受监管行业中的应用限制。该框架通过两阶段方法：首先将自然语言政策形式化，其次通过冗余翻译和符号推理验证逻辑一致性，实现超过99%的声望，显著降低假阳性率，确保输出的准确性和合规性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/9c9ccb85dc874fc25c84a9c5a5f547296c72380be7c099d25b050b6c65048d09.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09008v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09008v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09396v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09396v1.html">
-                        6. Multimodal Large Language Models for Low-Resource Languages: A Case Study for Basque
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">多模态大语言模型</span>
-                    
-                    <span class="keyword-badge">低资源语言</span>
-                    
-                    <span class="keyword-badge">巴斯克语</span>
-                    
-                    <span class="keyword-badge">数据混合策略</span>
-                    
-                    <span class="keyword-badge">晚融合架构</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: HiTZ Basque Center for Language Technology, Ixa NLP Group, University of the Basque Country UPV/EHU</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.448</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种针对低资源语言巴斯克语的多模态大语言模型（MLLM）开发方法。通过创建首个巴斯克语多模态数据集，并采用晚融合架构与数据混合策略，研究表明仅需20%的巴斯克数据即可实现优异性能，且无需特定的巴斯克基础模型。这一方法为其他低资源语言的MLLM开发提供了重要参考。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-13/337768aaef355e2185e2b9eba6f418d9fc0ce322ce40663902a2a8a73445735d.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.09396v1&redirect_url=%2Freports%2F2025-11-13%2F2511_09396v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-        </div>
-
-        <div class="footer">
-            <p>生成时间: 2025-11-13 23:47:06</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+        <div class="page-footer">
+            <p>生成时间: 2025-11-20 13:08:11</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

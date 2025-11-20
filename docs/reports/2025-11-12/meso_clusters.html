@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-11-12</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-11-12</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,420 +302,471 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 增强LLM推理能力的多样化方法</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Knowledge-Augmented Long-CoT Generation for Complex Biomolecular Reasoning</strong>
-                        <span class="contribution">提出了一种知识增强的长链生成方法，以解决复杂生物分子推理中的逻辑不一致性问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Thinker: Training LLMs in Hierarchical Thinking for Deep Search via Multi-Turn Interaction</strong>
-                        <span class="contribution">通过多轮交互训练LLMs进行层次思维，从而提高对外部知识库的检索效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PerspAct: Enhancing LLM Situated Collaboration Skills through Perspective Taking and Active Vision</strong>
-                        <span class="contribution">增强LLMs在多代理交互中的视角理解能力，以促进有效的协作和机器人应用。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Benchmarking Multi-Step Legal Reasoning and Analyzing Chain-of-Thought Effects in Large Language Models</strong>
-                        <span class="contribution">建立了一个多步骤法律推理基准，分析了链式思维在法律推理中的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Think-at-Hard: Selective Latent Iterations to Improve Reasoning Language Models</strong>
-                        <span class="contribution">提出选择性潜在迭代的方法，以在参数限制下提升LLMs的推理能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Designing LLM-based Multi-Agent Systems for Software Engineering Tasks: Quality Attributes, Design Patterns and Rationale</strong>
-                        <span class="contribution">探讨了LLM在软件工程任务中的多代理系统设计，强调质量属性和设计模式。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SciAgent: A Unified Multi-Agent System for Generalistic Scientific Reasoning</strong>
-                        <span class="contribution">介绍了SciAgent，一个统一的多代理系统，旨在实现广泛的科学推理能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>VSPO: Validating Semantic Pitfalls in Ontology via LLM-Based CQ Generation</strong>
-                        <span class="contribution">利用LLMs自动生成能力问题，以验证本体设计中的语义缺陷。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>FaithAct: Faithfulness Planning and Acting in MLLMs</strong>
-                        <span class="contribution">区分行为忠实性和感知忠实性，提出了一种在多模态LLMs中进行忠实性规划的方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>DPRM: A Dual Implicit Process Reward Model in Multi-Hop Question Answering</strong>
-                        <span class="contribution">提出了一种双隐式过程奖励模型，以提升多跳问答任务中的推理质量。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Test-time Diverse Reasoning by Riemannian Activation Steering</strong>
-                        <span class="contribution">通过黎曼激活引导实现测试时多样化推理，提高语言模型的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Smarter Together: Creating Agentic Communities of Practice through Shared Experiential Learning</strong>
-                        <span class="contribution">探讨了通过共享经验学习创建代理社区的策略，以促进软件开发者的知识共享。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>DynaAct: Large Language Model Reasoning with Dynamic Action Spaces</strong>
-                        <span class="contribution">提出了一种动态行动空间的方法，以提高序列决策系统中的推理效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>AgentPRM: Process Reward Models for LLM Agents via Step-Wise Promise and Progress</strong>
-                        <span class="contribution">开发了一种过程奖励模型，通过逐步承诺和进展来提升LLM代理的决策能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PCRLLM: Proof-Carrying Reasoning with Large Language Models under Stepwise Logical Constraints</strong>
-                        <span class="contribution">提出了一种在逐步逻辑约束下进行证明携带推理的框架，以增强LLMs的逻辑一致性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Experience to Strategy: Empowering LLM Agents with Trainable Graph Memory</strong>
-                        <span class="contribution">利用可训练图记忆增强LLM代理的推理能力，以更好地利用先前经验。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Last Layer Logits to Logic: Empowering LLMs with Logic-Consistent Structured Knowledge Reasoning</strong>
-                        <span class="contribution">通过逻辑一致的结构化知识推理增强LLMs在自然语言推理任务中的表现。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 时间序列预测中的深度学习方法</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>A Circular Argument : Does RoPE need to be Equivariant for Vision?</strong>
-                        <span class="contribution">探讨了旋转位置编码在视觉任务中的有效性及其与等变性的关系。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Capturing Complex Spatial-Temporal Dependencies in Traffic Forecasting: A Self-Attention Approach</strong>
-                        <span class="contribution">提出了一种自注意力机制来捕捉交通预测中的复杂时空依赖性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>HN-MVTS: HyperNetwork-based Multivariate Time Series Forecasting</strong>
-                        <span class="contribution">引入了超网络结构以增强多变量时间序列预测的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Physical Consistency of Aurora's Encoder: A Quantitative Study</strong>
-                        <span class="contribution">量化分析了Aurora编码器的物理一致性，提升了天气预测模型的透明度。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Generalizable Insights for Graph Transformers in Theory and Practice</strong>
-                        <span class="contribution">提供了图变换器的通用见解，强调了注意力机制和位置嵌入的设计选择对表现的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Towards Non-Stationary Time Series Forecasting with Temporal Stabilization and Frequency Differencing</strong>
-                        <span class="contribution">提出了一种处理非平稳时间序列的时间稳定化和频率差分方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>IBMA: An Imputation-Based Mixup Augmentation Using Self-Supervised Learning for Time Series Data</strong>
-                        <span class="contribution">开发了一种基于插补的混合增强方法，通过自监督学习提高时间序列数据的多样性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>EMAformer: Enhancing Transformer through Embedding Armor for Time Series Forecasting</strong>
-                        <span class="contribution">提出了EMAformer，通过嵌入保护机制改善了多变量时间序列预测的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Unified Geometric Field Theory Framework for Transformers: From Manifold Embeddings to Kernel Modulation</strong>
-                        <span class="contribution">建立了一个统一的几何场论框架，探讨变换器的核心组件的物理和数学解释。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 脑机接口中的信号解码与适应性</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Toward Practical BCI: A Real-time Wireless Imagined Speech EEG Decoding System</strong>
-                        <span class="contribution">提出了一种实时无线的想象语音EEG解码系统，旨在提高脑机接口的实际应用能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Meta-cognitive Multi-scale Hierarchical Reasoning for Motor Imagery Decoding</strong>
-                        <span class="contribution">研究了一种多尺度层次推理方法，以提高运动想象EEG信号的解码稳定性和准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Toward Robust EEG-based Intention Decoding during Misarticulated Speech in Aphasia</strong>
-                        <span class="contribution">开发了一种EEG基础的沟通支持系统，专注于在失语症患者的发音错误情况下进行意图解码。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Lightweight Diffusion-based Framework for Online Imagined Speech Decoding in Aphasia</strong>
-                        <span class="contribution">提出了一种轻量级的扩散神经解码框架，优化了失语症患者的实时想象语音分类。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Toward Adaptive BCIs: Enhancing Decoding Stability via User State-Aware EEG Filtering</strong>
-                        <span class="contribution">引入了一种用户状态感知的EEG过滤方法，以增强脑机接口的解码稳定性和适应性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Confidence-Aware Neural Decoding of Overt Speech from EEG: Toward Robust Brain-Computer Interfaces</strong>
-                        <span class="contribution">提出了一种信心感知解码框架，结合深度集成学习和后处理校准，提高了EEG解码的准确性和可靠性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>One Model for All: Universal Pre-training for EEG based Emotion Recognition across Heterogeneous Datasets and Paradigms</strong>
-                        <span class="contribution">提出了一个通用预训练框架，旨在解决EEG情感识别中的数据集异质性问题，提升模型的泛化能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 多模态语言模型与语音合成</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>SpeechJudge: Towards Human-Level Judgment for Speech Naturalness</strong>
-                        <span class="contribution">提出了一种方法，通过人类反馈对语音合成模型进行对齐，以提高其自然性评估。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Unifying Model and Layer Fusion for Speech Foundation Models</strong>
-                        <span class="contribution">提出了一种统一模型和层融合的方法，以提升语音基础模型在下游任务中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Boomda: Balanced Multi-objective Optimization for Multimodal Domain Adaptation</strong>
-                        <span class="contribution">提出了一种平衡多目标优化的方法，以应对多模态领域适应中的标注数据稀缺问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Quantification and object perception in Multimodal Large Language Models deviate from human linguistic cognition</strong>
-                        <span class="contribution">探讨了多模态大型语言模型在量化和物体感知方面的表现与人类语言认知之间的偏差。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ParliaBench: An Evaluation and Benchmarking Framework for LLM-Generated Parliamentary Speech</strong>
-                        <span class="contribution">建立了一个评估框架，用于衡量大型语言模型生成的议会演讲的语言质量和政治真实性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Multimodal LLMs Do Not Compose Skills Optimally Across Modalities</strong>
-                        <span class="contribution">分析了多模态大型语言模型在技能组合方面的不足，揭示了其在新任务解决中的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>VocalBench-zh: Decomposing and Benchmarking the Speech Conversational Abilities in Mandarin Context</strong>
-                        <span class="contribution">提出了一种基准测试方法，以评估普通话语音对话能力的各个组成部分。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 生成模型中的身份一致性与语义理解</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Beyond the Pixels: VLM-based Evaluation of Identity Preservation in Reference-Guided Synthesis</strong>
-                        <span class="contribution">提出了一种基于视觉语言模型的评估方法，以更细致地分析生成模型中的身份保留问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Taming Identity Consistency and Prompt Diversity in Diffusion Models via Latent Concatenation and Masked Conditional Flow Matching</strong>
-                        <span class="contribution">通过潜在拼接和掩蔽条件流匹配的方法，实现了在扩散模型中身份一致性与提示多样性的平衡。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>CLIP is All You Need for Human-like Semantic Representations in Stable Diffusion</strong>
-                        <span class="contribution">探讨了CLIP在稳定扩散模型中对图像生成的语义理解能力，揭示了其内部表示的有效性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Concentration bounds on response-based vector embeddings of black-box generative models</strong>
-                        <span class="contribution">提供了关于黑箱生成模型响应向量嵌入的集中界限，为统计分析和推断提供了理论基础。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Continual Unlearning for Text-to-Image Diffusion Models: A Regularization Perspective</strong>
-                        <span class="contribution">提出了一种正则化视角下的持续遗忘方法，解决了文本到图像扩散模型中的逐步遗忘问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Generative AI Meets 6G and Beyond: Diffusion Models for Semantic Communications</strong>
-                        <span class="contribution">探讨了生成AI在语义通信中的应用，强调了其在6G及未来网络中的重要性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 工业过程优化与可解释AI</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Improving Industrial Injection Molding Processes with Explainable AI for Quality Classification</strong>
-                        <span class="contribution">提出了一种可解释的AI方法来优化工业注塑过程中的质量分类，解决了模型复杂性和传感器技术不足的问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Advancements in synthetic data extraction for industrial injection molding</strong>
-                        <span class="contribution">探讨了合成数据提取的进展，为工业注塑过程中的数据不足问题提供了一种有效的解决方案。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>An Integrated Fusion Framework for Ensemble Learning Leveraging Gradient Boosting and Fuzzy Rule-Based Models</strong>
-                        <span class="contribution">提出了一种集成框架，将梯度提升与模糊规则模型结合，以提高模型的可解释性和性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Confusion to Clarity: ProtoScore - A Framework for Evaluating Prototype-Based XAI</strong>
-                        <span class="contribution">开发了ProtoScore框架，用于评估基于原型的可解释AI，旨在提高神经网络决策过程的透明度。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Foam Segmentation in Wastewater Treatment Plants: A Federated Learning Approach with Segment Anything Model 2</strong>
-                        <span class="contribution">提出了一种联邦学习方法，利用Segment Anything Model 2来实时监测污水处理厂中的泡沫分布，提升处理效率。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 联邦学习中的隐私与效率</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>ProbSelect: Stochastic Client Selection for GPU-Accelerated Compute Devices in the 3D Continuum</strong>
-                        <span class="contribution">提出了一种随机客户端选择方法，以应对在动态环境中进行联邦学习时的设备选择挑战。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>FedPoP: Federated Learning Meets Proof of Participation</strong>
-                        <span class="contribution">引入了参与证明机制，增强了联邦学习中模型训练的透明度和可验证性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PRISM: Privacy-preserving Inference System with Homomorphic Encryption and Modular Activation</strong>
-                        <span class="contribution">开发了一种隐私保护的推理系统，结合同态加密和模块化激活，确保数据隐私的同时进行有效推理。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>BIPPO: Budget-Aware Independent PPO for Energy-Efficient Federated Learning Services</strong>
-                        <span class="contribution">提出了一种预算感知的独立PPO算法，以提高资源受限环境中联邦学习服务的能效。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 生成模型中的随机性与约束</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>TimeFlow: Towards Stochastic-Aware and Efficient Time Series Generation via Flow Matching Modeling</strong>
-                        <span class="contribution">提出了一种基于流匹配建模的时间序列生成方法，强调了对时间动态内在随机性的建模。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Rectified Noise: A Generative Model Using Positive-incentive Noise</strong>
-                        <span class="contribution">引入了一种通过反向时间随机微分方程注入噪声的生成模型，以提高采样效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>HardFlow: Hard-Constrained Sampling for Flow-Matching Models via Trajectory Optimization</strong>
-                        <span class="contribution">提出了一种通过轨迹优化实现的硬约束采样方法，以满足生成样本的特定需求。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Parallel Sampling via Autospeculation</strong>
-                        <span class="contribution">展示了在任意顺序自回归模型和去噪扩散模型中加速采样的并行算法。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 可验证奖励的强化学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>The Path Not Taken: RLVR Provably Learns Off the Principals</strong>
-                        <span class="contribution">探讨了强化学习与可验证奖励的关系，揭示了模型条件优化偏差导致的稀疏性现象。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MURPHY: Multi-Turn GRPO for Self Correcting Code Generation</strong>
-                        <span class="contribution">提出了一种多轮GRPO方法，增强了代码生成的自我纠错能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SERL: Self-Examining Reinforcement Learning on Open-Domain</strong>
-                        <span class="contribution">分析了开放领域任务中应用强化学习的主观性挑战，并提出了相应的解决方案。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Exploration to Exploitation: A Two-Stage Entropy RLVR Approach for Noise-Tolerant MLLM Training</strong>
-                        <span class="contribution">提出了一种两阶段的熵强化学习方法，旨在提高多模态大语言模型在噪声环境下的训练效果。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 量子-经典混合计算与优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Hybrid Quantum-Classical Selective State Space Artificial Intelligence</strong>
-                        <span class="contribution">提出了一种混合量子经典算法，利用量子系统在大规模数值任务中的计算优势。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>An Information-Minimal Geometry for Qubit-Efficient Optimization</strong>
-                        <span class="contribution">介绍了一种信息最小几何方法，以在较小的Hilbert空间中高效优化量子比特。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>BDD2Seq: Enabling Scalable Reversible-Circuit Synthesis via Graph-to-Sequence Learning</strong>
-                        <span class="contribution">通过图到序列学习，提出了一种可扩展的可逆电路合成方法，优化了量子计算中的变量排序。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Classical to Hybrid: A Practical Framework for Quantum-Enhanced Learning</strong>
-                        <span class="contribution">提供了一个三阶段框架，帮助无量子专业知识的从业者过渡到混合量子经典机器学习工作流。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 增强LLM推理能力的多样化方法</div>
+                <div class="cluster-count">17 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Knowledge-Augmented Long-CoT Generation for Complex Biomolecular Reasoning</span>
+                        <span class="paper-contrib">提出了一种知识增强的长链生成方法，以解决复杂生物分子推理中的逻辑不一致性问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Thinker: Training LLMs in Hierarchical Thinking for Deep Search via Multi-Turn Interaction</span>
+                        <span class="paper-contrib">通过多轮交互训练LLMs进行层次思维，从而提高对外部知识库的检索效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PerspAct: Enhancing LLM Situated Collaboration Skills through Perspective Taking and Active Vision</span>
+                        <span class="paper-contrib">增强LLMs在多代理交互中的视角理解能力，以促进有效的协作和机器人应用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Benchmarking Multi-Step Legal Reasoning and Analyzing Chain-of-Thought Effects in Large Language Models</span>
+                        <span class="paper-contrib">建立了一个多步骤法律推理基准，分析了链式思维在法律推理中的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Think-at-Hard: Selective Latent Iterations to Improve Reasoning Language Models</span>
+                        <span class="paper-contrib">提出选择性潜在迭代的方法，以在参数限制下提升LLMs的推理能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Designing LLM-based Multi-Agent Systems for Software Engineering Tasks: Quality Attributes, Design Patterns and Rationale</span>
+                        <span class="paper-contrib">探讨了LLM在软件工程任务中的多代理系统设计，强调质量属性和设计模式。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SciAgent: A Unified Multi-Agent System for Generalistic Scientific Reasoning</span>
+                        <span class="paper-contrib">介绍了SciAgent，一个统一的多代理系统，旨在实现广泛的科学推理能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VSPO: Validating Semantic Pitfalls in Ontology via LLM-Based CQ Generation</span>
+                        <span class="paper-contrib">利用LLMs自动生成能力问题，以验证本体设计中的语义缺陷。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">FaithAct: Faithfulness Planning and Acting in MLLMs</span>
+                        <span class="paper-contrib">区分行为忠实性和感知忠实性，提出了一种在多模态LLMs中进行忠实性规划的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DPRM: A Dual Implicit Process Reward Model in Multi-Hop Question Answering</span>
+                        <span class="paper-contrib">提出了一种双隐式过程奖励模型，以提升多跳问答任务中的推理质量。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Test-time Diverse Reasoning by Riemannian Activation Steering</span>
+                        <span class="paper-contrib">通过黎曼激活引导实现测试时多样化推理，提高语言模型的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Smarter Together: Creating Agentic Communities of Practice through Shared Experiential Learning</span>
+                        <span class="paper-contrib">探讨了通过共享经验学习创建代理社区的策略，以促进软件开发者的知识共享。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DynaAct: Large Language Model Reasoning with Dynamic Action Spaces</span>
+                        <span class="paper-contrib">提出了一种动态行动空间的方法，以提高序列决策系统中的推理效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AgentPRM: Process Reward Models for LLM Agents via Step-Wise Promise and Progress</span>
+                        <span class="paper-contrib">开发了一种过程奖励模型，通过逐步承诺和进展来提升LLM代理的决策能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PCRLLM: Proof-Carrying Reasoning with Large Language Models under Stepwise Logical Constraints</span>
+                        <span class="paper-contrib">提出了一种在逐步逻辑约束下进行证明携带推理的框架，以增强LLMs的逻辑一致性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Experience to Strategy: Empowering LLM Agents with Trainable Graph Memory</span>
+                        <span class="paper-contrib">利用可训练图记忆增强LLM代理的推理能力，以更好地利用先前经验。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Last Layer Logits to Logic: Empowering LLMs with Logic-Consistent Structured Knowledge Reasoning</span>
+                        <span class="paper-contrib">通过逻辑一致的结构化知识推理增强LLMs在自然语言推理任务中的表现。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 时间序列预测中的深度学习方法</div>
+                <div class="cluster-count">9 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Circular Argument : Does RoPE need to be Equivariant for Vision?</span>
+                        <span class="paper-contrib">探讨了旋转位置编码在视觉任务中的有效性及其与等变性的关系。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Capturing Complex Spatial-Temporal Dependencies in Traffic Forecasting: A Self-Attention Approach</span>
+                        <span class="paper-contrib">提出了一种自注意力机制来捕捉交通预测中的复杂时空依赖性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">HN-MVTS: HyperNetwork-based Multivariate Time Series Forecasting</span>
+                        <span class="paper-contrib">引入了超网络结构以增强多变量时间序列预测的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Physical Consistency of Aurora's Encoder: A Quantitative Study</span>
+                        <span class="paper-contrib">量化分析了Aurora编码器的物理一致性，提升了天气预测模型的透明度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generalizable Insights for Graph Transformers in Theory and Practice</span>
+                        <span class="paper-contrib">提供了图变换器的通用见解，强调了注意力机制和位置嵌入的设计选择对表现的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards Non-Stationary Time Series Forecasting with Temporal Stabilization and Frequency Differencing</span>
+                        <span class="paper-contrib">提出了一种处理非平稳时间序列的时间稳定化和频率差分方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">IBMA: An Imputation-Based Mixup Augmentation Using Self-Supervised Learning for Time Series Data</span>
+                        <span class="paper-contrib">开发了一种基于插补的混合增强方法，通过自监督学习提高时间序列数据的多样性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">EMAformer: Enhancing Transformer through Embedding Armor for Time Series Forecasting</span>
+                        <span class="paper-contrib">提出了EMAformer，通过嵌入保护机制改善了多变量时间序列预测的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Unified Geometric Field Theory Framework for Transformers: From Manifold Embeddings to Kernel Modulation</span>
+                        <span class="paper-contrib">建立了一个统一的几何场论框架，探讨变换器的核心组件的物理和数学解释。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 脑机接口中的信号解码与适应性</div>
+                <div class="cluster-count">7 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Toward Practical BCI: A Real-time Wireless Imagined Speech EEG Decoding System</span>
+                        <span class="paper-contrib">提出了一种实时无线的想象语音EEG解码系统，旨在提高脑机接口的实际应用能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Meta-cognitive Multi-scale Hierarchical Reasoning for Motor Imagery Decoding</span>
+                        <span class="paper-contrib">研究了一种多尺度层次推理方法，以提高运动想象EEG信号的解码稳定性和准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Toward Robust EEG-based Intention Decoding during Misarticulated Speech in Aphasia</span>
+                        <span class="paper-contrib">开发了一种EEG基础的沟通支持系统，专注于在失语症患者的发音错误情况下进行意图解码。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Lightweight Diffusion-based Framework for Online Imagined Speech Decoding in Aphasia</span>
+                        <span class="paper-contrib">提出了一种轻量级的扩散神经解码框架，优化了失语症患者的实时想象语音分类。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Toward Adaptive BCIs: Enhancing Decoding Stability via User State-Aware EEG Filtering</span>
+                        <span class="paper-contrib">引入了一种用户状态感知的EEG过滤方法，以增强脑机接口的解码稳定性和适应性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Confidence-Aware Neural Decoding of Overt Speech from EEG: Toward Robust Brain-Computer Interfaces</span>
+                        <span class="paper-contrib">提出了一种信心感知解码框架，结合深度集成学习和后处理校准，提高了EEG解码的准确性和可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">One Model for All: Universal Pre-training for EEG based Emotion Recognition across Heterogeneous Datasets and Paradigms</span>
+                        <span class="paper-contrib">提出了一个通用预训练框架，旨在解决EEG情感识别中的数据集异质性问题，提升模型的泛化能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 多模态语言模型与语音合成</div>
+                <div class="cluster-count">7 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SpeechJudge: Towards Human-Level Judgment for Speech Naturalness</span>
+                        <span class="paper-contrib">提出了一种方法，通过人类反馈对语音合成模型进行对齐，以提高其自然性评估。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unifying Model and Layer Fusion for Speech Foundation Models</span>
+                        <span class="paper-contrib">提出了一种统一模型和层融合的方法，以提升语音基础模型在下游任务中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Boomda: Balanced Multi-objective Optimization for Multimodal Domain Adaptation</span>
+                        <span class="paper-contrib">提出了一种平衡多目标优化的方法，以应对多模态领域适应中的标注数据稀缺问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Quantification and object perception in Multimodal Large Language Models deviate from human linguistic cognition</span>
+                        <span class="paper-contrib">探讨了多模态大型语言模型在量化和物体感知方面的表现与人类语言认知之间的偏差。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ParliaBench: An Evaluation and Benchmarking Framework for LLM-Generated Parliamentary Speech</span>
+                        <span class="paper-contrib">建立了一个评估框架，用于衡量大型语言模型生成的议会演讲的语言质量和政治真实性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Multimodal LLMs Do Not Compose Skills Optimally Across Modalities</span>
+                        <span class="paper-contrib">分析了多模态大型语言模型在技能组合方面的不足，揭示了其在新任务解决中的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VocalBench-zh: Decomposing and Benchmarking the Speech Conversational Abilities in Mandarin Context</span>
+                        <span class="paper-contrib">提出了一种基准测试方法，以评估普通话语音对话能力的各个组成部分。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 生成模型中的身份一致性与语义理解</div>
+                <div class="cluster-count">6 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond the Pixels: VLM-based Evaluation of Identity Preservation in Reference-Guided Synthesis</span>
+                        <span class="paper-contrib">提出了一种基于视觉语言模型的评估方法，以更细致地分析生成模型中的身份保留问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Taming Identity Consistency and Prompt Diversity in Diffusion Models via Latent Concatenation and Masked Conditional Flow Matching</span>
+                        <span class="paper-contrib">通过潜在拼接和掩蔽条件流匹配的方法，实现了在扩散模型中身份一致性与提示多样性的平衡。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CLIP is All You Need for Human-like Semantic Representations in Stable Diffusion</span>
+                        <span class="paper-contrib">探讨了CLIP在稳定扩散模型中对图像生成的语义理解能力，揭示了其内部表示的有效性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Concentration bounds on response-based vector embeddings of black-box generative models</span>
+                        <span class="paper-contrib">提供了关于黑箱生成模型响应向量嵌入的集中界限，为统计分析和推断提供了理论基础。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Continual Unlearning for Text-to-Image Diffusion Models: A Regularization Perspective</span>
+                        <span class="paper-contrib">提出了一种正则化视角下的持续遗忘方法，解决了文本到图像扩散模型中的逐步遗忘问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generative AI Meets 6G and Beyond: Diffusion Models for Semantic Communications</span>
+                        <span class="paper-contrib">探讨了生成AI在语义通信中的应用，强调了其在6G及未来网络中的重要性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 工业过程优化与可解释AI</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Improving Industrial Injection Molding Processes with Explainable AI for Quality Classification</span>
+                        <span class="paper-contrib">提出了一种可解释的AI方法来优化工业注塑过程中的质量分类，解决了模型复杂性和传感器技术不足的问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Advancements in synthetic data extraction for industrial injection molding</span>
+                        <span class="paper-contrib">探讨了合成数据提取的进展，为工业注塑过程中的数据不足问题提供了一种有效的解决方案。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">An Integrated Fusion Framework for Ensemble Learning Leveraging Gradient Boosting and Fuzzy Rule-Based Models</span>
+                        <span class="paper-contrib">提出了一种集成框架，将梯度提升与模糊规则模型结合，以提高模型的可解释性和性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Confusion to Clarity: ProtoScore - A Framework for Evaluating Prototype-Based XAI</span>
+                        <span class="paper-contrib">开发了ProtoScore框架，用于评估基于原型的可解释AI，旨在提高神经网络决策过程的透明度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Foam Segmentation in Wastewater Treatment Plants: A Federated Learning Approach with Segment Anything Model 2</span>
+                        <span class="paper-contrib">提出了一种联邦学习方法，利用Segment Anything Model 2来实时监测污水处理厂中的泡沫分布，提升处理效率。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 联邦学习中的隐私与效率</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ProbSelect: Stochastic Client Selection for GPU-Accelerated Compute Devices in the 3D Continuum</span>
+                        <span class="paper-contrib">提出了一种随机客户端选择方法，以应对在动态环境中进行联邦学习时的设备选择挑战。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">FedPoP: Federated Learning Meets Proof of Participation</span>
+                        <span class="paper-contrib">引入了参与证明机制，增强了联邦学习中模型训练的透明度和可验证性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PRISM: Privacy-preserving Inference System with Homomorphic Encryption and Modular Activation</span>
+                        <span class="paper-contrib">开发了一种隐私保护的推理系统，结合同态加密和模块化激活，确保数据隐私的同时进行有效推理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BIPPO: Budget-Aware Independent PPO for Energy-Efficient Federated Learning Services</span>
+                        <span class="paper-contrib">提出了一种预算感知的独立PPO算法，以提高资源受限环境中联邦学习服务的能效。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 生成模型中的随机性与约束</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">TimeFlow: Towards Stochastic-Aware and Efficient Time Series Generation via Flow Matching Modeling</span>
+                        <span class="paper-contrib">提出了一种基于流匹配建模的时间序列生成方法，强调了对时间动态内在随机性的建模。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rectified Noise: A Generative Model Using Positive-incentive Noise</span>
+                        <span class="paper-contrib">引入了一种通过反向时间随机微分方程注入噪声的生成模型，以提高采样效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">HardFlow: Hard-Constrained Sampling for Flow-Matching Models via Trajectory Optimization</span>
+                        <span class="paper-contrib">提出了一种通过轨迹优化实现的硬约束采样方法，以满足生成样本的特定需求。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Parallel Sampling via Autospeculation</span>
+                        <span class="paper-contrib">展示了在任意顺序自回归模型和去噪扩散模型中加速采样的并行算法。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 可验证奖励的强化学习</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Path Not Taken: RLVR Provably Learns Off the Principals</span>
+                        <span class="paper-contrib">探讨了强化学习与可验证奖励的关系，揭示了模型条件优化偏差导致的稀疏性现象。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MURPHY: Multi-Turn GRPO for Self Correcting Code Generation</span>
+                        <span class="paper-contrib">提出了一种多轮GRPO方法，增强了代码生成的自我纠错能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SERL: Self-Examining Reinforcement Learning on Open-Domain</span>
+                        <span class="paper-contrib">分析了开放领域任务中应用强化学习的主观性挑战，并提出了相应的解决方案。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Exploration to Exploitation: A Two-Stage Entropy RLVR Approach for Noise-Tolerant MLLM Training</span>
+                        <span class="paper-contrib">提出了一种两阶段的熵强化学习方法，旨在提高多模态大语言模型在噪声环境下的训练效果。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 量子-经典混合计算与优化</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Hybrid Quantum-Classical Selective State Space Artificial Intelligence</span>
+                        <span class="paper-contrib">提出了一种混合量子经典算法，利用量子系统在大规模数值任务中的计算优势。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">An Information-Minimal Geometry for Qubit-Efficient Optimization</span>
+                        <span class="paper-contrib">介绍了一种信息最小几何方法，以在较小的Hilbert空间中高效优化量子比特。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BDD2Seq: Enabling Scalable Reversible-Circuit Synthesis via Graph-to-Sequence Learning</span>
+                        <span class="paper-contrib">通过图到序列学习，提出了一种可扩展的可逆电路合成方法，优化了量子计算中的变量排序。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Classical to Hybrid: A Practical Framework for Quantum-Enhanced Learning</span>
+                        <span class="paper-contrib">提供了一个三阶段框架，帮助无量子专业知识的从业者过渡到混合量子经典机器学习工作流。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-12 14:56:27</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:11</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

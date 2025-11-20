@@ -5,454 +5,717 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微观深度解读 - 2025-11-01</title>
     <style>
+        :root {
+            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
+            --primary-color: #4f46e5;
+            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --tag-bg: #f0f9ff;
+            --tag-text: #0369a1;
+            
+            --warn-bg: #fff7ed;
+            --warn-text: #c2410c;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
         }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 50px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
+            color: var(--text-main);
             font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .nav-links {
+        
+        .header h1 .icon { color: var(--micro-color); width: 32px; height: 32px; }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* 论文卡片列表 */
+        .paper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .paper-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .paper-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        /* 序号水印 */
+        .paper-index {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: 900;
+            color: #f1f5f9;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 卡片头部 */
+        .card-header {
+            position: relative;
+            z-index: 1;
             margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
         }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
-            font-size: 14px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .content-section {
-            background-color: #f8f9fa;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #6c757d;
-        }
-        .paper {
-            margin: 25px 0;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            transition: box-shadow 0.3s ease;
-        }
-        .paper:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+
         .paper-title {
             font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
             line-height: 1.4;
+            padding-right: 40px; /* 给序号留位 */
         }
+
         .paper-title a {
-            color: #2c3e50;
+            color: var(--text-main);
             text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-size: 0 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.3s;
         }
-        .paper-title a:hover {
-            color: #007bff;
-            text-decoration: underline;
+
+        .paper-card:hover .paper-title a {
+            background-size: 100% 10px;
+            color: var(--primary-color);
         }
-        .paper-meta {
-            color: #666;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-        .paper-summary {
-            color: #495057;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        .paper-score {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        .keywords-container {
-            margin: 8px 0;
+
+        /* 元数据行 */
+        .meta-row {
             display: flex;
             flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
             gap: 6px;
         }
-        .keyword-badge {
-            display: inline-block;
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #90caf9;
-            cursor: default;
-            user-select: none;
+
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
         }
-        .paper-image {
-            margin: 15px 0;
+
+        /* 关键词 */
+        .keywords-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .keyword-tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 摘要内容 */
+        .summary-content {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .summary-label {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 4px;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+
+        /* 图片容器 */
+        .image-wrapper {
+            margin: 20px 0;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
         }
-        .paper-image img {
+
+        .image-wrapper img {
             max-width: 100%;
             height: auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-        .paper-warning {
-            color: #e67e22;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 8px;
-            background-color: #fff4e6;
-            border-left: 3px solid #e67e22;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
-        .paper-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .paper-link:hover {
-            background-color: #5a6268;
-            text-decoration: none;
-        }
-        .footer {
-            margin-top: 40px;
+
+        /* 底部操作栏 */
+        .card-footer {
+            margin-top: 25px;
             padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            text-align: center;
-            color: #6c757d;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-read {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-read:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .page-footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .paper-card { padding: 20px; }
+            .paper-index { font-size: 30px; top: 15px; right: 15px; }
+            .paper-title { font-size: 18px; padding-right: 30px; }
+            .card-footer { justify-content: stretch; }
+            .btn-read { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📝 微观深度解读</h1>
-            <div class="date">2025-11-01</div>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                微观深度解读
+            </h1>
+            <div class="subtitle">为您精选了 6 篇高质量 AI 论文的深度解析</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
+        <div class="paper-list">
+            
+            <div class="paper-card">
+                <div class="paper-index">#1</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22272v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22272v1.html">
+                            From Slides to Chatbots: Enhancing Large Language Models with University Course Materials
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.542 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Karlsruhe Institute of Technology, Germany
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">检索增强生成(RAG)</span>
+                        
+                        <span class="keyword-tag">大型语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">计算机科学教育</span>
+                        
+                        <span class="keyword-tag">多模态学习</span>
+                        
+                        <span class="keyword-tag">教育AI助手</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种结合大学课程材料的检索增强生成（RAG）方法，以提升大型语言模型（LLM）在计算机科学教育中的表现。通过比较RAG与持续预训练（CPT），研究发现RAG在处理小规模专业数据时更有效，尤其是多模态RAG利用幻灯片图像显著提高了回答准确性。这为教育领域的AI助手开发提供了实用策略。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/016c412bd32a64266816c2526d7a274e129f3e3feb6ea70e27e4e44b8c36d82e.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22272v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22272v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#2</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22256v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22256v1.html">
+                            SteerX: Disentangled Steering for LLM Personalization
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.484 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            The Chinese University of Hong Kong, University of Science and Technology of China, National University of Singapore
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">个性化</span>
+                        
+                        <span class="keyword-tag">因果推断</span>
+                        
+                        <span class="keyword-tag">激活引导</span>
+                        
+                        <span class="keyword-tag">用户偏好</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了SteerX，一种基于因果推断的激活引导方法，旨在提升大语言模型（LLM）的个性化效果。SteerX通过解耦用户历史数据中的偏好驱动成分，生成更精准的激活引导向量，从而改善模型输出的相关性和质量。实验结果表明，SteerX在多个任务上显著优于现有方法，提供了一种有效的个性化解决方案。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/cd3a456fe00a34b5034d58ebfda26eb1da7f9b0164f5324bfd781393411ae9bd.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22256v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22256v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#3</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22437v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22437v1.html">
+                            Modeling Hierarchical Thinking in Large Reasoning Models
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.475 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            University of California, Riverside
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型推理模型(LRM)</span>
+                        
+                        <span class="keyword-tag">思维链推理(CoT)</span>
+                        
+                        <span class="keyword-tag">有限状态机(FSM)</span>
+                        
+                        <span class="keyword-tag">推理策略</span>
+                        
+                        <span class="keyword-tag">推理能力</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种基于有限状态机（FSM）的框架，用于系统性分析大型推理模型（LRMs）的思维链（CoT）推理过程。通过定义离散的推理状态并标注推理轨迹，研究揭示了不同模型在推理策略上的显著差异，提供了一种新的工具来理解和改进LLMs的推理能力。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/6c0b51fd4de9fd99b4ed85355e0f6a2ca7d191b428231912eeaa7f7918b488db.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22437v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22437v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#4</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22219v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22219v1.html">
+                            Estimating the Error of Large Language Models at Pairwise Text Comparison
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.473 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Department of Decisions, Operations and Technology, CUHK
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型语言模型(LLMs)</span>
+                        
+                        <span class="keyword-tag">文本比较</span>
+                        
+                        <span class="keyword-tag">错误估计</span>
+                        
+                        <span class="keyword-tag">Copeland排名</span>
+                        
+                        <span class="keyword-tag">性能分析</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种新方法，通过成对文本比较量化大型语言模型（LLMs）的输出错误，解决了在缺乏真实标签的情况下估计错误概率的问题。该方法分析了均匀错误率和位置偏差，并利用Copeland排名揭示了基于比较的排名方法的可扩展性限制。实验结果显示，Claude模型在不同文本类型和提示下表现最佳，提供了对LLMs性能的重要见解。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/4db7f102c2f5024c5cc91c4794d142145a785c2e149ede044c4f3c934228ead3.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22219v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22219v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#5</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22099v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22099v1.html">
+                            Generalization or Memorization: Dynamic Decoding for Mode Steering
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.467 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Stanford University, Department of Computer Science, University of Wisconsin-Madison
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">动态模式引导</span>
+                        
+                        <span class="keyword-tag">大语言模型(LLMs)</span>
+                        
+                        <span class="keyword-tag">推理算法</span>
+                        
+                        <span class="keyword-tag">逻辑一致性</span>
+                        
+                        <span class="keyword-tag">事实准确性</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为动态模式引导（DMS）的推理时算法，旨在解决大语言模型（LLMs）在复杂推理任务中表现出的不可靠性。DMS通过实时识别模型的记忆依赖，并动态引导其计算路径向更可靠的泛化模式转变，从而显著提高逻辑一致性和事实准确性。实验结果表明，DMS在多个基准测试中优于现有方法，增强了LLMs的可靠性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/09ad84e129ccce40366f90100df07ac70cd931ffb2084eff96e3b75d4e5e6133.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22099v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22099v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#6</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22333v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22333v1.html">
+                            LIFT: Interpretable truck driving risk prediction with literature-informed fine-tuned LLMs
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.393 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Tsinghua University, People’s Public Security University of China, Beijing University of Technology, State Key Laboratory of Intelligent Green Vehicle and Mobility
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">可解释性</span>
+                        
+                        <span class="keyword-tag">风险预测</span>
+                        
+                        <span class="keyword-tag">大型语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">微调</span>
+                        
+                        <span class="keyword-tag">交通安全管理</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为LIFT（Literature-Informed Fine-Tuning）LLM的可解释预测框架，旨在解决卡车驾驶风险预测中的可解释性和准确性问题。通过自动构建领域知识库并微调大型语言模型，LIFT LLM在真实数据集上实现了显著的性能提升，召回率提高26.7%，F1分数提高10.1%。该框架有效识别关键风险变量及其组合，提供稳定的解释，支持交通安全管理决策。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-01/1085b4c16fe6375b1cbe20033833bd627a32a993097ae9166b910d821614bb50.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22333v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22333v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
         </div>
 
-        <div class="content-section">
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">为您精选了 6 篇高质量 AI 论文的深度解读</p>
-            
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22272v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22272v1.html">
-                        1. From Slides to Chatbots: Enhancing Large Language Models with University Course Materials
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">检索增强生成(RAG)</span>
-                    
-                    <span class="keyword-badge">大型语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">计算机科学教育</span>
-                    
-                    <span class="keyword-badge">多模态学习</span>
-                    
-                    <span class="keyword-badge">教育AI助手</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Karlsruhe Institute of Technology, Germany</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.542</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种结合大学课程材料的检索增强生成（RAG）方法，以提升大型语言模型（LLM）在计算机科学教育中的表现。通过比较RAG与持续预训练（CPT），研究发现RAG在处理小规模专业数据时更有效，尤其是多模态RAG利用幻灯片图像显著提高了回答准确性。这为教育领域的AI助手开发提供了实用策略。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/016c412bd32a64266816c2526d7a274e129f3e3feb6ea70e27e4e44b8c36d82e.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22272v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22272v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22256v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22256v1.html">
-                        2. SteerX: Disentangled Steering for LLM Personalization
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">个性化</span>
-                    
-                    <span class="keyword-badge">因果推断</span>
-                    
-                    <span class="keyword-badge">激活引导</span>
-                    
-                    <span class="keyword-badge">用户偏好</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: The Chinese University of Hong Kong, University of Science and Technology of China, National University of Singapore</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.484</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了SteerX，一种基于因果推断的激活引导方法，旨在提升大语言模型（LLM）的个性化效果。SteerX通过解耦用户历史数据中的偏好驱动成分，生成更精准的激活引导向量，从而改善模型输出的相关性和质量。实验结果表明，SteerX在多个任务上显著优于现有方法，提供了一种有效的个性化解决方案。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/cd3a456fe00a34b5034d58ebfda26eb1da7f9b0164f5324bfd781393411ae9bd.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22256v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22256v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22437v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22437v1.html">
-                        3. Modeling Hierarchical Thinking in Large Reasoning Models
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大型推理模型(LRM)</span>
-                    
-                    <span class="keyword-badge">思维链推理(CoT)</span>
-                    
-                    <span class="keyword-badge">有限状态机(FSM)</span>
-                    
-                    <span class="keyword-badge">推理策略</span>
-                    
-                    <span class="keyword-badge">推理能力</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: University of California, Riverside</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.475</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种基于有限状态机（FSM）的框架，用于系统性分析大型推理模型（LRMs）的思维链（CoT）推理过程。通过定义离散的推理状态并标注推理轨迹，研究揭示了不同模型在推理策略上的显著差异，提供了一种新的工具来理解和改进LLMs的推理能力。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/6c0b51fd4de9fd99b4ed85355e0f6a2ca7d191b428231912eeaa7f7918b488db.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22437v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22437v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22219v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22219v1.html">
-                        4. Estimating the Error of Large Language Models at Pairwise Text Comparison
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大型语言模型(LLMs)</span>
-                    
-                    <span class="keyword-badge">文本比较</span>
-                    
-                    <span class="keyword-badge">错误估计</span>
-                    
-                    <span class="keyword-badge">Copeland排名</span>
-                    
-                    <span class="keyword-badge">性能分析</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Department of Decisions, Operations and Technology, CUHK</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.473</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种新方法，通过成对文本比较量化大型语言模型（LLMs）的输出错误，解决了在缺乏真实标签的情况下估计错误概率的问题。该方法分析了均匀错误率和位置偏差，并利用Copeland排名揭示了基于比较的排名方法的可扩展性限制。实验结果显示，Claude模型在不同文本类型和提示下表现最佳，提供了对LLMs性能的重要见解。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/4db7f102c2f5024c5cc91c4794d142145a785c2e149ede044c4f3c934228ead3.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22219v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22219v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22099v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22099v1.html">
-                        5. Generalization or Memorization: Dynamic Decoding for Mode Steering
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">动态模式引导</span>
-                    
-                    <span class="keyword-badge">大语言模型(LLMs)</span>
-                    
-                    <span class="keyword-badge">推理算法</span>
-                    
-                    <span class="keyword-badge">逻辑一致性</span>
-                    
-                    <span class="keyword-badge">事实准确性</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Stanford University, Department of Computer Science, University of Wisconsin-Madison</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.467</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为动态模式引导（DMS）的推理时算法，旨在解决大语言模型（LLMs）在复杂推理任务中表现出的不可靠性。DMS通过实时识别模型的记忆依赖，并动态引导其计算路径向更可靠的泛化模式转变，从而显著提高逻辑一致性和事实准确性。实验结果表明，DMS在多个基准测试中优于现有方法，增强了LLMs的可靠性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/09ad84e129ccce40366f90100df07ac70cd931ffb2084eff96e3b75d4e5e6133.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22099v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22099v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22333v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22333v1.html">
-                        6. LIFT: Interpretable truck driving risk prediction with literature-informed fine-tuned LLMs
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">可解释性</span>
-                    
-                    <span class="keyword-badge">风险预测</span>
-                    
-                    <span class="keyword-badge">大型语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">微调</span>
-                    
-                    <span class="keyword-badge">交通安全管理</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Tsinghua University, People’s Public Security University of China, Beijing University of Technology, State Key Laboratory of Intelligent Green Vehicle and Mobility</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.393</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为LIFT（Literature-Informed Fine-Tuning）LLM的可解释预测框架，旨在解决卡车驾驶风险预测中的可解释性和准确性问题。通过自动构建领域知识库并微调大型语言模型，LIFT LLM在真实数据集上实现了显著的性能提升，召回率提高26.7%，F1分数提高10.1%。该框架有效识别关键风险变量及其组合，提供稳定的解释，支持交通安全管理决策。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-01/1085b4c16fe6375b1cbe20033833bd627a32a993097ae9166b910d821614bb50.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.22333v1&redirect_url=%2Freports%2F2025-11-01%2F2510_22333v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-        </div>
-
-        <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+        <div class="page-footer">
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

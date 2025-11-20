@@ -5,350 +5,663 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 论文简报归档</title>
     <style>
+        :root {
+            /* 核心配色 */
+            --primary-color: #4f46e5;   /* Indigo */
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
+            padding: 40px 20px;
+            min-height: 100vh;
         }
+
         .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--shadow-md);
         }
+
+        /* SVG 图标通用样式 */
+        .icon {
+            width: 1.2em;
+            height: 1.2em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 40px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 32px;
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .subtitle {
-            color: #6c757d;
-            font-size: 14px;
-            margin-top: 10px;
+        
+        .header h1 .icon {
+            width: 32px;
+            height: 32px;
+            color: var(--primary-color);
         }
+
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f1f5f9;
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* 搜索触发器 */
+        .search-trigger-wrapper { margin-bottom: 30px; }
+
+        .search-trigger {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 16px 20px;
+            background-color: #f8fafc;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        .search-trigger:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: #fff;
+        }
+
+        .search-trigger .icon { margin-right: 12px; opacity: 0.7; }
+
+        /* 统计栏 */
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stats-text {
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .stats-highlight {
+            color: var(--primary-color);
+            font-size: 18px;
+            margin: 0 4px;
+        }
+
+        /* 列表区域 */
         .date-list {
             list-style: none;
-            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
+
         .date-item {
-            margin: 15px 0;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            position: relative;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.2s ease;
         }
+
         .date-item:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
             transform: translateY(-2px);
+            z-index: 1;
         }
-        .date-item a {
-            color: #007bff;
+
+        .date-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
             text-decoration: none;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        .date-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .date-text {
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 600;
+            color: var(--text-main);
         }
-        .date-item a:hover {
-            text-decoration: underline;
+        
+        .date-item:hover .date-text { color: var(--primary-color); }
+
+        .meta-info {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: var(--text-secondary);
         }
-        .date-meta {
-            color: #6c757d;
-            font-size: 14px;
-            margin-top: 8px;
+        
+        .meta-tag { display: flex; align-items: center; }
+        .meta-tag::before { content: "•"; margin-right: 6px; color: #cbd5e1; }
+        .meta-tag:first-child::before { display: none; }
+
+        /* 箭头图标 */
+        .arrow-icon {
+            color: #cbd5e1;
+            transition: transform 0.2s ease, color 0.2s ease;
         }
+
+        .date-item:hover .arrow-icon {
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 50px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
         }
-        .stats {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .stats-text {
-            color: #1976d2;
-            font-weight: bold;
+        
+        .footer a { color: var(--text-secondary); text-decoration: none; }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .container { padding: 25px 20px; }
+            .date-link { align-items: flex-start; }
+            .arrow-icon { margin-top: 4px; }
+            .meta-info { flex-direction: column; gap: 4px; margin-top: 4px; }
+            .meta-tag::before { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📚 AI 论文简报归档</h1>
-            <div class="subtitle">生成时间: 2025-11-19 19:38:42</div>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                AI 论文简报归档
+            </h1>
+            <div class="meta-badge">最近更新: 2025-11-20 13:08:11</div>
         </div>
         
-        <div class="nav-links" style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
-            <a href="search.html" style="color: #007bff; text-decoration: none; margin-right: 15px; font-size: 14px;">🔍 搜索历史归档</a>
+        <div class="search-trigger-wrapper">
+            <a href="search.html" class="search-trigger">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>输入关键词搜索历史归档...</span>
+            </a>
         </div>
         
-        <div class="stats">
-            <div class="stats-text">共收录 24 天的推荐论文</div>
+        <div class="stats-bar">
+            <div class="stats-text">
+                已收录 <span class="stats-highlight">24</span> 天的简报
+            </div>
         </div>
         
         <ul class="date-list">
             
             <li class="date-item">
-                <a href="reports/2025-11-19/index.html">2025-11-19</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-19 19:38
-                    
-                </div>
+                <a href="reports/2025-11-19/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-19</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">19:38 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-18/index.html">2025-11-18</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-19 17:24
-                    
-                </div>
+                <a href="reports/2025-11-18/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-18</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">17:24 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-17/index.html">2025-11-17</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-18 16:59
-                    
-                </div>
+                <a href="reports/2025-11-17/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-17</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">16:59 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-16/index.html">2025-11-16</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-18 16:13
-                    
-                </div>
+                <a href="reports/2025-11-16/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-16</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">16:13 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-15/index.html">2025-11-15</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-17 17:20
-                    
-                </div>
+                <a href="reports/2025-11-15/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-15</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">17:20 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-14/index.html">2025-11-14</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-14 16:33
-                    
-                </div>
+                <a href="reports/2025-11-14/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-14</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">16:33 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-13/index.html">2025-11-13</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-13 23:47
-                    
-                </div>
+                <a href="reports/2025-11-13/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-13</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">23:47 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-12/index.html">2025-11-12</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-12 14:56
-                    
-                </div>
+                <a href="reports/2025-11-12/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-12</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">14:56 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-11/index.html">2025-11-11</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-11 15:15
-                    
-                </div>
+                <a href="reports/2025-11-11/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-11</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">15:15 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-10/index.html">2025-11-10</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-11 14:27
-                    
-                </div>
+                <a href="reports/2025-11-10/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-10</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">14:27 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-09/index.html">2025-11-09</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-11 12:30
-                    
-                </div>
+                <a href="reports/2025-11-09/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-09</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">12:30 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-08/index.html">2025-11-08</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-10 17:27
-                    
-                </div>
+                <a href="reports/2025-11-08/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-08</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">17:27 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-07/index.html">2025-11-07</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-07 19:48
-                    
-                </div>
+                <a href="reports/2025-11-07/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-07</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">19:48 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-06/index.html">2025-11-06</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-06 20:07
-                    
-                </div>
+                <a href="reports/2025-11-06/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-06</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">20:07 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-05/index.html">2025-11-05</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-05 20:41
-                    
-                </div>
+                <a href="reports/2025-11-05/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-05</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">20:41 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-04/index.html">2025-11-04</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 23:30
-                    
-                </div>
+                <a href="reports/2025-11-04/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-04</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">23:30 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-03/index.html">2025-11-03</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-03 19:11
-                    
-                </div>
+                <a href="reports/2025-11-03/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-03</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">19:11 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-02/index.html">2025-11-02</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 20:14
-                    
-                </div>
+                <a href="reports/2025-11-02/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-02</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">20:14 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-11-01/index.html">2025-11-01</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 15:59
-                    
-                </div>
+                <a href="reports/2025-11-01/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-11-01</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">15:59 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-10-31/index.html">2025-10-31</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 14:23
-                    
-                </div>
+                <a href="reports/2025-10-31/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-10-31</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">14:23 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-10-30/index.html">2025-10-30</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 13:45
-                    
-                </div>
+                <a href="reports/2025-10-30/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-10-30</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">13:45 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-10-29/index.html">2025-10-29</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-03 21:32
-                    
-                </div>
+                <a href="reports/2025-10-29/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-10-29</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">21:32 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-10-28/index.html">2025-10-28</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 15:08
-                    
-                </div>
+                <a href="reports/2025-10-28/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-10-28</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">15:08 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
             <li class="date-item">
-                <a href="reports/2025-10-27/index.html">2025-10-27</a>
-                <div class="date-meta">
-                    推荐论文数: 6 篇
-                    
-                    | 生成时间: 2025-11-04 15:29
-                    
-                </div>
+                <a href="reports/2025-10-27/index.html" class="date-link">
+                    <div class="date-info">
+                        <span class="date-text">2025-10-27</span>
+                        <div class="meta-info">
+                            <span class="meta-tag">精选 6 篇论文</span>
+                            
+                            <span class="meta-tag">15:29 生成</span>
+                            
+                        </div>
+                    </div>
+                    <div class="arrow-icon">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
             </li>
             
         </ul>
         
         <div class="footer">
-            <p>📧 这是由智能论文简报系统自动生成的归档页面</p>
-            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+            <p>由智能论文简报系统自动生成</p>
+            <p style="margin-top: 5px;">访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

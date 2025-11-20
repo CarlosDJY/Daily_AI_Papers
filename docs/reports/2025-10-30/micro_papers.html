@@ -5,453 +5,717 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微观深度解读 - 2025-10-30</title>
     <style>
+        :root {
+            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
+            --primary-color: #4f46e5;
+            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --tag-bg: #f0f9ff;
+            --tag-text: #0369a1;
+            
+            --warn-bg: #fff7ed;
+            --warn-text: #c2410c;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
         }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 50px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
+            color: var(--text-main);
             font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .nav-links {
+        
+        .header h1 .icon { color: var(--micro-color); width: 32px; height: 32px; }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* 论文卡片列表 */
+        .paper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .paper-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .paper-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        /* 序号水印 */
+        .paper-index {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: 900;
+            color: #f1f5f9;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 卡片头部 */
+        .card-header {
+            position: relative;
+            z-index: 1;
             margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
         }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
-            font-size: 14px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .content-section {
-            background-color: #f8f9fa;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #6c757d;
-        }
-        .paper {
-            margin: 25px 0;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            transition: box-shadow 0.3s ease;
-        }
-        .paper:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+
         .paper-title {
             font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
             line-height: 1.4;
+            padding-right: 40px; /* 给序号留位 */
         }
+
         .paper-title a {
-            color: #2c3e50;
+            color: var(--text-main);
             text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-size: 0 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.3s;
         }
-        .paper-title a:hover {
-            color: #007bff;
-            text-decoration: underline;
+
+        .paper-card:hover .paper-title a {
+            background-size: 100% 10px;
+            color: var(--primary-color);
         }
-        .paper-meta {
-            color: #666;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-        .paper-summary {
-            color: #495057;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        .paper-score {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        .keywords-container {
-            margin: 8px 0;
+
+        /* 元数据行 */
+        .meta-row {
             display: flex;
             flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
             gap: 6px;
         }
-        .keyword-badge {
-            display: inline-block;
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #90caf9;
-            cursor: default;
-            user-select: none;
+
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
         }
-        .paper-image {
-            margin: 15px 0;
+
+        /* 关键词 */
+        .keywords-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .keyword-tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 摘要内容 */
+        .summary-content {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .summary-label {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 4px;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+
+        /* 图片容器 */
+        .image-wrapper {
+            margin: 20px 0;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
         }
-        .paper-image img {
+
+        .image-wrapper img {
             max-width: 100%;
             height: auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-        .paper-warning {
-            color: #e67e22;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 8px;
-            background-color: #fff4e6;
-            border-left: 3px solid #e67e22;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
-        .paper-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .paper-link:hover {
-            background-color: #5a6268;
-            text-decoration: none;
-        }
-        .footer {
-            margin-top: 40px;
+
+        /* 底部操作栏 */
+        .card-footer {
+            margin-top: 25px;
             padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            text-align: center;
-            color: #6c757d;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-read {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-read:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .page-footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .paper-card { padding: 20px; }
+            .paper-index { font-size: 30px; top: 15px; right: 15px; }
+            .paper-title { font-size: 18px; padding-right: 30px; }
+            .card-footer { justify-content: stretch; }
+            .btn-read { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📝 微观深度解读</h1>
-            <div class="date">2025-10-30</div>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                微观深度解读
+            </h1>
+            <div class="subtitle">为您精选了 6 篇高质量 AI 论文的深度解析</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
+        <div class="paper-list">
+            
+            <div class="paper-card">
+                <div class="paper-index">#1</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20810v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20810v1.html">
+                            On the Detectability of LLM-Generated Text: What Exactly Is LLM-Generated Text?
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.557 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            École Normale Supérieure (ENS), Université Paris Sciences et Lettres (PSL), Laboratoire Lattice (CNRS, ENS-PSL, Université Sorbonne Nouvelle)
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">文本检测</span>
+                        
+                        <span class="keyword-tag">水印技术</span>
+                        
+                        <span class="keyword-tag">内容核查</span>
+                        
+                        <span class="keyword-tag">人类判断</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种新的方法来检测大型语言模型（LLM）生成的文本，解决了当前检测工具在准确性和鲁棒性方面的不足。研究强调了对“LLM生成文本”缺乏一致定义的问题，并建议结合人类判断与多种技术（如水印和内容核查）以提高检测效果，确保结果仅作为参考而非决定性证据。
+                </div>
+
+                
+                <div class="warning-box" style="background-color: #fff1f2; color: #be123c;">
+                    <svg class="icon" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M21 21l-2-2m-3.28-3.28A6 6 0 0 0 13 12.72"></path><path d="M21 21h-5.17"></path><path d="M3 3l2 2m3.28 3.28A6 6 0 0 0 11 11.28"></path><path d="M3 3v18h18"></path></svg>
+                    <span>图片提取失败：未找到图片</span>
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20810v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20810v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#2</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20449v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20449v1.html">
+                            LM-mixup: Text Data Augmentation via Language Model based Mixup
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.511 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            The Hong Kong University of Science and Technology (Guangzhou), BIAI, ZJUT & D5Data.ai
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">数据增强</span>
+                        
+                        <span class="keyword-tag">大型语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">指令蒸馏</span>
+                        
+                        <span class="keyword-tag">监督微调</span>
+                        
+                        <span class="keyword-tag">强化学习(RL)</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为“指令蒸馏”的新方法，通过将多个低质量输入提炼为高质量指令-输出对，解决了低质量数据在大型语言模型（LLM）指令调优中的有效利用问题。通过构建MIXTURE数据集和LM-Mixup框架，结合监督微调和强化学习，显著提升了模型性能，证明低质量数据在适当处理后具有重要价值。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-10-30/0bbbaaf56db935cc546a54e6161e6711deb2aca37d5dc43420610166e17169d4.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20449v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20449v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#3</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20377v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20377v1.html">
+                            IKnow: Instruction-Knowledge-Aware Continual Pretraining for Effective Domain Adaptation
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.502 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            University of Bonn, Lamarr Institute for Machine Learning and Artificial Intelligence
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">持续预训练</span>
+                        
+                        <span class="keyword-tag">指令遵循</span>
+                        
+                        <span class="keyword-tag">知识感知</span>
+                        
+                        <span class="keyword-tag">领域适应</span>
+                        
+                        <span class="keyword-tag">自监督学习</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了IKnow框架，通过引入知识感知的指令风格自监督目标，解决了大型语言模型在持续预训练中指令遵循能力下降的问题。IKnow利用文本中的内嵌领域知识，设计了两个新任务（Masked Phrase Prediction和NL-KG Loop），显著提升了模型在知识密集型问答任务中的表现。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-10-30/4d8e39a3f18d9dd3c9694d29fb8f0e29aefa4f413f96a8ecc0b7ee4469ffeafb.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20377v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20377v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#4</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20632v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20632v1.html">
+                            Towards Reliable Evaluation of Large Language Models for Multilingual and Multimodal E-Commerce Applications
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.501 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Shopee
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型语言模型(LLMs)</span>
+                        
+                        <span class="keyword-tag">多语言评估</span>
+                        
+                        <span class="keyword-tag">多模态应用</span>
+                        
+                        <span class="keyword-tag">电子商务</span>
+                        
+                        <span class="keyword-tag">性能分析</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了EcomEval，一个全面的多语言和多模态评估基准，旨在解决大型语言模型（LLMs）在电子商务领域评估不足的问题。EcomEval涵盖37个真实场景任务，采用半自动化流程生成高质量答案，并通过多维度评估和难度分级，提供更准确的模型性能分析，填补了现有评估工具的空白。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-10-30/a88ec1463e6189cd644df1c708cfb6c337a33748ca0c654584afa98021856caa.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20632v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20632v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#5</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20498v2&redirect_url=%2Freports%2F2025-10-30%2F2510_20498v2.html">
+                            Robust Preference Alignment via Directional Neighborhood Consensus
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.499 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            The Hong Kong University of Science and Technology (Guangzhou), Shanghai Jiao Tong University
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">鲁棒偏好选择</span>
+                        
+                        <span class="keyword-tag">大语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">偏好对齐</span>
+                        
+                        <span class="keyword-tag">个体化偏好</span>
+                        
+                        <span class="keyword-tag">分布外偏好</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为鲁棒偏好选择（RPS）的方法，旨在解决大语言模型（LLM）在处理个体化偏好时的“偏好覆盖缺口”问题。RPS通过从用户偏好附近的多样化响应中选取最佳候选，增强了模型在特定偏好下的鲁棒性，且无需重新训练。实验结果表明，RPS在多种偏好对齐模型上显著提高了性能，尤其在处理分布外偏好时表现优越。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-10-30/8bba0446907ad2893c1ae54eb1ba0efa35aa2dea66c7b311db6a944c9fb88dc6.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20498v2&redirect_url=%2Freports%2F2025-10-30%2F2510_20498v2.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#6</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20303v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20303v1.html">
+                            Citation Failure: Definition, Analysis and Efficient Mitigation
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.413 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Ubiquitous Knowledge Processing Lab (UKP Lab), Department of Computer Science, Hessian Center for AI (hessian.AI), Technical University of Darmstadt
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">引用失败</span>
+                        
+                        <span class="keyword-tag">大型语言模型(LLM)</span>
+                        
+                        <span class="keyword-tag">CITECONTROL基准</span>
+                        
+                        <span class="keyword-tag">CITENTION框架</span>
+                        
+                        <span class="keyword-tag">多跳推理任务</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了CITECONTROL基准和CITENTION框架，旨在解决大型语言模型（LLM）中的引用失败问题。CITECONTROL系统分析响应与证据关系的复杂性对引用质量的影响，而CITENTION则整合生成式、检索式和基于注意力的方法，以提高引用准确性。实验结果表明，该框架在多跳推理任务中显著改善了引用性能，验证了组合方法的有效性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-10-30/3990b6226cb1ee934e876270ffd4fa12b5120d8e4b4efb1ad949432a235a159f.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20303v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20303v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
         </div>
 
-        <div class="content-section">
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">为您精选了 6 篇高质量 AI 论文的深度解读</p>
-            
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20810v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20810v1.html">
-                        1. On the Detectability of LLM-Generated Text: What Exactly Is LLM-Generated Text?
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大型语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">文本检测</span>
-                    
-                    <span class="keyword-badge">水印技术</span>
-                    
-                    <span class="keyword-badge">内容核查</span>
-                    
-                    <span class="keyword-badge">人类判断</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: École Normale Supérieure (ENS), Université Paris Sciences et Lettres (PSL), Laboratoire Lattice (CNRS, ENS-PSL, Université Sorbonne Nouvelle)</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.557</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种新的方法来检测大型语言模型（LLM）生成的文本，解决了当前检测工具在准确性和鲁棒性方面的不足。研究强调了对“LLM生成文本”缺乏一致定义的问题，并建议结合人类判断与多种技术（如水印和内容核查）以提高检测效果，确保结果仅作为参考而非决定性证据。
-                    
-                </div>
-                
-                <div class="paper-warning">
-                    <strong>⚠️ 核心思路图片提取失败：</strong>未找到图片
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20810v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20810v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20449v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20449v1.html">
-                        2. LM-mixup: Text Data Augmentation via Language Model based Mixup
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">数据增强</span>
-                    
-                    <span class="keyword-badge">大型语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">指令蒸馏</span>
-                    
-                    <span class="keyword-badge">监督微调</span>
-                    
-                    <span class="keyword-badge">强化学习(RL)</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: The Hong Kong University of Science and Technology (Guangzhou), BIAI, ZJUT & D5Data.ai</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.511</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为“指令蒸馏”的新方法，通过将多个低质量输入提炼为高质量指令-输出对，解决了低质量数据在大型语言模型（LLM）指令调优中的有效利用问题。通过构建MIXTURE数据集和LM-Mixup框架，结合监督微调和强化学习，显著提升了模型性能，证明低质量数据在适当处理后具有重要价值。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-10-30/0bbbaaf56db935cc546a54e6161e6711deb2aca37d5dc43420610166e17169d4.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20449v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20449v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20377v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20377v1.html">
-                        3. IKnow: Instruction-Knowledge-Aware Continual Pretraining for Effective Domain Adaptation
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">持续预训练</span>
-                    
-                    <span class="keyword-badge">指令遵循</span>
-                    
-                    <span class="keyword-badge">知识感知</span>
-                    
-                    <span class="keyword-badge">领域适应</span>
-                    
-                    <span class="keyword-badge">自监督学习</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: University of Bonn, Lamarr Institute for Machine Learning and Artificial Intelligence</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.502</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了IKnow框架，通过引入知识感知的指令风格自监督目标，解决了大型语言模型在持续预训练中指令遵循能力下降的问题。IKnow利用文本中的内嵌领域知识，设计了两个新任务（Masked Phrase Prediction和NL-KG Loop），显著提升了模型在知识密集型问答任务中的表现。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-10-30/4d8e39a3f18d9dd3c9694d29fb8f0e29aefa4f413f96a8ecc0b7ee4469ffeafb.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20377v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20377v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20632v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20632v1.html">
-                        4. Towards Reliable Evaluation of Large Language Models for Multilingual and Multimodal E-Commerce Applications
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大型语言模型(LLMs)</span>
-                    
-                    <span class="keyword-badge">多语言评估</span>
-                    
-                    <span class="keyword-badge">多模态应用</span>
-                    
-                    <span class="keyword-badge">电子商务</span>
-                    
-                    <span class="keyword-badge">性能分析</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Shopee</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.501</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了EcomEval，一个全面的多语言和多模态评估基准，旨在解决大型语言模型（LLMs）在电子商务领域评估不足的问题。EcomEval涵盖37个真实场景任务，采用半自动化流程生成高质量答案，并通过多维度评估和难度分级，提供更准确的模型性能分析，填补了现有评估工具的空白。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-10-30/a88ec1463e6189cd644df1c708cfb6c337a33748ca0c654584afa98021856caa.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20632v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20632v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20498v2&redirect_url=%2Freports%2F2025-10-30%2F2510_20498v2.html">
-                        5. Robust Preference Alignment via Directional Neighborhood Consensus
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">鲁棒偏好选择</span>
-                    
-                    <span class="keyword-badge">大语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">偏好对齐</span>
-                    
-                    <span class="keyword-badge">个体化偏好</span>
-                    
-                    <span class="keyword-badge">分布外偏好</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: The Hong Kong University of Science and Technology (Guangzhou), Shanghai Jiao Tong University</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.499</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为鲁棒偏好选择（RPS）的方法，旨在解决大语言模型（LLM）在处理个体化偏好时的“偏好覆盖缺口”问题。RPS通过从用户偏好附近的多样化响应中选取最佳候选，增强了模型在特定偏好下的鲁棒性，且无需重新训练。实验结果表明，RPS在多种偏好对齐模型上显著提高了性能，尤其在处理分布外偏好时表现优越。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-10-30/8bba0446907ad2893c1ae54eb1ba0efa35aa2dea66c7b311db6a944c9fb88dc6.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20498v2&redirect_url=%2Freports%2F2025-10-30%2F2510_20498v2.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20303v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20303v1.html">
-                        6. Citation Failure: Definition, Analysis and Efficient Mitigation
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">引用失败</span>
-                    
-                    <span class="keyword-badge">大型语言模型(LLM)</span>
-                    
-                    <span class="keyword-badge">CITECONTROL基准</span>
-                    
-                    <span class="keyword-badge">CITENTION框架</span>
-                    
-                    <span class="keyword-badge">多跳推理任务</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Ubiquitous Knowledge Processing Lab (UKP Lab), Department of Computer Science, Hessian Center for AI (hessian.AI), Technical University of Darmstadt</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.413</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了CITECONTROL基准和CITENTION框架，旨在解决大型语言模型（LLM）中的引用失败问题。CITECONTROL系统分析响应与证据关系的复杂性对引用质量的影响，而CITENTION则整合生成式、检索式和基于注意力的方法，以提高引用准确性。实验结果表明，该框架在多跳推理任务中显著改善了引用性能，验证了组合方法的有效性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-10-30/3990b6226cb1ee934e876270ffd4fa12b5120d8e4b4efb1ad949432a235a159f.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.20303v1&redirect_url=%2Freports%2F2025-10-30%2F2510_20303v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-        </div>
-
-        <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+        <div class="page-footer">
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-10-29</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-10-29</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,335 +302,386 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 多模态学习与视觉理解</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Finding Culture-Sensitive Neurons in Vision-Language Models</strong>
-                        <span class="contribution">研究了视觉语言模型中对文化信息敏感的神经元，揭示了其在处理文化背景输入时的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Cross-Task Examples to In-Task Prompts: A Graph-Based Pseudo-Labeling Framework for In-context Learning</strong>
-                        <span class="contribution">提出了一种图基伪标记框架，以提高在上下文学习中获取高质量示例的效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Rethinking Visual Intelligence: Insights from Video Pretraining</strong>
-                        <span class="contribution">探讨了视频预训练在视觉智能中的应用，强调了与语言模型相比的适应性差异。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ViPER: Empowering the Self-Evolution of Visual Perception Abilities in Vision-Language Model</strong>
-                        <span class="contribution">提出了一种方法，通过自我演化机制提升视觉语言模型的细粒度视觉感知能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>DualCap: Enhancing Lightweight Image Captioning via Dual Retrieval with Similar Scenes Visual Prompts</strong>
-                        <span class="contribution">提出了DualCap模型，通过双重检索增强轻量级图像描述的语义一致性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>BLM$_1$: A Boundless Large Model for Cross-Space, Cross-Task, and Cross-Embodiment Learning</strong>
-                        <span class="contribution">介绍了一种无界大型模型，旨在解决多模态学习中的空间、任务和体现间的泛化问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>VC4VG: Optimizing Video Captions for Text-to-Video Generation</strong>
-                        <span class="contribution">探讨了如何优化视频字幕以提升文本到视频生成模型的训练效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>What do vision-language models see in the context? Investigating multimodal in-context learning</strong>
-                        <span class="contribution">系统研究了视觉语言模型在上下文学习中的表现，揭示了其在多模态学习中的潜力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>V-SAT: Video Subtitle Annotation Tool</strong>
-                        <span class="contribution">提出了一种新的视频字幕注释工具，以提高流媒体平台上字幕的准确性和可及性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Latent Sketchpad: Sketching Visual Thoughts to Elicit Multimodal Reasoning in MLLMs</strong>
-                        <span class="contribution">引入了Latent Sketchpad，通过草图化视觉思维促进多模态推理能力的发展。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 深度学习与物理系统建模</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Learning from History: A Retrieval-Augmented Framework for Spatiotemporal Prediction</strong>
-                        <span class="contribution">提出了一种检索增强框架，以提高复杂物理系统的时空预测准确性和长期预测能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ResNet: Enabling Deep Convolutional Neural Networks through Residual Learning</strong>
-                        <span class="contribution">引入残差学习的概念，成功解决了训练非常深的卷积神经网络中的梯度消失问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Statistical physics of deep learning: Optimal learning of a multi-layer perceptron near interpolation</strong>
-                        <span class="contribution">利用统计物理框架分析多层感知机的学习能力，探讨了深度学习模型的特征学习效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Unlocking Out-of-Distribution Generalization in Dynamics through Physics-Guided Augmentation</strong>
-                        <span class="contribution">提出了一种物理指导的定量增强方法，以解决动态系统建模中的数据稀缺和分布转移问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Identifiable learning of dissipative dynamics</strong>
-                        <span class="contribution">开发了一种学习复杂耗散系统动态的新方法，强调了能量耗散和时间不可逆性在行为中的重要性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Linear to Nonlinear: Provable Weak-to-Strong Generalization through Feature Learning</strong>
-                        <span class="contribution">提供了从弱模型到强模型的可证明的泛化理论，揭示了特征学习在这一过程中的关键作用。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Deep Learning-Enhanced Calibration of the Heston Model: A Unified Framework</strong>
-                        <span class="contribution">提出了一种统一框架，通过深度学习增强Heston模型的校准过程，降低了计算复杂性和对局部最小值的敏感性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 人类反馈的强化学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Greedy Sampling Is Provably Efficient for RLHF</strong>
-                        <span class="contribution">提出了一种贪婪采样方法，证明其在使用偏好反馈进行人类反馈强化学习时的有效性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PaTaRM: Bridging Pairwise and Pointwise Signals via Preference-Aware Task-Adaptive Reward Modeling</strong>
-                        <span class="contribution">介绍了一种新颖的奖励建模方法，通过偏好感知的任务自适应机制连接成对和逐点信号。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Evolving Diagnostic Agents in a Virtual Clinical Environment</strong>
-                        <span class="contribution">提出了一种框架，利用强化学习训练大型语言模型作为诊断代理，能够适应性地管理多轮诊断过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>OpenReward: Learning to Reward Long-form Agentic Tasks via Reinforcement Learning</strong>
-                        <span class="contribution">开发了一种新的奖励模型，旨在解决知识密集型和长篇任务中的评估问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Can LLMs Translate Human Instructions into a Reinforcement Learning Agent's Internal Emergent Symbolic Representation?</strong>
-                        <span class="contribution">探讨了大型语言模型是否能够将人类自然语言指令转化为内部符号表示，以支持发展学习代理。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Reinforcement Learning for Long-Horizon Multi-Turn Search Agents</strong>
-                        <span class="contribution">展示了如何通过强化学习提升大型语言模型代理在复杂任务中的能力，尤其是在多轮搜索中。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: LLMs中的幻觉缓解与检索增强生成</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Mitigating Hallucination in Large Language Models (LLMs): An Application-Oriented Survey on RAG, Reasoning, and Agentic Systems</strong>
-                        <span class="contribution">综述了在实际应用中缓解大型语言模型幻觉的有效策略，重点关注检索增强生成和推理增强。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Challenging Multilingual LLMs: A New Taxonomy and Benchmark for Unraveling Hallucination in Translation</strong>
-                        <span class="contribution">提出了一种新的分类框架和基准，以揭示多语言大型语言模型在翻译中的幻觉现象。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>META-RAG: Meta-Analysis-Inspired Evidence-Re-Ranking Method for Retrieval-Augmented Generation in Evidence-Based Medicine</strong>
-                        <span class="contribution">开发了一种基于元分析的证据重新排序方法，以提高检索增强生成在循证医学中的应用效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PICOs-RAG: PICO-supported Query Rewriting for Retrieval-Augmented Generation in Evidence-Based Medicine</strong>
-                        <span class="contribution">提出了一种基于PICO的查询重写方法，以优化检索增强生成在循证医学中的信息检索过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>M-Eval: A Heterogeneity-Based Framework for Multi-evidence Validation in Medical RAG Systems</strong>
-                        <span class="contribution">构建了一个异质性基础的框架，用于在医疗检索增强生成系统中进行多证据验证。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 因果推断与动态网络分析</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Cyclic Counterfactuals under Shift-Scale Interventions</strong>
-                        <span class="contribution">探讨了在存在反馈循环的情况下进行反事实推断的新框架。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Causal Ordering for Structure Learning From Time Series</strong>
-                        <span class="contribution">提出了一种基于时间序列数据的因果结构学习方法，解决了因果关系识别的组合复杂性问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>NeuroPathNet: Dynamic Path Trajectory Learning for Brain Functional Connectivity Analysis</strong>
-                        <span class="contribution">开发了一种动态路径轨迹学习方法，以分析大脑功能网络随时间的演变。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Graph Distance Based on Cause-Effect Estimands with Latents</strong>
-                        <span class="contribution">提出了一种新的图距离度量方法，以评估因果关系图的发现进展。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 人工智能与人类认知的交互</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Efficiency Without Cognitive Change: Evidence from Human Interaction with Narrow AI Systems</strong>
-                        <span class="contribution">该研究实验性地测试了短期接触狭义AI工具是否增强核心认知能力，结果表明AI的使用主要提高了效率而非改变思维方式。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>The Narrative Continuity Test: A Conceptual Framework for Evaluating Identity Persistence in AI Systems</strong>
-                        <span class="contribution">提出了叙事连续性测试（NCT），为评估基于大型语言模型的AI系统在生成文本时的身份持续性提供了概念框架。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Unified Geometric Space Bridging AI Models and the Human Brain</strong>
-                        <span class="contribution">探讨了现代人工神经网络如何在语言、感知和推理方面与人类相媲美，并提出了一个统一的几何空间来理解AI模型与人脑之间的关系。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Improved Accuracy of Robot Localization Using 3-D LiDAR in a Hippocampus-Inspired Model</strong>
-                        <span class="contribution">通过采用受海马体启发的模型，利用3D LiDAR技术显著提高了机器人定位的准确性，展示了生物神经机制在计算模型中的应用潜力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 多语言LLM的评估与挑战</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Charting the European LLM Benchmarking Landscape: A New Taxonomy and a Set of Best Practices</strong>
-                        <span class="contribution">提供了一个关于非英语语言的大型语言模型基准的新分类法和最佳实践概述。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Uncovering the Potential Risks in Unlearning: Danger of English-only Unlearning in Multilingual LLMs</strong>
-                        <span class="contribution">探讨了仅使用英语数据进行多语言LLM知识删除的潜在风险，并提出了评估的新视角。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Relative Scaling Laws for LLMs</strong>
-                        <span class="contribution">引入了相对缩放法则，揭示了在不同子群体中大型语言模型性能差异的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LuxIT: A Luxembourgish Instruction Tuning Dataset from Monolingual Seed Data</strong>
-                        <span class="contribution">开发了LuxIT，一个针对卢森堡语的单语指令调优数据集，以应对低资源语言环境中的训练数据不足问题。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: ICU中的机器学习应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Closing Gaps: An Imputation Analysis of ICU Vital Signs</strong>
-                        <span class="contribution">提出了一种数据插补分析方法，以提高ICU生命体征数据的质量，从而增强临床预测模型的有效性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MIMIC-Sepsis: A Curated Benchmark for Modeling and Learning from Sepsis Trajectories in the ICU</strong>
-                        <span class="contribution">引入了MIMIC-Sepsis数据集，为ICU中的脓毒症轨迹建模和学习提供了一个经过整理的基准框架。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Filtering instances and rejecting predictions to obtain reliable models in healthcare</strong>
-                        <span class="contribution">提出了一种新颖的两步数据中心方法，以提高医疗领域机器学习模型的预测可靠性，特别是在不确定性管理方面。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Towards actionable hypotension prediction -- predicting catecholamine therapy initiation in the intensive care unit</strong>
-                        <span class="contribution">开发了一种针对低血压的预测模型，旨在有效预测ICU患者何时需要启动儿茶酚胺治疗，减少治疗风险。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 自动驾驶中的多模态模型评估</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>SCOUT: A Lightweight Framework for Scenario Coverage Assessment in Autonomous Driving</strong>
-                        <span class="contribution">提出了一种轻量级框架SCOUT，用于在自动驾驶中评估场景覆盖率，解决了现有方法的高成本和低效率问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Enhancing Vision-Language Models for Autonomous Driving through Task-Specific Prompting and Spatial Reasoning</strong>
-                        <span class="contribution">开发了一种系统框架，通过任务特定的提示和空间推理来增强视觉-语言模型在自动驾驶场景理解中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SPARTA: Evaluating Reasoning Segmentation Robustness through Black-Box Adversarial Paraphrasing in Text Autoencoder Latent Space</strong>
-                        <span class="contribution">提出了一种新方法SPARTA，通过黑箱对抗性释义在文本自编码器潜在空间中评估推理分割的鲁棒性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 脉冲神经网络的能效与学习机制</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Unsupervised local learning based on voltage-dependent synaptic plasticity for resistive and ferroelectric synapses</strong>
-                        <span class="contribution">提出了一种基于电压依赖性突触可塑性的无监督局部学习方法，以提高边缘计算设备的能效和功能性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>All in one timestep: Enhancing Sparsity and Energy efficiency in Multi-level Spiking Neural Networks</strong>
-                        <span class="contribution">通过多级脉冲神经网络的设计，增强了稀疏性和能效，推动了事件驱动通信机制的应用。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Adaptive Surrogate Gradients for Sequential Reinforcement Learning in Spiking Neural Networks</strong>
-                        <span class="contribution">提出了一种自适应替代梯度方法，优化了脉冲神经网络在序列强化学习中的应用，提升了能效和时间处理能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 多模态学习与视觉理解</div>
+                <div class="cluster-count">10 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Finding Culture-Sensitive Neurons in Vision-Language Models</span>
+                        <span class="paper-contrib">研究了视觉语言模型中对文化信息敏感的神经元，揭示了其在处理文化背景输入时的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Cross-Task Examples to In-Task Prompts: A Graph-Based Pseudo-Labeling Framework for In-context Learning</span>
+                        <span class="paper-contrib">提出了一种图基伪标记框架，以提高在上下文学习中获取高质量示例的效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rethinking Visual Intelligence: Insights from Video Pretraining</span>
+                        <span class="paper-contrib">探讨了视频预训练在视觉智能中的应用，强调了与语言模型相比的适应性差异。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ViPER: Empowering the Self-Evolution of Visual Perception Abilities in Vision-Language Model</span>
+                        <span class="paper-contrib">提出了一种方法，通过自我演化机制提升视觉语言模型的细粒度视觉感知能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DualCap: Enhancing Lightweight Image Captioning via Dual Retrieval with Similar Scenes Visual Prompts</span>
+                        <span class="paper-contrib">提出了DualCap模型，通过双重检索增强轻量级图像描述的语义一致性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BLM$_1$: A Boundless Large Model for Cross-Space, Cross-Task, and Cross-Embodiment Learning</span>
+                        <span class="paper-contrib">介绍了一种无界大型模型，旨在解决多模态学习中的空间、任务和体现间的泛化问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VC4VG: Optimizing Video Captions for Text-to-Video Generation</span>
+                        <span class="paper-contrib">探讨了如何优化视频字幕以提升文本到视频生成模型的训练效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">What do vision-language models see in the context? Investigating multimodal in-context learning</span>
+                        <span class="paper-contrib">系统研究了视觉语言模型在上下文学习中的表现，揭示了其在多模态学习中的潜力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">V-SAT: Video Subtitle Annotation Tool</span>
+                        <span class="paper-contrib">提出了一种新的视频字幕注释工具，以提高流媒体平台上字幕的准确性和可及性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Latent Sketchpad: Sketching Visual Thoughts to Elicit Multimodal Reasoning in MLLMs</span>
+                        <span class="paper-contrib">引入了Latent Sketchpad，通过草图化视觉思维促进多模态推理能力的发展。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 深度学习与物理系统建模</div>
+                <div class="cluster-count">7 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning from History: A Retrieval-Augmented Framework for Spatiotemporal Prediction</span>
+                        <span class="paper-contrib">提出了一种检索增强框架，以提高复杂物理系统的时空预测准确性和长期预测能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ResNet: Enabling Deep Convolutional Neural Networks through Residual Learning</span>
+                        <span class="paper-contrib">引入残差学习的概念，成功解决了训练非常深的卷积神经网络中的梯度消失问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Statistical physics of deep learning: Optimal learning of a multi-layer perceptron near interpolation</span>
+                        <span class="paper-contrib">利用统计物理框架分析多层感知机的学习能力，探讨了深度学习模型的特征学习效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unlocking Out-of-Distribution Generalization in Dynamics through Physics-Guided Augmentation</span>
+                        <span class="paper-contrib">提出了一种物理指导的定量增强方法，以解决动态系统建模中的数据稀缺和分布转移问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Identifiable learning of dissipative dynamics</span>
+                        <span class="paper-contrib">开发了一种学习复杂耗散系统动态的新方法，强调了能量耗散和时间不可逆性在行为中的重要性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Linear to Nonlinear: Provable Weak-to-Strong Generalization through Feature Learning</span>
+                        <span class="paper-contrib">提供了从弱模型到强模型的可证明的泛化理论，揭示了特征学习在这一过程中的关键作用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Deep Learning-Enhanced Calibration of the Heston Model: A Unified Framework</span>
+                        <span class="paper-contrib">提出了一种统一框架，通过深度学习增强Heston模型的校准过程，降低了计算复杂性和对局部最小值的敏感性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 人类反馈的强化学习</div>
+                <div class="cluster-count">6 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Greedy Sampling Is Provably Efficient for RLHF</span>
+                        <span class="paper-contrib">提出了一种贪婪采样方法，证明其在使用偏好反馈进行人类反馈强化学习时的有效性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PaTaRM: Bridging Pairwise and Pointwise Signals via Preference-Aware Task-Adaptive Reward Modeling</span>
+                        <span class="paper-contrib">介绍了一种新颖的奖励建模方法，通过偏好感知的任务自适应机制连接成对和逐点信号。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Evolving Diagnostic Agents in a Virtual Clinical Environment</span>
+                        <span class="paper-contrib">提出了一种框架，利用强化学习训练大型语言模型作为诊断代理，能够适应性地管理多轮诊断过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">OpenReward: Learning to Reward Long-form Agentic Tasks via Reinforcement Learning</span>
+                        <span class="paper-contrib">开发了一种新的奖励模型，旨在解决知识密集型和长篇任务中的评估问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Can LLMs Translate Human Instructions into a Reinforcement Learning Agent's Internal Emergent Symbolic Representation?</span>
+                        <span class="paper-contrib">探讨了大型语言模型是否能够将人类自然语言指令转化为内部符号表示，以支持发展学习代理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reinforcement Learning for Long-Horizon Multi-Turn Search Agents</span>
+                        <span class="paper-contrib">展示了如何通过强化学习提升大型语言模型代理在复杂任务中的能力，尤其是在多轮搜索中。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: LLMs中的幻觉缓解与检索增强生成</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mitigating Hallucination in Large Language Models (LLMs): An Application-Oriented Survey on RAG, Reasoning, and Agentic Systems</span>
+                        <span class="paper-contrib">综述了在实际应用中缓解大型语言模型幻觉的有效策略，重点关注检索增强生成和推理增强。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Challenging Multilingual LLMs: A New Taxonomy and Benchmark for Unraveling Hallucination in Translation</span>
+                        <span class="paper-contrib">提出了一种新的分类框架和基准，以揭示多语言大型语言模型在翻译中的幻觉现象。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">META-RAG: Meta-Analysis-Inspired Evidence-Re-Ranking Method for Retrieval-Augmented Generation in Evidence-Based Medicine</span>
+                        <span class="paper-contrib">开发了一种基于元分析的证据重新排序方法，以提高检索增强生成在循证医学中的应用效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PICOs-RAG: PICO-supported Query Rewriting for Retrieval-Augmented Generation in Evidence-Based Medicine</span>
+                        <span class="paper-contrib">提出了一种基于PICO的查询重写方法，以优化检索增强生成在循证医学中的信息检索过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">M-Eval: A Heterogeneity-Based Framework for Multi-evidence Validation in Medical RAG Systems</span>
+                        <span class="paper-contrib">构建了一个异质性基础的框架，用于在医疗检索增强生成系统中进行多证据验证。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 因果推断与动态网络分析</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Cyclic Counterfactuals under Shift-Scale Interventions</span>
+                        <span class="paper-contrib">探讨了在存在反馈循环的情况下进行反事实推断的新框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Causal Ordering for Structure Learning From Time Series</span>
+                        <span class="paper-contrib">提出了一种基于时间序列数据的因果结构学习方法，解决了因果关系识别的组合复杂性问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">NeuroPathNet: Dynamic Path Trajectory Learning for Brain Functional Connectivity Analysis</span>
+                        <span class="paper-contrib">开发了一种动态路径轨迹学习方法，以分析大脑功能网络随时间的演变。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Graph Distance Based on Cause-Effect Estimands with Latents</span>
+                        <span class="paper-contrib">提出了一种新的图距离度量方法，以评估因果关系图的发现进展。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 人工智能与人类认知的交互</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Efficiency Without Cognitive Change: Evidence from Human Interaction with Narrow AI Systems</span>
+                        <span class="paper-contrib">该研究实验性地测试了短期接触狭义AI工具是否增强核心认知能力，结果表明AI的使用主要提高了效率而非改变思维方式。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Narrative Continuity Test: A Conceptual Framework for Evaluating Identity Persistence in AI Systems</span>
+                        <span class="paper-contrib">提出了叙事连续性测试（NCT），为评估基于大型语言模型的AI系统在生成文本时的身份持续性提供了概念框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Unified Geometric Space Bridging AI Models and the Human Brain</span>
+                        <span class="paper-contrib">探讨了现代人工神经网络如何在语言、感知和推理方面与人类相媲美，并提出了一个统一的几何空间来理解AI模型与人脑之间的关系。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Improved Accuracy of Robot Localization Using 3-D LiDAR in a Hippocampus-Inspired Model</span>
+                        <span class="paper-contrib">通过采用受海马体启发的模型，利用3D LiDAR技术显著提高了机器人定位的准确性，展示了生物神经机制在计算模型中的应用潜力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 多语言LLM的评估与挑战</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Charting the European LLM Benchmarking Landscape: A New Taxonomy and a Set of Best Practices</span>
+                        <span class="paper-contrib">提供了一个关于非英语语言的大型语言模型基准的新分类法和最佳实践概述。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Uncovering the Potential Risks in Unlearning: Danger of English-only Unlearning in Multilingual LLMs</span>
+                        <span class="paper-contrib">探讨了仅使用英语数据进行多语言LLM知识删除的潜在风险，并提出了评估的新视角。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Relative Scaling Laws for LLMs</span>
+                        <span class="paper-contrib">引入了相对缩放法则，揭示了在不同子群体中大型语言模型性能差异的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LuxIT: A Luxembourgish Instruction Tuning Dataset from Monolingual Seed Data</span>
+                        <span class="paper-contrib">开发了LuxIT，一个针对卢森堡语的单语指令调优数据集，以应对低资源语言环境中的训练数据不足问题。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: ICU中的机器学习应用</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Closing Gaps: An Imputation Analysis of ICU Vital Signs</span>
+                        <span class="paper-contrib">提出了一种数据插补分析方法，以提高ICU生命体征数据的质量，从而增强临床预测模型的有效性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MIMIC-Sepsis: A Curated Benchmark for Modeling and Learning from Sepsis Trajectories in the ICU</span>
+                        <span class="paper-contrib">引入了MIMIC-Sepsis数据集，为ICU中的脓毒症轨迹建模和学习提供了一个经过整理的基准框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Filtering instances and rejecting predictions to obtain reliable models in healthcare</span>
+                        <span class="paper-contrib">提出了一种新颖的两步数据中心方法，以提高医疗领域机器学习模型的预测可靠性，特别是在不确定性管理方面。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards actionable hypotension prediction -- predicting catecholamine therapy initiation in the intensive care unit</span>
+                        <span class="paper-contrib">开发了一种针对低血压的预测模型，旨在有效预测ICU患者何时需要启动儿茶酚胺治疗，减少治疗风险。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 自动驾驶中的多模态模型评估</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SCOUT: A Lightweight Framework for Scenario Coverage Assessment in Autonomous Driving</span>
+                        <span class="paper-contrib">提出了一种轻量级框架SCOUT，用于在自动驾驶中评估场景覆盖率，解决了现有方法的高成本和低效率问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Enhancing Vision-Language Models for Autonomous Driving through Task-Specific Prompting and Spatial Reasoning</span>
+                        <span class="paper-contrib">开发了一种系统框架，通过任务特定的提示和空间推理来增强视觉-语言模型在自动驾驶场景理解中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SPARTA: Evaluating Reasoning Segmentation Robustness through Black-Box Adversarial Paraphrasing in Text Autoencoder Latent Space</span>
+                        <span class="paper-contrib">提出了一种新方法SPARTA，通过黑箱对抗性释义在文本自编码器潜在空间中评估推理分割的鲁棒性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 脉冲神经网络的能效与学习机制</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unsupervised local learning based on voltage-dependent synaptic plasticity for resistive and ferroelectric synapses</span>
+                        <span class="paper-contrib">提出了一种基于电压依赖性突触可塑性的无监督局部学习方法，以提高边缘计算设备的能效和功能性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">All in one timestep: Enhancing Sparsity and Energy efficiency in Multi-level Spiking Neural Networks</span>
+                        <span class="paper-contrib">通过多级脉冲神经网络的设计，增强了稀疏性和能效，推动了事件驱动通信机制的应用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adaptive Surrogate Gradients for Sequential Reinforcement Learning in Spiking Neural Networks</span>
+                        <span class="paper-contrib">提出了一种自适应替代梯度方法，优化了脉冲神经网络在序列强化学习中的应用，提升了能效和时间处理能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

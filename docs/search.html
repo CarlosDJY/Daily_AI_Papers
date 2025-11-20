@@ -5,187 +5,307 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>搜索历史归档 - AI 论文简报</title>
     <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --primary-light: #e0e7ff;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            /* 高亮色 - 柔和的黄 */
+            --highlight-bg: #fef9c3;
+            --highlight-text: #854d0e;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
+            padding: 40px 20px;
+            min-height: 100vh;
         }
+
         .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
         }
+
+        /* 头部 */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 40px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
             font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
+
+        /* SVG 图标通用样式 */
+        .icon {
+            width: 1em;
+            height: 1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .nav-links a {
-            color: #007bff;
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-secondary);
             text-decoration: none;
-            margin-right: 15px;
             font-size: 14px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .search-section {
             margin-bottom: 30px;
+            transition: color 0.2s;
         }
+        
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; width: 16px; height: 16px; }
+
+        /* 搜索区域 */
+        .search-wrapper {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 40px;
+        }
+
         .search-box-container {
             position: relative;
-            margin-bottom: 15px;
+            max-width: 100%;
         }
+
+        .search-icon-wrapper {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
         #search-box {
             width: 100%;
-            padding: 15px;
+            padding: 18px 20px 18px 52px;
             font-size: 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            box-sizing: border-box;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-md);
             font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-        #search-box:focus {
+            color: var(--text-main);
+            transition: all 0.2s ease;
             outline: none;
-            border-color: #007bff;
         }
+
+        #search-box:focus {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        #search-box::placeholder {
+            color: var(--text-light);
+        }
+
+        .search-hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        
+        /* 状态栏 */
         #search-status {
-            color: #6c757d;
+            text-align: center;
+            margin-bottom: 20px;
             font-size: 14px;
-            margin-bottom: 10px;
-            min-height: 20px;
+            color: var(--text-secondary);
+            min-height: 24px;
         }
-        #search-status.loading {
-            color: #007bff;
-        }
-        #search-status.error {
-            color: #dc3545;
-        }
-        #search-status.success {
-            color: #28a745;
-        }
+
+        #search-status.loading { color: var(--primary-color); font-weight: 500; }
+        #search-status.error { color: #ef4444; }
+        #search-status.success { color: #10b981; }
+
+        /* 结果列表 */
         #results-container {
-            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
+
         .result-item {
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            background-color: var(--bg-card);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
         }
+
         .result-item:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
         }
+
         .result-title {
             font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.4;
         }
+
         .result-title a {
-            color: #007bff;
+            color: var(--text-main);
             text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--primary-light) 0);
+            background-size: 100% 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.2s;
         }
+
         .result-title a:hover {
-            text-decoration: underline;
+            background-size: 100% 100%;
+            color: var(--primary-color);
         }
-        .result-summary {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-        .result-date {
-            color: #6c757d;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-        .highlight {
-            background-color: #ffeb3b;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-            font-size: 16px;
-        }
-        .no-results-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        .search-hint {
-            color: #6c757d;
-            font-size: 12px;
-            margin-top: 5px;
-        }
+
+        /* 关键词 Badge */
         .keywords-container {
-            margin: 10px 0;
+            margin-bottom: 12px;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
+
         .keyword-badge {
             display: inline-block;
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 12px;
-            border-radius: 12px;
+            background-color: #f1f5f9;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 12px;
             font-weight: 500;
-            border: 1px solid #90caf9;
-            cursor: default;
-            user-select: none;
+        }
+
+        /* 修复 line-clamp 警告 */
+        .result-summary {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3; /* 标准属性，消除兼容性警告 */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .result-meta {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-light);
+            border-top: 1px solid #f1f5f9;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        /* 高亮样式 */
+        .highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        /* 空状态 */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .no-results .icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="index.html" class="back-link">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            返回汇总页
+        </a>
+        
         <div class="header">
-            <h1>🔍 搜索历史归档</h1>
+            <h1>
+                <svg class="icon" style="width: 32px; height: 32px; color: var(--primary-color);" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                搜索历史归档
+            </h1>
         </div>
         
-        <div class="nav-links">
-            <a href="index.html">← 返回汇总页</a>
-        </div>
-        
-        <div class="search-section">
+        <div class="search-wrapper">
             <div class="search-box-container">
-                <input type="text" id="search-box" placeholder="请输入关键词搜索（支持多关键词，用空格分隔）..." autocomplete="off" />
-                <div class="search-hint">提示：支持多关键词搜索，例如 "Kimi transformer"</div>
+                <div class="search-icon-wrapper">
+                    <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <input type="text" id="search-box" placeholder="输入关键词（支持多词空格）..." autocomplete="off" />
             </div>
-            <div id="search-status">正在加载索引...</div>
-            <div id="results-container"></div>
+            <div class="search-hint">支持标题、摘要、关键词全文检索</div>
         </div>
+        
+        <div id="search-status">正在加载索引...</div>
+        
+        <div id="results-container"></div>
         
         <div class="footer">
-            <p>📧 这是由智能论文简报系统自动生成的搜索页面</p>
+            <p>智能论文简报系统 · 本地即时搜索</p>
         </div>
     </div>
     
-    <!-- 引入 lunr.js 库 -->
     <script src="https://cdn.jsdelivr.net/npm/lunr@2.3.9/lunr.min.js"></script>
     
     <script>
@@ -205,36 +325,34 @@
                 const indexData = await response.json();
                 paperDatabase = indexData;
                 
-                // 将数据存储到全局变量（供未来语义搜索使用）
                 window.paperDatabase = paperDatabase;
                 
                 // 构建 lunr 索引
                 lunrIndex = lunr(function() {
                     this.ref('id');
-                    this.field('metadata', { boost: 15 });  // metadata 权重最高
-                    this.field('abstract', { boost: 10 });  // short_summary 权重中等
-                    this.field('keywords', { boost: 8 });   // keywords 权重中等（介于 abstract 和 summary 之间）
-                    this.field('summary', { boost: 3 });    // 详细总结权重最低
+                    this.field('metadata', { boost: 15 });
+                    this.field('abstract', { boost: 10 });
+                    this.field('keywords', { boost: 8 });
+                    this.field('summary', { boost: 3 });
                     
-                    // 添加所有论文到索引
                     paperDatabase.forEach(function(paper) {
                         this.add({
                             id: paper.id,
-                            metadata: (paper.metadata || paper.title || ''),  // 优先使用 metadata
-                            abstract: (paper.abstract || ''),  // short_summary
-                            keywords: (paper.keywords || ''),   // keywords（空格分隔的字符串）
-                            summary: (paper.summary || '')      // 详细总结
+                            metadata: (paper.metadata || paper.title || ''),
+                            abstract: (paper.abstract || ''),
+                            keywords: (paper.keywords || ''),
+                            summary: (paper.summary || '')
                         });
                     }, this);
                 });
                 
-                // 更新状态
-                updateSearchStatus('success', `索引加载完成，共 ${paperDatabase.length} 篇论文，请输入关键词搜索...`);
+                updateSearchStatus('success', `索引加载完成，共 ${paperDatabase.length} 篇论文`);
                 
-                // 绑定搜索事件
+                // 绑定事件
                 const searchBox = document.getElementById('search-box');
                 searchBox.addEventListener('input', handleSearch);
                 searchBox.addEventListener('keyup', handleSearch);
+                searchBox.focus(); // 自动聚焦
                 
             } catch (error) {
                 console.error('加载搜索索引失败:', error);
@@ -242,54 +360,45 @@
             }
         }
         
-        // 更新搜索状态
         function updateSearchStatus(type, message) {
             const statusEl = document.getElementById('search-status');
             statusEl.textContent = message;
             statusEl.className = type;
+            
+            // 3秒后淡出成功信息
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (statusEl.className === 'success') statusEl.textContent = '';
+                }, 3000);
+            }
         }
         
-        // 处理搜索
         function handleSearch(event) {
             const query = event.target.value.trim();
             
             if (!query) {
                 document.getElementById('results-container').innerHTML = '';
-                updateSearchStatus('success', `索引加载完成，共 ${paperDatabase.length} 篇论文，请输入关键词搜索...`);
+                updateSearchStatus('', '');
                 return;
             }
             
-            if (!lunrIndex) {
-                updateSearchStatus('error', '搜索索引尚未加载完成，请稍候...');
-                return;
-            }
+            if (!lunrIndex) return;
             
             try {
-                // 执行搜索
                 const results = lunrIndex.search(query);
-                
-                // 自定义排序：同分时按关键词出现次数，再按 total_score
                 const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 0);
                 const sortedResults = sortSearchResults(results, keywords);
-                
-                // 显示结果
                 displayResults(sortedResults, query);
-                
             } catch (error) {
                 console.error('搜索失败:', error);
-                updateSearchStatus('error', '搜索失败，请检查关键词是否正确。');
-                document.getElementById('results-container').innerHTML = '';
             }
         }
         
-        // 排序搜索结果（同分时按关键词出现次数，再按 total_score）
         function sortSearchResults(results, keywords) {
-            // 为每个结果添加额外的排序信息
             const enrichedResults = results.map(result => {
                 const paper = paperDatabase.find(p => p.id === result.ref);
                 if (!paper) return null;
                 
-                // 计算关键词出现次数
                 const searchText = (
                     (paper.metadata || paper.title || '') + ' ' +
                     (paper.abstract || '') + ' ' +
@@ -298,11 +407,9 @@
                 
                 let keywordCount = 0;
                 keywords.forEach(keyword => {
-                    const regex = new RegExp(escapeRegExp(keyword), 'gi');
-                    const matches = searchText.match(regex);
-                    if (matches) {
-                        keywordCount += matches.length;
-                    }
+                    // 简单的出现次数统计
+                    const matches = searchText.split(keyword.toLowerCase()).length - 1;
+                    keywordCount += matches;
                 });
                 
                 return {
@@ -312,65 +419,50 @@
                 };
             }).filter(r => r !== null);
             
-            // 排序：先按 lunr 分数（降序），再按关键词出现次数（降序），再按 total_score（降序）
+            // 排序规则：Lunr分数 > 关键词频次 > 论文推荐分
             enrichedResults.sort((a, b) => {
-                // 首先按 lunr 相关性分数（已包含在 result.score 中）
-                if (Math.abs(a.score - b.score) > 0.0001) {
-                    return b.score - a.score;
-                }
-                // 同分时按关键词出现次数
-                if (a.keywordCount !== b.keywordCount) {
-                    return b.keywordCount - a.keywordCount;
-                }
-                // 仍然同分时按 total_score
+                if (Math.abs(a.score - b.score) > 0.001) return b.score - a.score;
+                if (a.keywordCount !== b.keywordCount) return b.keywordCount - a.keywordCount;
                 return b.totalScore - a.totalScore;
             });
             
             return enrichedResults;
         }
         
-        // 显示搜索结果
         function displayResults(searchResults, query) {
             const container = document.getElementById('results-container');
             
             if (searchResults.length === 0) {
                 container.innerHTML = `
                     <div class="no-results">
-                        <div class="no-results-icon">🔍</div>
-                        <div>未找到匹配的论文</div>
-                        <div style="margin-top: 10px; font-size: 14px;">请尝试其他关键词或检查拼写</div>
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        <div>未找到与 "${query}" 相关的结果</div>
                     </div>
                 `;
-                updateSearchStatus('success', `未找到匹配结果（关键词: "${query}"）`);
                 return;
             }
             
-            // 构建结果 HTML
             let html = '';
             const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 0);
             
-            searchResults.forEach((result, index) => {
+            searchResults.forEach(result => {
                 const paper = paperDatabase.find(p => p.id === result.ref);
                 if (!paper) return;
                 
-                // 标题：优先使用 metadata，如果没有则使用 title
                 const displayTitle = paper.metadata || paper.title || '无标题';
                 const highlightedTitle = highlightKeywords(displayTitle, keywords);
+                const summaryText = (paper.abstract || '').substring(0, 240);
+                const highlightedSummary = highlightKeywords(summaryText, keywords);
                 
-                // Keywords 展示
                 let keywordsHTML = '';
                 if (paper.keywords_list && paper.keywords_list.length > 0) {
                     keywordsHTML = '<div class="keywords-container">';
-                    paper.keywords_list.forEach(keyword => {
+                    paper.keywords_list.slice(0, 5).forEach(keyword => { // 限制显示5个关键词
                         const highlightedKeyword = highlightKeywords(keyword, keywords);
                         keywordsHTML += `<span class="keyword-badge">${highlightedKeyword}</span>`;
                     });
                     keywordsHTML += '</div>';
                 }
-                
-                // 摘要：优先使用 short_summary（即 abstract）
-                const summaryText = (paper.abstract || '').substring(0, 200);
-                const highlightedSummary = highlightKeywords(summaryText, keywords);
                 
                 html += `
                     <div class="result-item">
@@ -379,43 +471,36 @@
                         </div>
                         ${keywordsHTML}
                         <div class="result-summary">
-                            ${highlightedSummary}${(paper.abstract || '').length > 200 ? '...' : ''}
+                            ${highlightedSummary}${(paper.abstract || '').length > 240 ? '...' : ''}
                         </div>
-                        <div class="result-date">日期: ${paper.date}</div>
+                        <div class="result-meta">
+                            <span>📅 ${paper.date}</span>
+                            <span style="margin: 0 8px">•</span>
+                            <span>推荐分: ${parseFloat(paper.total_score || 0).toFixed(3)}</span>
+                        </div>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
-            updateSearchStatus('success', `找到 ${searchResults.length} 篇匹配的论文（关键词: "${query}"）`);
         }
         
-        // 高亮关键词
         function highlightKeywords(text, keywords) {
-            if (!text || !keywords || keywords.length === 0) {
-                return text || '';
-            }
-            
+            if (!text || !keywords || keywords.length === 0) return text || '';
             let highlighted = text;
-            
-            // 对每个关键词进行高亮
             keywords.forEach(keyword => {
                 if (keyword.length > 0) {
-                    // 使用正则表达式匹配（不区分大小写）
                     const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
                     highlighted = highlighted.replace(regex, '<span class="highlight">$1</span>');
                 }
             });
-            
             return highlighted;
         }
         
-        // 转义正则表达式特殊字符
         function escapeRegExp(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
         
-        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', initSearch);
     </script>
 </body>

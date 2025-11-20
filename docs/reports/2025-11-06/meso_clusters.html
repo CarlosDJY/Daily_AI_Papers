@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-11-06</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-11-06</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,345 +302,396 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 异常检测与故障诊断</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>A Quantized VAE-MLP Botnet Detection Model: A Systematic Evaluation of Quantization-Aware Training and Post-Training Quantization Strategies</strong>
-                        <span class="contribution">提出了一种量化的VAE-MLP模型，以提高IoT设备上对botnet攻击的检测能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Forecast2Anomaly (F2A): Adapting Multivariate Time Series Foundation Models for Anomaly Prediction</strong>
-                        <span class="contribution">开发了一种多变量时间序列基础模型的适应性方法，用于提高异常预测的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Image-Intrinsic Priors for Integrated Circuit Defect Detection and Novel Class Discovery via Self-Supervised Learning</strong>
-                        <span class="contribution">利用自监督学习方法，通过图像内在先验实现集成电路缺陷检测和新类别发现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Sparse, self-organizing ensembles of local kernels detect rare statistical anomalies</strong>
-                        <span class="contribution">提出了一种稀疏自组织局部核集成方法，以检测稀有统计异常。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SHIELD: Securing Healthcare IoT with Efficient Machine Learning Techniques for Anomaly Detection</strong>
-                        <span class="contribution">构建了一种高效的机器学习框架，用于检测医疗IoT中的网络攻击和操作异常。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>CLIP Meets Diffusion: A Synergistic Approach to Anomaly Detection</strong>
-                        <span class="contribution">结合CLIP和扩散模型，提出了一种综合性方法以捕捉多层次特征进行异常检测。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>UniFault: A Fault Diagnosis Foundation Model from Bearing Data</strong>
-                        <span class="contribution">开发了一种基础模型UniFault，旨在通过轴承数据实现更广泛的故障诊断。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>RKUM: An R Package for Robust Kernel Unsupervised Methods</strong>
-                        <span class="contribution">推出了RKUM R包，提供稳健核无监督方法的实现，增强异常检测的鲁棒性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 多语言处理与翻译技术</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>How to Evaluate Speech Translation with Source-Aware Neural MT Metrics</strong>
-                        <span class="contribution">提出了一种新的评估方法，通过源信息增强神经机器翻译的评估效果，克服了传统参考基础评估的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>BanglaSTEM: A Parallel Corpus for Technical Domain Bangla-English Translation</strong>
-                        <span class="contribution">构建了一个针对技术领域的孟加拉语-英语平行语料库，以改善孟加拉语问题的翻译质量。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Does Synthetic Data Help Named Entity Recognition for Low-Resource Languages?</strong>
-                        <span class="contribution">探讨了合成数据在低资源语言命名实体识别中的有效性，为数据增强提供了新的视角。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>HPLT 3.0: Very Large-Scale Multilingual Resources for LLM and MT. Mono- and Bi-lingual Data, Multilingual Evaluation, and Pre-Trained Models</strong>
-                        <span class="contribution">介绍了一个包含近200种语言的大规模多语言数据集，为大语言模型和机器翻译提供了丰富的预训练资源。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Segmentation Beyond Defaults: Asymmetrical Byte Pair Encoding for Optimal Machine Translation Performance</strong>
-                        <span class="contribution">提出了一种不对称的字节对编码方法，以优化机器翻译中的词汇分割性能，超越传统的对称方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>IndicSuperTokenizer: An Optimized Tokenizer for Indic Multilingual LLMs</strong>
-                        <span class="contribution">开发了一种针对印度多语言大语言模型的优化分词器，以提高模型的训练效率和推理性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Beyond Ranked Lists: The SARAL Framework for Cross-Lingual Document Set Retrieval</strong>
-                        <span class="contribution">提出了SARAL框架，改进了跨语言文档集检索的效果，超越了传统的排名列表方法。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 基于检索增强生成的图算法推理</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>GDS Agent for Graph Algorithmic Reasoning</strong>
-                        <span class="contribution">提出了一种通过功能调用和检索增强技术来提升大型语言模型在图算法推理中的能力的系统。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Divide by Question, Conquer by Agent: SPLIT-RAG with Question-Driven Graph Partitioning</strong>
-                        <span class="contribution">引入了一种基于问题驱动的图划分方法，以提高检索增强生成系统在处理大型知识图时的效率和准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Beyond Single Pass, Looping Through Time: KG-IRAG with Iterative Knowledge Retrieval</strong>
-                        <span class="contribution">提出了一种迭代知识检索的方法，通过知识图增强图检索增强生成的性能，适用于复杂推理任务。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>s3: You Don't Need That Much Data to Train a Search Agent via RL</strong>
-                        <span class="contribution">展示了通过强化学习训练搜索代理的能力，强调在检索增强生成系统中多轮交互对信息获取的提升。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>RAGBoost: Efficient Retrieval-Augmented Generation with Accuracy-Preserving Context Reuse</strong>
-                        <span class="contribution">提出了一种高效的检索增强生成方法，利用上下文重用来提高准确性，同时应对现代应用对输入长度和复杂性的需求。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 医学影像中的深度学习与预测</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>DE3S: Dual-Enhanced Soft-Sparse-Shape Learning for Medical Early Time-Series Classification</strong>
-                        <span class="contribution">提出了一种双重增强的软稀疏形状学习方法，以提高医疗早期时间序列分类的准确性和及时性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Computational Imaging Meets LLMs: Zero-Shot IDH Mutation Prediction in Brain Gliomas</strong>
-                        <span class="contribution">结合大语言模型与计算成像分析，实现了对脑胶质瘤中 IDH 突变状态的零样本预测。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Benchmarking Foundation Models and Parameter-Efficient Fine-Tuning for Prognosis Prediction in Medical Imaging</strong>
-                        <span class="contribution">建立了首个结构化基准，以评估基础模型在医疗影像预后预测中的应用潜力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Generative deep learning for foundational video translation in ultrasound</strong>
-                        <span class="contribution">探讨了生成深度学习在超声影像翻译中的应用，强调了数据不平衡和缺失问题的解决。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Alleviating Hyperparameter-Tuning Burden in SVM Classifiers for Pulmonary Nodules Diagnosis with Multi-Task Bayesian Optimization</strong>
-                        <span class="contribution">通过多任务贝叶斯优化减轻了支持向量机分类器在肺结节诊断中的超参数调优负担。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 生成式人工智能在生物信息学与多模态应用中的进展</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Generative Artificial Intelligence in Bioinformatics: A Systematic Review of Models, Applications, and Methodological Advances</strong>
-                        <span class="contribution">该论文系统评估了生成式人工智能在生物信息学中的模型、应用和方法学进展。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>When Generative Artificial Intelligence meets Extended Reality: A Systematic Review</strong>
-                        <span class="contribution">本研究探讨了生成式人工智能与扩展现实结合的潜力及其应用前景。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ForTIFAI: Fending Off Recursive Training Induced Failure for AI Model Collapse</strong>
-                        <span class="contribution">论文提出了一种方法以应对生成式AI模型在递归训练中可能导致的失败和模型崩溃问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>POEMS: Product of Experts for Interpretable Multi-omic Integration using Sparse Decoding</strong>
-                        <span class="contribution">该研究提出了一种新颖的多组学数据集成方法，强调了解释性与预测性能的平衡。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Learning noisy tissue dynamics across time scales</strong>
-                        <span class="contribution">论文介绍了一种生物仿生的机器学习框架，用于直接推断嘈杂的多细胞动态。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: LLM的安全性与公平性研究</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>A Proprietary Model-Based Safety Response Framework for AI Agents</strong>
-                        <span class="contribution">提出了一种新颖的安全响应框架，以系统性地保护大型语言模型（LLM）的安全性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Death by a Thousand Prompts: Open Model Vulnerability Analysis</strong>
-                        <span class="contribution">分析了八个开放权重的大型语言模型（LLM）的安全性和安全态势，识别出可能影响后续微调和部署的脆弱性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Silenced Biases: The Dark Side LLMs Learned to Refuse</strong>
-                        <span class="contribution">探讨了安全对齐的大型语言模型（LLM）在敏感应用中的公平性评估挑战及其潜在的偏见输出问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Let the Bees Find the Weak Spots: A Path Planning Perspective on Multi-Turn Jailbreak Attacks against LLMs</strong>
-                        <span class="contribution">采用多轮越狱攻击的红队评估方法，识别大型语言模型（LLM）的潜在安全和伦理风险。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SafeSearch: Do Not Trade Safety for Utility in LLM Search Agents</strong>
-                        <span class="contribution">首次评估了基于大型语言模型（LLM）的搜索代理的安全行为，强调在提升效用时不应牺牲安全性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: LLMs中的不确定性量化与推理</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>PlanU: Large Language Model Reasoning through Planning under Uncertainty</strong>
-                        <span class="contribution">提出了一种通过规划在不确定环境中进行推理的框架，以提高LLMs在复杂推理任务中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Why Machine Learning Models Fail to Fully Capture Epistemic Uncertainty</strong>
-                        <span class="contribution">分析了现有方法在捕捉认知不确定性方面的不足，并强调了被忽视的关键成分。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Read Your Own Mind: Reasoning Helps Surface Self-Confidence Signals in LLMs</strong>
-                        <span class="contribution">探讨了LLMs在问答任务中的自信信号，揭示了模型在默认设置下的过度自信现象。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Inv-Entropy: A Fully Probabilistic Framework for Uncertainty Quantification in Language Models</strong>
-                        <span class="contribution">提出了一种全面的概率框架，用于LLMs的不确定性量化，强调了理论基础的重要性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Measuring Aleatoric and Epistemic Uncertainty in LLMs: Empirical Evaluation on ID and OOD QA Tasks</strong>
-                        <span class="contribution">进行了全面的实证研究，评估了LLMs在有界和无界问答任务中的不确定性估计能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 图神经网络的可扩展性与应用挑战</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Graph Sampling for Scalable and Expressive Graph Neural Networks on Homophilic Graphs</strong>
-                        <span class="contribution">提出了一种图采样方法，以提高图神经网络在同质图上的可扩展性和表达能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Survey of Graph Neural Networks in Real world: Imbalance, Noise, Privacy and OOD Challenges</strong>
-                        <span class="contribution">综述了图神经网络在现实世界应用中的不平衡、噪声、隐私及超出分布（OOD）挑战。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>GMoPE:A Prompt-Expert Mixture Framework for Graph Foundation Models</strong>
-                        <span class="contribution">提出了一种提示-专家混合框架，以改善图基础模型在多领域任务中的泛化能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Graph Neural AI with Temporal Dynamics for Comprehensive Anomaly Detection in Microservices</strong>
-                        <span class="contribution">结合图神经网络与时间建模，提出了一种统一框架用于微服务架构中的异常检测与根因追踪。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 多模态大语言模型的推理能力</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Benchmarking the Thinking Mode of Multimodal Large Language Models in Clinical Tasks</strong>
-                        <span class="contribution">提出了一种新的基准，评估多模态大语言模型在临床任务中的推理模式。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Agent-Omni: Test-Time Multimodal Reasoning via Model Coordination for Understanding Anything</strong>
-                        <span class="contribution">介绍了一种模型协调的方法，以实现多模态推理，从而克服固定模态对的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MathOPEval: A Fine-grained Evaluation Benchmark for Visual Operations of MLLMs in Mathematical Reasoning</strong>
-                        <span class="contribution">开发了一个细粒度评估基准，专注于多模态数学推理中的视觉操作。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MME-CC: A Challenging Multi-Modal Evaluation Benchmark of Cognitive Capacity</strong>
-                        <span class="contribution">提出了一个新的多模态评估基准，以系统性地捕捉认知能力中的视觉中心行为。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 自注意力机制的效率与可解释性</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Efficient Linear Attention for Multivariate Time Series Modeling via Entropy Equality</strong>
-                        <span class="contribution">提出了一种高效的线性注意力机制，通过熵等式优化多变量时间序列建模的计算复杂性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>An Augmentation Overlap Theory of Contrastive Learning</strong>
-                        <span class="contribution">建立了对比学习的增强重叠理论，揭示了其在条件独立假设下的工作机制。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Towards Interpretable and Efficient Attention: Compressing All by Contracting a Few</strong>
-                        <span class="contribution">提出了一种通过压缩少数元素来提高自注意力机制的可解释性和效率的方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Recurrent Self-Attention Dynamics: An Energy-Agnostic Perspective from Jacobians</strong>
-                        <span class="contribution">从雅可比矩阵的角度探讨了自注意力的动态特性，提供了对信号传播偏差的深入理解。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 异常检测与故障诊断</div>
+                <div class="cluster-count">8 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Quantized VAE-MLP Botnet Detection Model: A Systematic Evaluation of Quantization-Aware Training and Post-Training Quantization Strategies</span>
+                        <span class="paper-contrib">提出了一种量化的VAE-MLP模型，以提高IoT设备上对botnet攻击的检测能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Forecast2Anomaly (F2A): Adapting Multivariate Time Series Foundation Models for Anomaly Prediction</span>
+                        <span class="paper-contrib">开发了一种多变量时间序列基础模型的适应性方法，用于提高异常预测的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Image-Intrinsic Priors for Integrated Circuit Defect Detection and Novel Class Discovery via Self-Supervised Learning</span>
+                        <span class="paper-contrib">利用自监督学习方法，通过图像内在先验实现集成电路缺陷检测和新类别发现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Sparse, self-organizing ensembles of local kernels detect rare statistical anomalies</span>
+                        <span class="paper-contrib">提出了一种稀疏自组织局部核集成方法，以检测稀有统计异常。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SHIELD: Securing Healthcare IoT with Efficient Machine Learning Techniques for Anomaly Detection</span>
+                        <span class="paper-contrib">构建了一种高效的机器学习框架，用于检测医疗IoT中的网络攻击和操作异常。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CLIP Meets Diffusion: A Synergistic Approach to Anomaly Detection</span>
+                        <span class="paper-contrib">结合CLIP和扩散模型，提出了一种综合性方法以捕捉多层次特征进行异常检测。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">UniFault: A Fault Diagnosis Foundation Model from Bearing Data</span>
+                        <span class="paper-contrib">开发了一种基础模型UniFault，旨在通过轴承数据实现更广泛的故障诊断。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">RKUM: An R Package for Robust Kernel Unsupervised Methods</span>
+                        <span class="paper-contrib">推出了RKUM R包，提供稳健核无监督方法的实现，增强异常检测的鲁棒性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 多语言处理与翻译技术</div>
+                <div class="cluster-count">7 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">How to Evaluate Speech Translation with Source-Aware Neural MT Metrics</span>
+                        <span class="paper-contrib">提出了一种新的评估方法，通过源信息增强神经机器翻译的评估效果，克服了传统参考基础评估的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BanglaSTEM: A Parallel Corpus for Technical Domain Bangla-English Translation</span>
+                        <span class="paper-contrib">构建了一个针对技术领域的孟加拉语-英语平行语料库，以改善孟加拉语问题的翻译质量。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Does Synthetic Data Help Named Entity Recognition for Low-Resource Languages?</span>
+                        <span class="paper-contrib">探讨了合成数据在低资源语言命名实体识别中的有效性，为数据增强提供了新的视角。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">HPLT 3.0: Very Large-Scale Multilingual Resources for LLM and MT. Mono- and Bi-lingual Data, Multilingual Evaluation, and Pre-Trained Models</span>
+                        <span class="paper-contrib">介绍了一个包含近200种语言的大规模多语言数据集，为大语言模型和机器翻译提供了丰富的预训练资源。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Segmentation Beyond Defaults: Asymmetrical Byte Pair Encoding for Optimal Machine Translation Performance</span>
+                        <span class="paper-contrib">提出了一种不对称的字节对编码方法，以优化机器翻译中的词汇分割性能，超越传统的对称方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">IndicSuperTokenizer: An Optimized Tokenizer for Indic Multilingual LLMs</span>
+                        <span class="paper-contrib">开发了一种针对印度多语言大语言模型的优化分词器，以提高模型的训练效率和推理性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond Ranked Lists: The SARAL Framework for Cross-Lingual Document Set Retrieval</span>
+                        <span class="paper-contrib">提出了SARAL框架，改进了跨语言文档集检索的效果，超越了传统的排名列表方法。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 基于检索增强生成的图算法推理</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GDS Agent for Graph Algorithmic Reasoning</span>
+                        <span class="paper-contrib">提出了一种通过功能调用和检索增强技术来提升大型语言模型在图算法推理中的能力的系统。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Divide by Question, Conquer by Agent: SPLIT-RAG with Question-Driven Graph Partitioning</span>
+                        <span class="paper-contrib">引入了一种基于问题驱动的图划分方法，以提高检索增强生成系统在处理大型知识图时的效率和准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond Single Pass, Looping Through Time: KG-IRAG with Iterative Knowledge Retrieval</span>
+                        <span class="paper-contrib">提出了一种迭代知识检索的方法，通过知识图增强图检索增强生成的性能，适用于复杂推理任务。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">s3: You Don't Need That Much Data to Train a Search Agent via RL</span>
+                        <span class="paper-contrib">展示了通过强化学习训练搜索代理的能力，强调在检索增强生成系统中多轮交互对信息获取的提升。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">RAGBoost: Efficient Retrieval-Augmented Generation with Accuracy-Preserving Context Reuse</span>
+                        <span class="paper-contrib">提出了一种高效的检索增强生成方法，利用上下文重用来提高准确性，同时应对现代应用对输入长度和复杂性的需求。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 医学影像中的深度学习与预测</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DE3S: Dual-Enhanced Soft-Sparse-Shape Learning for Medical Early Time-Series Classification</span>
+                        <span class="paper-contrib">提出了一种双重增强的软稀疏形状学习方法，以提高医疗早期时间序列分类的准确性和及时性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Computational Imaging Meets LLMs: Zero-Shot IDH Mutation Prediction in Brain Gliomas</span>
+                        <span class="paper-contrib">结合大语言模型与计算成像分析，实现了对脑胶质瘤中 IDH 突变状态的零样本预测。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Benchmarking Foundation Models and Parameter-Efficient Fine-Tuning for Prognosis Prediction in Medical Imaging</span>
+                        <span class="paper-contrib">建立了首个结构化基准，以评估基础模型在医疗影像预后预测中的应用潜力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generative deep learning for foundational video translation in ultrasound</span>
+                        <span class="paper-contrib">探讨了生成深度学习在超声影像翻译中的应用，强调了数据不平衡和缺失问题的解决。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Alleviating Hyperparameter-Tuning Burden in SVM Classifiers for Pulmonary Nodules Diagnosis with Multi-Task Bayesian Optimization</span>
+                        <span class="paper-contrib">通过多任务贝叶斯优化减轻了支持向量机分类器在肺结节诊断中的超参数调优负担。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 生成式人工智能在生物信息学与多模态应用中的进展</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generative Artificial Intelligence in Bioinformatics: A Systematic Review of Models, Applications, and Methodological Advances</span>
+                        <span class="paper-contrib">该论文系统评估了生成式人工智能在生物信息学中的模型、应用和方法学进展。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">When Generative Artificial Intelligence meets Extended Reality: A Systematic Review</span>
+                        <span class="paper-contrib">本研究探讨了生成式人工智能与扩展现实结合的潜力及其应用前景。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ForTIFAI: Fending Off Recursive Training Induced Failure for AI Model Collapse</span>
+                        <span class="paper-contrib">论文提出了一种方法以应对生成式AI模型在递归训练中可能导致的失败和模型崩溃问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">POEMS: Product of Experts for Interpretable Multi-omic Integration using Sparse Decoding</span>
+                        <span class="paper-contrib">该研究提出了一种新颖的多组学数据集成方法，强调了解释性与预测性能的平衡。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning noisy tissue dynamics across time scales</span>
+                        <span class="paper-contrib">论文介绍了一种生物仿生的机器学习框架，用于直接推断嘈杂的多细胞动态。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: LLM的安全性与公平性研究</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Proprietary Model-Based Safety Response Framework for AI Agents</span>
+                        <span class="paper-contrib">提出了一种新颖的安全响应框架，以系统性地保护大型语言模型（LLM）的安全性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Death by a Thousand Prompts: Open Model Vulnerability Analysis</span>
+                        <span class="paper-contrib">分析了八个开放权重的大型语言模型（LLM）的安全性和安全态势，识别出可能影响后续微调和部署的脆弱性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Silenced Biases: The Dark Side LLMs Learned to Refuse</span>
+                        <span class="paper-contrib">探讨了安全对齐的大型语言模型（LLM）在敏感应用中的公平性评估挑战及其潜在的偏见输出问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Let the Bees Find the Weak Spots: A Path Planning Perspective on Multi-Turn Jailbreak Attacks against LLMs</span>
+                        <span class="paper-contrib">采用多轮越狱攻击的红队评估方法，识别大型语言模型（LLM）的潜在安全和伦理风险。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SafeSearch: Do Not Trade Safety for Utility in LLM Search Agents</span>
+                        <span class="paper-contrib">首次评估了基于大型语言模型（LLM）的搜索代理的安全行为，强调在提升效用时不应牺牲安全性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: LLMs中的不确定性量化与推理</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PlanU: Large Language Model Reasoning through Planning under Uncertainty</span>
+                        <span class="paper-contrib">提出了一种通过规划在不确定环境中进行推理的框架，以提高LLMs在复杂推理任务中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Why Machine Learning Models Fail to Fully Capture Epistemic Uncertainty</span>
+                        <span class="paper-contrib">分析了现有方法在捕捉认知不确定性方面的不足，并强调了被忽视的关键成分。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Read Your Own Mind: Reasoning Helps Surface Self-Confidence Signals in LLMs</span>
+                        <span class="paper-contrib">探讨了LLMs在问答任务中的自信信号，揭示了模型在默认设置下的过度自信现象。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Inv-Entropy: A Fully Probabilistic Framework for Uncertainty Quantification in Language Models</span>
+                        <span class="paper-contrib">提出了一种全面的概率框架，用于LLMs的不确定性量化，强调了理论基础的重要性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Measuring Aleatoric and Epistemic Uncertainty in LLMs: Empirical Evaluation on ID and OOD QA Tasks</span>
+                        <span class="paper-contrib">进行了全面的实证研究，评估了LLMs在有界和无界问答任务中的不确定性估计能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 图神经网络的可扩展性与应用挑战</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Graph Sampling for Scalable and Expressive Graph Neural Networks on Homophilic Graphs</span>
+                        <span class="paper-contrib">提出了一种图采样方法，以提高图神经网络在同质图上的可扩展性和表达能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Survey of Graph Neural Networks in Real world: Imbalance, Noise, Privacy and OOD Challenges</span>
+                        <span class="paper-contrib">综述了图神经网络在现实世界应用中的不平衡、噪声、隐私及超出分布（OOD）挑战。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GMoPE:A Prompt-Expert Mixture Framework for Graph Foundation Models</span>
+                        <span class="paper-contrib">提出了一种提示-专家混合框架，以改善图基础模型在多领域任务中的泛化能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Graph Neural AI with Temporal Dynamics for Comprehensive Anomaly Detection in Microservices</span>
+                        <span class="paper-contrib">结合图神经网络与时间建模，提出了一种统一框架用于微服务架构中的异常检测与根因追踪。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 多模态大语言模型的推理能力</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Benchmarking the Thinking Mode of Multimodal Large Language Models in Clinical Tasks</span>
+                        <span class="paper-contrib">提出了一种新的基准，评估多模态大语言模型在临床任务中的推理模式。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Agent-Omni: Test-Time Multimodal Reasoning via Model Coordination for Understanding Anything</span>
+                        <span class="paper-contrib">介绍了一种模型协调的方法，以实现多模态推理，从而克服固定模态对的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MathOPEval: A Fine-grained Evaluation Benchmark for Visual Operations of MLLMs in Mathematical Reasoning</span>
+                        <span class="paper-contrib">开发了一个细粒度评估基准，专注于多模态数学推理中的视觉操作。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MME-CC: A Challenging Multi-Modal Evaluation Benchmark of Cognitive Capacity</span>
+                        <span class="paper-contrib">提出了一个新的多模态评估基准，以系统性地捕捉认知能力中的视觉中心行为。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 自注意力机制的效率与可解释性</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Efficient Linear Attention for Multivariate Time Series Modeling via Entropy Equality</span>
+                        <span class="paper-contrib">提出了一种高效的线性注意力机制，通过熵等式优化多变量时间序列建模的计算复杂性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">An Augmentation Overlap Theory of Contrastive Learning</span>
+                        <span class="paper-contrib">建立了对比学习的增强重叠理论，揭示了其在条件独立假设下的工作机制。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards Interpretable and Efficient Attention: Compressing All by Contracting a Few</span>
+                        <span class="paper-contrib">提出了一种通过压缩少数元素来提高自注意力机制的可解释性和效率的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Recurrent Self-Attention Dynamics: An Energy-Agnostic Perspective from Jacobians</span>
+                        <span class="paper-contrib">从雅可比矩阵的角度探讨了自注意力的动态特性，提供了对信号传播偏差的深入理解。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-06 20:07:39</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-11-10</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-11-10</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,260 +302,311 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 大语言模型的高效推理与知识集成</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Route Experts by Sequence, not by Token</strong>
-                        <span class="contribution">提出了一种基于序列的专家路由方法，以适应不同复杂性的输入，从而提高Mixture-of-Experts架构的效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SR-KI: Scalable and Real-Time Knowledge Integration into LLMs via Supervised Attention</strong>
-                        <span class="contribution">提出SR-KI方法，通过将结构化知识库编码为键值对并注入LLMs的KV缓存，实现实时和大规模知识集成。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LPFQA: A Long-Tail Professional Forum-based Benchmark for LLM Evaluation</strong>
-                        <span class="contribution">引入了LPFQA基准，专注于评估LLMs在长尾专业论坛中的推理和问答能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>TimeSense:Making Large Language Models Proficient in Time-Series Analysis</strong>
-                        <span class="contribution">开发了一种方法，使LLMs能够有效处理时间序列分析任务，结合文本与时间数据进行推理。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Analyzing and Mitigating Negation Artifacts using Data Augmentation for Improving ELECTRA-Small Model Accuracy</strong>
-                        <span class="contribution">通过数据增强技术分析和缓解否定伪影，提高ELECTRA-small模型在自然语言推理任务中的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Towards Resource-Efficient Multimodal Intelligence: Learned Routing among Specialized Expert Models</strong>
-                        <span class="contribution">提出了一种学习路由机制，在专门的专家模型之间进行高效的多模态智能推理。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Better Datasets Start From RefineLab: Automatic Optimization for High-Quality Dataset Refinement</strong>
-                        <span class="contribution">提出RefineLab方法，通过自动优化提高高质量问答数据集的可靠性和一致性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Confidence-Guided Stepwise Model Routing for Cost-Efficient Reasoning</strong>
-                        <span class="contribution">提出了一种基于置信度的分步模型路由方法，以降低大型语言模型的推理成本。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 图形与路径规划中的学习方法</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>GHOST: Solving the Traveling Salesman Problem on Graphs of Convex Sets</strong>
-                        <span class="contribution">提出了一种新的旅行商问题变体，通过图形的凸集表示进行轨迹规划，优化了边缘成本的计算。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LaneDiffusion: Improving Centerline Graph Learning via Prior Injected BEV Feature Generation</strong>
-                        <span class="contribution">引入了一种生成性方法，通过注入先验的鸟瞰视图特征来改善中心线图的学习，增强了空间推理能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Learning Time-Varying Graph Signals via Koopman</strong>
-                        <span class="contribution">利用Koopman算子学习时间变化的图信号，提供了一种处理非欧几里得结构数据的新方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Adaptive Multi-view Graph Contrastive Learning via Fractional-order Neural Diffusion Networks</strong>
-                        <span class="contribution">提出了一种自适应多视图图对比学习方法，通过分数阶神经扩散网络捕捉多尺度结构模式。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 大型推理模型的行为优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>MONICA: Real-Time Monitoring and Calibration of Chain-of-Thought Sycophancy in Large Reasoning Models</strong>
-                        <span class="contribution">提出了一种实时监测和校准大型推理模型中谄媚行为的方法，以提高模型的独立推理能力和可靠性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>What Makes Reasoning Invalid: Echo Reflection Mitigation for Large Language Models</strong>
-                        <span class="contribution">探讨了如何通过回声反射减轻大型语言模型在复杂推理任务中的无效推理问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Chasing Consistency: Quantifying and Optimizing Human-Model Alignment in Chain-of-Thought Reasoning</strong>
-                        <span class="contribution">提出了一种新的评估框架和对齐评分指标，以量化和优化大型语言模型在链式推理中的一致性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Privacy-Preserving Federated Learning for Fair and Efficient Urban Traffic Optimization</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Setting $\varepsilon$ is not the Issue in Differential Privacy</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Local K-Similarity Constraint for Federated Learning with Label Noise</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 药物发现与反应预测</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Reaction Prediction via Interaction Modeling of Symmetric Difference Shingle Sets</strong>
-                        <span class="contribution">提出了一种新的反应预测方法，通过建模对称差集的交互来克服现有模型在分子排列敏感性和子结构交互建模不足的问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LLM$^3$-DTI: A Large Language Model and Multi-modal data co-powered framework for Drug-Target Interaction prediction</strong>
-                        <span class="contribution">开发了一个结合大语言模型和多模态数据的框架，以提高药物-靶点相互作用预测的准确性和效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>How Well Do LLMs Understand Drug Mechanisms? A Knowledge + Reasoning Evaluation Dataset</strong>
-                        <span class="contribution">构建了一个评估数据集，以测试大语言模型在药物机制理解和推理方面的能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 高效神经网络处理与优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Precision-Scalable Microscaling Datapaths with Optimized Reduction Tree for Efficient NPU Integration</strong>
-                        <span class="contribution">提出了一种优化的减树结构，以支持新一代神经处理单元在训练和推理操作中的高效集成。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>How Wide and How Deep? Mitigating Over-Squashing of GNNs via Channel Capacity Constrained Estimation</strong>
-                        <span class="contribution">引入了通道容量约束估计（C3E）框架，以解决图神经网络中的信息损失问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>CAMP-HiVe: Cyclic Pair Merging based Efficient DNN Pruning with Hessian-Vector Approximation for Resource-Constrained Systems</strong>
-                        <span class="contribution">提出了一种基于循环配对合并的高效深度神经网络剪枝方法，适用于资源受限系统。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: AI驱动的数据科学与工程</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>The Station: An Open-World Environment for AI-Driven Discovery</strong>
-                        <span class="contribution">提出了一个开放世界的多智能体环境，支持AI驱动的科学探索和发现过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Kaggle Chronicles: 15 Years of Competitions, Community and Data Science Innovation</strong>
-                        <span class="contribution">回顾了Kaggle平台15年的发展历程，强调了其在数据科学创新和社区建设中的重要作用。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Dataforge: A Data Agent Platform for Autonomous Data Engineering</strong>
-                        <span class="contribution">介绍了一个自主数据工程平台，旨在简化和自动化数据准备过程，以支持AI应用。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 上下文学习中的理论与应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Scaling Laws and In-Context Learning: A Unified Theoretical Framework</strong>
-                        <span class="contribution">提出了一个统一的理论框架，连接了规模扩展与上下文学习的关系。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Explicit Knowledge-Guided In-Context Learning for Early Detection of Alzheimer's Disease</strong>
-                        <span class="contribution">探讨了如何利用知识引导的上下文学习来提高阿尔茨海默病早期检测的效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Vocabulary In-Context Learning in Transformers: Benefits of Positional Encoding</strong>
-                        <span class="contribution">研究了位置编码在变换器架构中对词汇上下文学习的积极影响。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 多模态融合与视频处理</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>MambaOVSR: Multiscale Fusion with Global Motion Modeling for Chinese Opera Video Super-Resolution</strong>
-                        <span class="contribution">提出了一种多尺度融合与全局运动建模的方法，以提高中国戏曲视频的超分辨率效果。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MULTIBENCH++: A Unified and Comprehensive Multimodal Fusion Benchmarking Across Specialized Domains</strong>
-                        <span class="contribution">建立了一个统一且全面的多模态融合基准，旨在评估不同领域的融合方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Countering Multi-modal Representation Collapse through Rank-targeted Fusion</strong>
-                        <span class="contribution">提出了一种针对多模态表示崩溃的解决方案，通过排名导向的融合方法增强特征的区分能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 图机器学习中的公平性</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Breaking the Dyadic Barrier: Rethinking Fairness in Link Prediction Beyond Demographic Parity</strong>
-                        <span class="contribution">提出了一种超越传统二元公平性定义的新方法，以解决图链接预测中的偏见问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Achieving Fairness Without Harm via Selective Demographic Experts</strong>
-                        <span class="contribution">介绍了一种选择性使用人口统计专家的策略，旨在实现公平性与高预测性能之间的平衡。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 大语言模型的高效推理与知识集成</div>
+                <div class="cluster-count">8 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Route Experts by Sequence, not by Token</span>
+                        <span class="paper-contrib">提出了一种基于序列的专家路由方法，以适应不同复杂性的输入，从而提高Mixture-of-Experts架构的效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SR-KI: Scalable and Real-Time Knowledge Integration into LLMs via Supervised Attention</span>
+                        <span class="paper-contrib">提出SR-KI方法，通过将结构化知识库编码为键值对并注入LLMs的KV缓存，实现实时和大规模知识集成。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LPFQA: A Long-Tail Professional Forum-based Benchmark for LLM Evaluation</span>
+                        <span class="paper-contrib">引入了LPFQA基准，专注于评估LLMs在长尾专业论坛中的推理和问答能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">TimeSense:Making Large Language Models Proficient in Time-Series Analysis</span>
+                        <span class="paper-contrib">开发了一种方法，使LLMs能够有效处理时间序列分析任务，结合文本与时间数据进行推理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Analyzing and Mitigating Negation Artifacts using Data Augmentation for Improving ELECTRA-Small Model Accuracy</span>
+                        <span class="paper-contrib">通过数据增强技术分析和缓解否定伪影，提高ELECTRA-small模型在自然语言推理任务中的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards Resource-Efficient Multimodal Intelligence: Learned Routing among Specialized Expert Models</span>
+                        <span class="paper-contrib">提出了一种学习路由机制，在专门的专家模型之间进行高效的多模态智能推理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Better Datasets Start From RefineLab: Automatic Optimization for High-Quality Dataset Refinement</span>
+                        <span class="paper-contrib">提出RefineLab方法，通过自动优化提高高质量问答数据集的可靠性和一致性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Confidence-Guided Stepwise Model Routing for Cost-Efficient Reasoning</span>
+                        <span class="paper-contrib">提出了一种基于置信度的分步模型路由方法，以降低大型语言模型的推理成本。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 图形与路径规划中的学习方法</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GHOST: Solving the Traveling Salesman Problem on Graphs of Convex Sets</span>
+                        <span class="paper-contrib">提出了一种新的旅行商问题变体，通过图形的凸集表示进行轨迹规划，优化了边缘成本的计算。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LaneDiffusion: Improving Centerline Graph Learning via Prior Injected BEV Feature Generation</span>
+                        <span class="paper-contrib">引入了一种生成性方法，通过注入先验的鸟瞰视图特征来改善中心线图的学习，增强了空间推理能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning Time-Varying Graph Signals via Koopman</span>
+                        <span class="paper-contrib">利用Koopman算子学习时间变化的图信号，提供了一种处理非欧几里得结构数据的新方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adaptive Multi-view Graph Contrastive Learning via Fractional-order Neural Diffusion Networks</span>
+                        <span class="paper-contrib">提出了一种自适应多视图图对比学习方法，通过分数阶神经扩散网络捕捉多尺度结构模式。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 大型推理模型的行为优化</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MONICA: Real-Time Monitoring and Calibration of Chain-of-Thought Sycophancy in Large Reasoning Models</span>
+                        <span class="paper-contrib">提出了一种实时监测和校准大型推理模型中谄媚行为的方法，以提高模型的独立推理能力和可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">What Makes Reasoning Invalid: Echo Reflection Mitigation for Large Language Models</span>
+                        <span class="paper-contrib">探讨了如何通过回声反射减轻大型语言模型在复杂推理任务中的无效推理问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Chasing Consistency: Quantifying and Optimizing Human-Model Alignment in Chain-of-Thought Reasoning</span>
+                        <span class="paper-contrib">提出了一种新的评估框架和对齐评分指标，以量化和优化大型语言模型在链式推理中的一致性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Privacy-Preserving Federated Learning for Fair and Efficient Urban Traffic Optimization</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Setting $\varepsilon$ is not the Issue in Differential Privacy</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Local K-Similarity Constraint for Federated Learning with Label Noise</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 药物发现与反应预测</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reaction Prediction via Interaction Modeling of Symmetric Difference Shingle Sets</span>
+                        <span class="paper-contrib">提出了一种新的反应预测方法，通过建模对称差集的交互来克服现有模型在分子排列敏感性和子结构交互建模不足的问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LLM$^3$-DTI: A Large Language Model and Multi-modal data co-powered framework for Drug-Target Interaction prediction</span>
+                        <span class="paper-contrib">开发了一个结合大语言模型和多模态数据的框架，以提高药物-靶点相互作用预测的准确性和效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">How Well Do LLMs Understand Drug Mechanisms? A Knowledge + Reasoning Evaluation Dataset</span>
+                        <span class="paper-contrib">构建了一个评估数据集，以测试大语言模型在药物机制理解和推理方面的能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 高效神经网络处理与优化</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Precision-Scalable Microscaling Datapaths with Optimized Reduction Tree for Efficient NPU Integration</span>
+                        <span class="paper-contrib">提出了一种优化的减树结构，以支持新一代神经处理单元在训练和推理操作中的高效集成。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">How Wide and How Deep? Mitigating Over-Squashing of GNNs via Channel Capacity Constrained Estimation</span>
+                        <span class="paper-contrib">引入了通道容量约束估计（C3E）框架，以解决图神经网络中的信息损失问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CAMP-HiVe: Cyclic Pair Merging based Efficient DNN Pruning with Hessian-Vector Approximation for Resource-Constrained Systems</span>
+                        <span class="paper-contrib">提出了一种基于循环配对合并的高效深度神经网络剪枝方法，适用于资源受限系统。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: AI驱动的数据科学与工程</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Station: An Open-World Environment for AI-Driven Discovery</span>
+                        <span class="paper-contrib">提出了一个开放世界的多智能体环境，支持AI驱动的科学探索和发现过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Kaggle Chronicles: 15 Years of Competitions, Community and Data Science Innovation</span>
+                        <span class="paper-contrib">回顾了Kaggle平台15年的发展历程，强调了其在数据科学创新和社区建设中的重要作用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Dataforge: A Data Agent Platform for Autonomous Data Engineering</span>
+                        <span class="paper-contrib">介绍了一个自主数据工程平台，旨在简化和自动化数据准备过程，以支持AI应用。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 上下文学习中的理论与应用</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Scaling Laws and In-Context Learning: A Unified Theoretical Framework</span>
+                        <span class="paper-contrib">提出了一个统一的理论框架，连接了规模扩展与上下文学习的关系。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Explicit Knowledge-Guided In-Context Learning for Early Detection of Alzheimer's Disease</span>
+                        <span class="paper-contrib">探讨了如何利用知识引导的上下文学习来提高阿尔茨海默病早期检测的效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Vocabulary In-Context Learning in Transformers: Benefits of Positional Encoding</span>
+                        <span class="paper-contrib">研究了位置编码在变换器架构中对词汇上下文学习的积极影响。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 多模态融合与视频处理</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MambaOVSR: Multiscale Fusion with Global Motion Modeling for Chinese Opera Video Super-Resolution</span>
+                        <span class="paper-contrib">提出了一种多尺度融合与全局运动建模的方法，以提高中国戏曲视频的超分辨率效果。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MULTIBENCH++: A Unified and Comprehensive Multimodal Fusion Benchmarking Across Specialized Domains</span>
+                        <span class="paper-contrib">建立了一个统一且全面的多模态融合基准，旨在评估不同领域的融合方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Countering Multi-modal Representation Collapse through Rank-targeted Fusion</span>
+                        <span class="paper-contrib">提出了一种针对多模态表示崩溃的解决方案，通过排名导向的融合方法增强特征的区分能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 图机器学习中的公平性</div>
+                <div class="cluster-count">2 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Breaking the Dyadic Barrier: Rethinking Fairness in Link Prediction Beyond Demographic Parity</span>
+                        <span class="paper-contrib">提出了一种超越传统二元公平性定义的新方法，以解决图链接预测中的偏见问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Achieving Fairness Without Harm via Selective Demographic Experts</span>
+                        <span class="paper-contrib">介绍了一种选择性使用人口统计专家的策略，旨在实现公平性与高预测性能之间的平衡。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-11 14:27:38</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:11</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

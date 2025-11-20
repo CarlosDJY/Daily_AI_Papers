@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-11-08</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-11-08</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,285 +302,336 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 高效长上下文处理的语言模型</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>BudgetMem: Learning Selective Memory Policies for Cost-Efficient Long-Context Processing in Language Models</strong>
-                        <span class="contribution">提出了一种选择性记忆策略，以提高大型语言模型在处理长上下文时的成本效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Attention and Compression is all you need for Controllably Efficient Language Models</strong>
-                        <span class="contribution">探讨了稀疏和滑动窗口注意力等高效方法在计算和内存方面的优势与质量之间的权衡。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Iterative Layer-wise Distillation for Efficient Compression of Large Language Models</strong>
-                        <span class="contribution">研究了层级蒸馏方法，以开发在保持高性能的同时压缩大型语言模型。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Reflective Personalization Optimization: A Post-hoc Rewriting Framework for Black-Box Large Language Models</strong>
-                        <span class="contribution">提出了一种后处理重写框架，以优化黑箱大型语言模型的个性化。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ManufactuBERT: Efficient Continual Pretraining for Manufacturing</strong>
-                        <span class="contribution">介绍了ManufactuBERT，通过持续预训练提高大型语言模型在制造领域的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Order-Level Attention Similarity Across Language Models: A Latent Commonality</strong>
-                        <span class="contribution">探讨了不同语言模型在上下文聚合模式上的潜在共性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LoPT: Lossless Parallel Tokenization Acceleration for Long Context Inference of Large Language Model</strong>
-                        <span class="contribution">提出了一种无损并行标记化加速方法，以减少大型语言模型在长上下文推理中的计算延迟。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 增强生成与信息检索</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>TeaRAG: A Token-Efficient Agentic Retrieval-Augmented Generation Framework</strong>
-                        <span class="contribution">提出了一种高效的代理检索增强生成框架，利用自主多轮检索和推理来解决查询问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Query Generation Pipeline with Enhanced Answerability Assessment for Financial Information Retrieval</strong>
-                        <span class="contribution">开发了一种针对金融信息检索的查询生成管道，并增强了答案可评估性以满足复杂的领域需求。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Search Is Not Retrieval: Decoupling Semantic Matching from Contextual Assembly in RAG</strong>
-                        <span class="contribution">引入了Search-Is-Not-Retrieve框架，区分了信息查找与推理上下文提供的两个独立过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>QUESTER: Query Specification for Generative Retrieval</strong>
-                        <span class="contribution">提出了QUESTER框架，解决了生成检索在泛化和扩展性方面的挑战。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>AgentExpt: Automating AI Experiment Design with LLM-based Resource Retrieval Agent</strong>
-                        <span class="contribution">开发了一种基于大型语言模型的资源检索代理，自动化AI实验设计以促进科学研究。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 深度强化学习与优化问题</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>An End-to-End Deep Reinforcement Learning Approach for Solving the Traveling Salesman Problem with Drones</strong>
-                        <span class="contribution">提出了一种端到端的深度强化学习方法，解决了与无人机协作的旅行商问题，显著提高了最后一公里物流的效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Dual Perspective on Decision-Focused Learning: Scalable Training via Dual-Guided Surrogates</strong>
-                        <span class="contribution">引入了双引导代理的决策聚焦学习方法，通过优化预测模型的训练过程，提升了在不确定性下的决策性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Follow-Me in Micro-Mobility with End-to-End Imitation Learning</strong>
-                        <span class="contribution">开发了一种端到端模仿学习框架，以优化微型移动平台在动态环境中的用户舒适度和导航能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Multi-Agent Craftax: Benchmarking Open-Ended Multi-Agent Reinforcement Learning at the Hyperscale</strong>
-                        <span class="contribution">提出了一个开放式多智能体强化学习基准，强调了长期依赖性和泛化能力的挑战，以推动该领域的进展。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Self-Interest and Systemic Benefits: Emergence of Collective Rationality in Mixed Autonomy Traffic Through Deep Reinforcement Learning</strong>
-                        <span class="contribution">通过深度强化学习探讨了在混合自主交通中，自动驾驶车辆如何通过集体理性提升整体交通系统的性能。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: AI素养教育</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>AI Literacy Assessment Revisited: A Task-Oriented Approach Aligned with Real-world Occupations</strong>
-                        <span class="contribution">提出了一种与现实职业相一致的任务导向的AI素养评估方法，以帮助非STEM背景的工作者有效使用AI工具。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>"I Like That You Have to Poke Around": Instructors on How Experiential Approaches to AI Literacy Spark Inquiry and Critical Thinking</strong>
-                        <span class="contribution">探讨了体验式学习方法如何激发学生的探究和批判性思维，从而增强AI素养。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>AI Literacy for Community Colleges: Instructors' Perspectives on Scenario-Based and Interactive Approaches to Teaching AI</strong>
-                        <span class="contribution">研究社区大学教师对互动和情境基础的AI素养教学资源的评价，强调无代码工具对非STEM学习者的可及性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Enhancing Public Speaking Skills in Engineering Students Through AI</strong>
-                        <span class="contribution">探讨了利用AI技术提升工程学生公共演讲能力的实践方法，以应对他们在技术沟通中的挑战。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>SWE-Compass: Towards Unified Evaluation of Agentic Coding Abilities for Large Language Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>UA-Code-Bench: A Competitive Programming Benchmark for Evaluating LLM Code Generation in Ukrainian</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Usando LLMs para Programar Jogos de Tabuleiro e Variações</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 基于图的物理模拟与自适应学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Self-adaptive weighting and sampling for physics-informed neural networks</strong>
-                        <span class="contribution">提出了一种混合自适应采样和加权的方法，以提高物理信息神经网络在复杂问题上的准确性和效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Parameter-Efficient Conditioning for Material Generalization in Graph-Based Simulators</strong>
-                        <span class="contribution">开发了一种参数高效的条件化方法，以增强图网络模拟器在未见几何体上的泛化能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Context-aware Learned Mesh-based Simulation via Trajectory-Level Meta-Learning</strong>
-                        <span class="contribution">引入了一种基于轨迹级元学习的上下文感知学习网格模拟方法，以提高物体变形的模拟精度和速度。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 3D点云生成与特征提取</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Rethinking Metrics and Diffusion Architecture for 3D Point Cloud Generation</strong>
-                        <span class="contribution">提出了新的评估指标和扩散架构，以提高3D点云生成模型的性能和可靠性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>How Many Tokens Do 3D Point Cloud Transformer Architectures Really Need?</strong>
-                        <span class="contribution">探讨了3D点云变换器架构中令牌表示的数量对计算和内存成本的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Another BRIXEL in the Wall: Towards Cheaper Dense Features</strong>
-                        <span class="contribution">提出了一种新方法以降低计算密集型特征图生成的成本，同时保持高性能。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 多智能体LLM系统的安全性与风险</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>TAMAS: Benchmarking Adversarial Risks in Multi-Agent LLM Systems</strong>
-                        <span class="contribution">该论文提出了一种基准测试方法，用于评估多智能体LLM系统中的对抗性风险。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Large Language Models for Explainable Threat Intelligence</strong>
-                        <span class="contribution">本研究探讨了LLM在网络安全领域的应用，强调其在处理复杂威胁情报中的潜力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ConVerse: Benchmarking Contextual Safety in Agent-to-Agent Conversations</strong>
-                        <span class="contribution">该论文聚焦于多智能体对话中的安全性问题，提出了一种评估模型在用户代理交互中的安全性的方法。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 电子健康记录中的风险预测与隐私保护</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>BiPETE: A Bi-Positional Embedding Transformer Encoder for Risk Assessment of Alcohol and Substance Use Disorder with Electronic Health Records</strong>
-                        <span class="contribution">提出了一种双位置嵌入变换器编码器，以解决电子健康记录中时间依赖性建模的挑战。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Embedding-Space Data Augmentation to Prevent Membership Inference Attacks in Clinical Time Series Forecasting</strong>
-                        <span class="contribution">探讨了数据增强如何缓解临床时间序列预测模型中的成员推断攻击。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Risk Prediction of Cardiovascular Disease for Diabetic Patients with Machine Learning and Deep Learning Techniques</strong>
-                        <span class="contribution">提出了一种高效的心血管疾病风险预测模型，专门针对糖尿病患者。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 知识蒸馏与推理能力</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>You Need Reasoning to Learn Reasoning: The Limitations of Label-Free RL in Weak Base Models</strong>
-                        <span class="contribution">探讨了无标签强化学习在小型基础模型中的局限性，强调推理能力的重要性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Metamorphic Testing Perspective on Knowledge Distillation for Language Models of Code: Does the Student Deeply Mimic the Teacher?</strong>
-                        <span class="contribution">从变形测试的角度分析了代码语言模型的知识蒸馏过程，评估学生模型对教师模型的深度模仿能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Effectiveness of Chain-of-Thought in Distilling Reasoning Capability from Large Language Models</strong>
-                        <span class="contribution">研究了链式思维在从大型语言模型中蒸馏推理能力的有效性，揭示了其在知识蒸馏中的应用潜力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 高效长上下文处理的语言模型</div>
+                <div class="cluster-count">7 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BudgetMem: Learning Selective Memory Policies for Cost-Efficient Long-Context Processing in Language Models</span>
+                        <span class="paper-contrib">提出了一种选择性记忆策略，以提高大型语言模型在处理长上下文时的成本效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Attention and Compression is all you need for Controllably Efficient Language Models</span>
+                        <span class="paper-contrib">探讨了稀疏和滑动窗口注意力等高效方法在计算和内存方面的优势与质量之间的权衡。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Iterative Layer-wise Distillation for Efficient Compression of Large Language Models</span>
+                        <span class="paper-contrib">研究了层级蒸馏方法，以开发在保持高性能的同时压缩大型语言模型。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reflective Personalization Optimization: A Post-hoc Rewriting Framework for Black-Box Large Language Models</span>
+                        <span class="paper-contrib">提出了一种后处理重写框架，以优化黑箱大型语言模型的个性化。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ManufactuBERT: Efficient Continual Pretraining for Manufacturing</span>
+                        <span class="paper-contrib">介绍了ManufactuBERT，通过持续预训练提高大型语言模型在制造领域的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Order-Level Attention Similarity Across Language Models: A Latent Commonality</span>
+                        <span class="paper-contrib">探讨了不同语言模型在上下文聚合模式上的潜在共性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LoPT: Lossless Parallel Tokenization Acceleration for Long Context Inference of Large Language Model</span>
+                        <span class="paper-contrib">提出了一种无损并行标记化加速方法，以减少大型语言模型在长上下文推理中的计算延迟。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 增强生成与信息检索</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">TeaRAG: A Token-Efficient Agentic Retrieval-Augmented Generation Framework</span>
+                        <span class="paper-contrib">提出了一种高效的代理检索增强生成框架，利用自主多轮检索和推理来解决查询问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Query Generation Pipeline with Enhanced Answerability Assessment for Financial Information Retrieval</span>
+                        <span class="paper-contrib">开发了一种针对金融信息检索的查询生成管道，并增强了答案可评估性以满足复杂的领域需求。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Search Is Not Retrieval: Decoupling Semantic Matching from Contextual Assembly in RAG</span>
+                        <span class="paper-contrib">引入了Search-Is-Not-Retrieve框架，区分了信息查找与推理上下文提供的两个独立过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">QUESTER: Query Specification for Generative Retrieval</span>
+                        <span class="paper-contrib">提出了QUESTER框架，解决了生成检索在泛化和扩展性方面的挑战。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AgentExpt: Automating AI Experiment Design with LLM-based Resource Retrieval Agent</span>
+                        <span class="paper-contrib">开发了一种基于大型语言模型的资源检索代理，自动化AI实验设计以促进科学研究。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 深度强化学习与优化问题</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">An End-to-End Deep Reinforcement Learning Approach for Solving the Traveling Salesman Problem with Drones</span>
+                        <span class="paper-contrib">提出了一种端到端的深度强化学习方法，解决了与无人机协作的旅行商问题，显著提高了最后一公里物流的效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Dual Perspective on Decision-Focused Learning: Scalable Training via Dual-Guided Surrogates</span>
+                        <span class="paper-contrib">引入了双引导代理的决策聚焦学习方法，通过优化预测模型的训练过程，提升了在不确定性下的决策性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Follow-Me in Micro-Mobility with End-to-End Imitation Learning</span>
+                        <span class="paper-contrib">开发了一种端到端模仿学习框架，以优化微型移动平台在动态环境中的用户舒适度和导航能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Multi-Agent Craftax: Benchmarking Open-Ended Multi-Agent Reinforcement Learning at the Hyperscale</span>
+                        <span class="paper-contrib">提出了一个开放式多智能体强化学习基准，强调了长期依赖性和泛化能力的挑战，以推动该领域的进展。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Self-Interest and Systemic Benefits: Emergence of Collective Rationality in Mixed Autonomy Traffic Through Deep Reinforcement Learning</span>
+                        <span class="paper-contrib">通过深度强化学习探讨了在混合自主交通中，自动驾驶车辆如何通过集体理性提升整体交通系统的性能。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: AI素养教育</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AI Literacy Assessment Revisited: A Task-Oriented Approach Aligned with Real-world Occupations</span>
+                        <span class="paper-contrib">提出了一种与现实职业相一致的任务导向的AI素养评估方法，以帮助非STEM背景的工作者有效使用AI工具。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">"I Like That You Have to Poke Around": Instructors on How Experiential Approaches to AI Literacy Spark Inquiry and Critical Thinking</span>
+                        <span class="paper-contrib">探讨了体验式学习方法如何激发学生的探究和批判性思维，从而增强AI素养。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AI Literacy for Community Colleges: Instructors' Perspectives on Scenario-Based and Interactive Approaches to Teaching AI</span>
+                        <span class="paper-contrib">研究社区大学教师对互动和情境基础的AI素养教学资源的评价，强调无代码工具对非STEM学习者的可及性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Enhancing Public Speaking Skills in Engineering Students Through AI</span>
+                        <span class="paper-contrib">探讨了利用AI技术提升工程学生公共演讲能力的实践方法，以应对他们在技术沟通中的挑战。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SWE-Compass: Towards Unified Evaluation of Agentic Coding Abilities for Large Language Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">UA-Code-Bench: A Competitive Programming Benchmark for Evaluating LLM Code Generation in Ukrainian</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Usando LLMs para Programar Jogos de Tabuleiro e Variações</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 基于图的物理模拟与自适应学习</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Self-adaptive weighting and sampling for physics-informed neural networks</span>
+                        <span class="paper-contrib">提出了一种混合自适应采样和加权的方法，以提高物理信息神经网络在复杂问题上的准确性和效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Parameter-Efficient Conditioning for Material Generalization in Graph-Based Simulators</span>
+                        <span class="paper-contrib">开发了一种参数高效的条件化方法，以增强图网络模拟器在未见几何体上的泛化能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Context-aware Learned Mesh-based Simulation via Trajectory-Level Meta-Learning</span>
+                        <span class="paper-contrib">引入了一种基于轨迹级元学习的上下文感知学习网格模拟方法，以提高物体变形的模拟精度和速度。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 3D点云生成与特征提取</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rethinking Metrics and Diffusion Architecture for 3D Point Cloud Generation</span>
+                        <span class="paper-contrib">提出了新的评估指标和扩散架构，以提高3D点云生成模型的性能和可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">How Many Tokens Do 3D Point Cloud Transformer Architectures Really Need?</span>
+                        <span class="paper-contrib">探讨了3D点云变换器架构中令牌表示的数量对计算和内存成本的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Another BRIXEL in the Wall: Towards Cheaper Dense Features</span>
+                        <span class="paper-contrib">提出了一种新方法以降低计算密集型特征图生成的成本，同时保持高性能。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 多智能体LLM系统的安全性与风险</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">TAMAS: Benchmarking Adversarial Risks in Multi-Agent LLM Systems</span>
+                        <span class="paper-contrib">该论文提出了一种基准测试方法，用于评估多智能体LLM系统中的对抗性风险。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Large Language Models for Explainable Threat Intelligence</span>
+                        <span class="paper-contrib">本研究探讨了LLM在网络安全领域的应用，强调其在处理复杂威胁情报中的潜力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ConVerse: Benchmarking Contextual Safety in Agent-to-Agent Conversations</span>
+                        <span class="paper-contrib">该论文聚焦于多智能体对话中的安全性问题，提出了一种评估模型在用户代理交互中的安全性的方法。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 电子健康记录中的风险预测与隐私保护</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BiPETE: A Bi-Positional Embedding Transformer Encoder for Risk Assessment of Alcohol and Substance Use Disorder with Electronic Health Records</span>
+                        <span class="paper-contrib">提出了一种双位置嵌入变换器编码器，以解决电子健康记录中时间依赖性建模的挑战。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Embedding-Space Data Augmentation to Prevent Membership Inference Attacks in Clinical Time Series Forecasting</span>
+                        <span class="paper-contrib">探讨了数据增强如何缓解临床时间序列预测模型中的成员推断攻击。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Risk Prediction of Cardiovascular Disease for Diabetic Patients with Machine Learning and Deep Learning Techniques</span>
+                        <span class="paper-contrib">提出了一种高效的心血管疾病风险预测模型，专门针对糖尿病患者。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 知识蒸馏与推理能力</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">You Need Reasoning to Learn Reasoning: The Limitations of Label-Free RL in Weak Base Models</span>
+                        <span class="paper-contrib">探讨了无标签强化学习在小型基础模型中的局限性，强调推理能力的重要性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Metamorphic Testing Perspective on Knowledge Distillation for Language Models of Code: Does the Student Deeply Mimic the Teacher?</span>
+                        <span class="paper-contrib">从变形测试的角度分析了代码语言模型的知识蒸馏过程，评估学生模型对教师模型的深度模仿能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Effectiveness of Chain-of-Thought in Distilling Reasoning Capability from Large Language Models</span>
+                        <span class="paper-contrib">研究了链式思维在从大型语言模型中蒸馏推理能力的有效性，揭示了其在知识蒸馏中的应用潜力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-10 17:27:31</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:11</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

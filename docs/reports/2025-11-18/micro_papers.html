@@ -5,454 +5,717 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微观深度解读 - 2025-11-18</title>
     <style>
+        :root {
+            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
+            --primary-color: #4f46e5;
+            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --tag-bg: #f0f9ff;
+            --tag-text: #0369a1;
+            
+            --warn-bg: #fff7ed;
+            --warn-text: #c2410c;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
         }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 50px;
         }
+
         .header h1 {
-            color: #2c3e50;
-            margin: 0;
+            color: var(--text-main);
             font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .nav-links {
+        
+        .header h1 .icon { color: var(--micro-color); width: 32px; height: 32px; }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* 论文卡片列表 */
+        .paper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .paper-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .paper-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        /* 序号水印 */
+        .paper-index {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: 900;
+            color: #f1f5f9;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 卡片头部 */
+        .card-header {
+            position: relative;
+            z-index: 1;
             margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
         }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
-            font-size: 14px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .content-section {
-            background-color: #f8f9fa;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #6c757d;
-        }
-        .paper {
-            margin: 25px 0;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            transition: box-shadow 0.3s ease;
-        }
-        .paper:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+
         .paper-title {
             font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
             line-height: 1.4;
+            padding-right: 40px; /* 给序号留位 */
         }
+
         .paper-title a {
-            color: #2c3e50;
+            color: var(--text-main);
             text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-size: 0 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.3s;
         }
-        .paper-title a:hover {
-            color: #007bff;
-            text-decoration: underline;
+
+        .paper-card:hover .paper-title a {
+            background-size: 100% 10px;
+            color: var(--primary-color);
         }
-        .paper-meta {
-            color: #666;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-        .paper-summary {
-            color: #495057;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        .paper-score {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        .keywords-container {
-            margin: 8px 0;
+
+        /* 元数据行 */
+        .meta-row {
             display: flex;
             flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
             gap: 6px;
         }
-        .keyword-badge {
-            display: inline-block;
-            background-color: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #90caf9;
-            cursor: default;
-            user-select: none;
+
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
         }
-        .paper-image {
-            margin: 15px 0;
+
+        /* 关键词 */
+        .keywords-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .keyword-tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 摘要内容 */
+        .summary-content {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .summary-label {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 4px;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+
+        /* 图片容器 */
+        .image-wrapper {
+            margin: 20px 0;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
         }
-        .paper-image img {
+
+        .image-wrapper img {
             max-width: 100%;
             height: auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-        .paper-warning {
-            color: #e67e22;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 8px;
-            background-color: #fff4e6;
-            border-left: 3px solid #e67e22;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
-        .paper-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .paper-link:hover {
-            background-color: #5a6268;
-            text-decoration: none;
-        }
-        .footer {
-            margin-top: 40px;
+
+        /* 底部操作栏 */
+        .card-footer {
+            margin-top: 25px;
             padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            text-align: center;
-            color: #6c757d;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-read {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-read:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .page-footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .paper-card { padding: 20px; }
+            .paper-index { font-size: 30px; top: 15px; right: 15px; }
+            .paper-title { font-size: 18px; padding-right: 30px; }
+            .card-footer { justify-content: stretch; }
+            .btn-read { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📝 微观深度解读</h1>
-            <div class="date">2025-11-18</div>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                微观深度解读
+            </h1>
+            <div class="subtitle">为您精选了 6 篇高质量 AI 论文的深度解析</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
+        <div class="paper-list">
+            
+            <div class="paper-card">
+                <div class="paper-index">#1</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13646v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13646v1.html">
+                            Live-SWE-agent: Can Software Engineering Agents Self-Evolve on the Fly?
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.588 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            University of Illinois Urbana-Champaign
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">软件工程代理</span>
+                        
+                        <span class="keyword-tag">自主演化</span>
+                        
+                        <span class="keyword-tag">动态创建</span>
+                        
+                        <span class="keyword-tag">适应性</span>
+                        
+                        <span class="keyword-tag">复杂软件问题</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了Live-SWE-agent，一种能够在运行时自主演化的软件工程代理。该方法解决了传统软件代理在设计和适应性上的局限性，通过动态创建和修改工具，显著提高了解决复杂软件问题的能力，达到75.4%的解决率，超越现有开源代理，展示了在线自我演化的有效性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/503a988181c76a1a2458775ffa5e4878ffe98fb38225c762fe2d9657a01d752f.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13646v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13646v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#2</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13254v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13254v1.html">
+                            Souper-Model: How Simple Arithmetic Unlocks State-of-the-Art LLM Performance
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.568 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Meta SuperIntelligence Labs, FAIR at Meta, University College London
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">类别专家组合</span>
+                        
+                        <span class="keyword-tag">大型语言模型</span>
+                        
+                        <span class="keyword-tag">非均匀加权平均</span>
+                        
+                        <span class="keyword-tag">模型训练资源</span>
+                        
+                        <span class="keyword-tag">性能优化</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了“类别专家组合”（SoCE）框架，通过识别不同任务类别的“专家”模型并采用非均匀加权平均，优化大型语言模型（LLMs）的性能。SoCE有效解决了模型训练资源消耗高、性能不一致和过拟合等问题，实验证明其在多项基准测试中达到了最先进的性能，增强了模型的稳健性和一致性。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/0fff9d269847671054846729484802593f81b69c5890b8fd6d1e3fce5fbca472.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13254v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13254v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#3</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13612v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13612v1.html">
+                            P1: Mastering Physics Olympiads with Reinforcement Learning
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.540 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            P1 Team, Shanghai AI Laboratory
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">强化学习</span>
+                        
+                        <span class="keyword-tag">物理问题推理</span>
+                        
+                        <span class="keyword-tag">大语言模型</span>
+                        
+                        <span class="keyword-tag">科学推理</span>
+                        
+                        <span class="keyword-tag">国际物理奥林匹克</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了P1系列大语言模型，通过构建高质量物理问题数据集和采用多阶段强化学习，显著提升了模型在复杂物理问题上的推理能力。P1-235B-A22B成为首个在国际物理奥林匹克中获得金牌的开源模型，展示了其在科学推理领域的突破性进展。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/0f715627bb3daa209ccfea94ab5e9d32af39fec69048cf0dd19b65c51f405442.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13612v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13612v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#4</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12997v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12997v1.html">
+                            WebCoach: Self-Evolving Web Agents with Cross-Session Memory Guidance
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.523 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            University of California, Los Angeles, Amazon
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">自我演化</span>
+                        
+                        <span class="keyword-tag">网页代理</span>
+                        
+                        <span class="keyword-tag">跨会话记忆</span>
+                        
+                        <span class="keyword-tag">持久记忆</span>
+                        
+                        <span class="keyword-tag">动态网页环境</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了WebCoach，一个自我演化的框架，旨在解决网页代理在复杂任务中缺乏跨会话记忆的问题。WebCoach通过三个组件（WebCondenser、外部记忆存储和教练）实现持久记忆，支持代理从历史经验中学习，显著提高任务成功率和执行效率。实验结果显示，WebCoach在多个LLM模型上均有效提升了代理性能，展示了其在动态网页环境中的应用潜力。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/1896b672fecdf1add2fbbf1d42485d0b738972420e45012b4ffd44e042b4b27a.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12997v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12997v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#5</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12991v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12991v1.html">
+                            Fine-Tuned LLMs Know They Don't Know: A Parameter-Efficient Approach to Recovering Honesty
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.500 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            SKLCCSE, School of Computer Science and Engineering, Beihang University, School of Software, Beihang University, Zhongguancun Laboratory, Beijing
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大语言模型</span>
+                        
+                        <span class="keyword-tag">诚实性关键神经元恢复</span>
+                        
+                        <span class="keyword-tag">监督微调</span>
+                        
+                        <span class="keyword-tag">Hessian引导</span>
+                        
+                        <span class="keyword-tag">参数效率</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了一种名为“诚实性关键神经元恢复”（HCNR）的方法，旨在解决大语言模型（LLM）在监督微调后诚实性下降的问题。HCNR通过识别并恢复对诚实性至关重要的神经元，同时应用Hessian引导的补偿机制，显著提高模型的诚实性，恢复率达33.25%，且在数据使用和速度上均优于传统方法。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/ff211390937b279c182a48929eb834fedc4d77880b914809921dd9321fee79b0.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12991v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12991v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-index">#6</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        
+                        
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13676v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13676v1.html">
+                            T-SAR: A Full-Stack Co-design for CPU-Only Ternary LLM Inference via In-Place SIMD ALU Reorganization
+                        </a>
+                    </div>
+
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="score-badge">0.389 分</span>
+                        </div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Department of Computer Science, University of California, Irvine
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">三元大语言模型</span>
+                        
+                        <span class="keyword-tag">LLM推理</span>
+                        
+                        <span class="keyword-tag">SIMD寄存器</span>
+                        
+                        <span class="keyword-tag">GEMM操作</span>
+                        
+                        <span class="keyword-tag">能效优化</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="summary-content">
+                    
+
+                    <span class="summary-label">简介：</span>本文提出了T-SAR框架，解决了边缘设备上三元大语言模型（LLM）推理中的计算和内存瓶颈问题。通过在CPU的SIMD寄存器内动态生成查找表，T-SAR显著提高了GEMM和GEMV操作的性能，分别实现了5.6-24.5倍和1.1-86.2倍的速度提升，同时保持低功耗和硬件开销，展现出优于现有解决方案的能效。
+                </div>
+
+                
+                <div class="image-wrapper">
+                    
+                    <img src="../../images/2025-11-18/51fe307d8ba96caf5309a7aabb2b7797d1e380f8be0637222299f2a38a7bfcfe.jpg" alt="核心思路示意图" loading="lazy" />
+                </div>
+                
+
+                <div class="card-footer">
+                    
+                    
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13676v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13676v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
         </div>
 
-        <div class="content-section">
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">为您精选了 6 篇高质量 AI 论文的深度解读</p>
-            
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13646v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13646v1.html">
-                        1. Live-SWE-agent: Can Software Engineering Agents Self-Evolve on the Fly?
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">软件工程代理</span>
-                    
-                    <span class="keyword-badge">自主演化</span>
-                    
-                    <span class="keyword-badge">动态创建</span>
-                    
-                    <span class="keyword-badge">适应性</span>
-                    
-                    <span class="keyword-badge">复杂软件问题</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: University of Illinois Urbana-Champaign</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.588</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了Live-SWE-agent，一种能够在运行时自主演化的软件工程代理。该方法解决了传统软件代理在设计和适应性上的局限性，通过动态创建和修改工具，显著提高了解决复杂软件问题的能力，达到75.4%的解决率，超越现有开源代理，展示了在线自我演化的有效性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/503a988181c76a1a2458775ffa5e4878ffe98fb38225c762fe2d9657a01d752f.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13646v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13646v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13254v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13254v1.html">
-                        2. Souper-Model: How Simple Arithmetic Unlocks State-of-the-Art LLM Performance
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">类别专家组合</span>
-                    
-                    <span class="keyword-badge">大型语言模型</span>
-                    
-                    <span class="keyword-badge">非均匀加权平均</span>
-                    
-                    <span class="keyword-badge">模型训练资源</span>
-                    
-                    <span class="keyword-badge">性能优化</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Meta SuperIntelligence Labs, FAIR at Meta, University College London</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.568</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了“类别专家组合”（SoCE）框架，通过识别不同任务类别的“专家”模型并采用非均匀加权平均，优化大型语言模型（LLMs）的性能。SoCE有效解决了模型训练资源消耗高、性能不一致和过拟合等问题，实验证明其在多项基准测试中达到了最先进的性能，增强了模型的稳健性和一致性。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/0fff9d269847671054846729484802593f81b69c5890b8fd6d1e3fce5fbca472.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13254v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13254v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13612v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13612v1.html">
-                        3. P1: Mastering Physics Olympiads with Reinforcement Learning
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">强化学习</span>
-                    
-                    <span class="keyword-badge">物理问题推理</span>
-                    
-                    <span class="keyword-badge">大语言模型</span>
-                    
-                    <span class="keyword-badge">科学推理</span>
-                    
-                    <span class="keyword-badge">国际物理奥林匹克</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: P1 Team, Shanghai AI Laboratory</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.540</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了P1系列大语言模型，通过构建高质量物理问题数据集和采用多阶段强化学习，显著提升了模型在复杂物理问题上的推理能力。P1-235B-A22B成为首个在国际物理奥林匹克中获得金牌的开源模型，展示了其在科学推理领域的突破性进展。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/0f715627bb3daa209ccfea94ab5e9d32af39fec69048cf0dd19b65c51f405442.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13612v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13612v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12997v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12997v1.html">
-                        4. WebCoach: Self-Evolving Web Agents with Cross-Session Memory Guidance
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">自我演化</span>
-                    
-                    <span class="keyword-badge">网页代理</span>
-                    
-                    <span class="keyword-badge">跨会话记忆</span>
-                    
-                    <span class="keyword-badge">持久记忆</span>
-                    
-                    <span class="keyword-badge">动态网页环境</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: University of California, Los Angeles, Amazon</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.523</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了WebCoach，一个自我演化的框架，旨在解决网页代理在复杂任务中缺乏跨会话记忆的问题。WebCoach通过三个组件（WebCondenser、外部记忆存储和教练）实现持久记忆，支持代理从历史经验中学习，显著提高任务成功率和执行效率。实验结果显示，WebCoach在多个LLM模型上均有效提升了代理性能，展示了其在动态网页环境中的应用潜力。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/1896b672fecdf1add2fbbf1d42485d0b738972420e45012b4ffd44e042b4b27a.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12997v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12997v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12991v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12991v1.html">
-                        5. Fine-Tuned LLMs Know They Don't Know: A Parameter-Efficient Approach to Recovering Honesty
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">大语言模型</span>
-                    
-                    <span class="keyword-badge">诚实性关键神经元恢复</span>
-                    
-                    <span class="keyword-badge">监督微调</span>
-                    
-                    <span class="keyword-badge">Hessian引导</span>
-                    
-                    <span class="keyword-badge">参数效率</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: SKLCCSE, School of Computer Science and Engineering, Beihang University, School of Software, Beihang University, Zhongguancun Laboratory, Beijing</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.500</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了一种名为“诚实性关键神经元恢复”（HCNR）的方法，旨在解决大语言模型（LLM）在监督微调后诚实性下降的问题。HCNR通过识别并恢复对诚实性至关重要的神经元，同时应用Hessian引导的补偿机制，显著提高模型的诚实性，恢复率达33.25%，且在数据使用和速度上均优于传统方法。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/ff211390937b279c182a48929eb834fedc4d77880b914809921dd9321fee79b0.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.12991v1&redirect_url=%2Freports%2F2025-11-18%2F2511_12991v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-            <div class="paper">
-                <div class="paper-title">
-                    
-                    
-                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13676v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13676v1.html">
-                        6. T-SAR: A Full-Stack Co-design for CPU-Only Ternary LLM Inference via In-Place SIMD ALU Reorganization
-                    </a>
-                </div>
-                
-                <div class="keywords-container">
-                    
-                    <span class="keyword-badge">三元大语言模型</span>
-                    
-                    <span class="keyword-badge">LLM推理</span>
-                    
-                    <span class="keyword-badge">SIMD寄存器</span>
-                    
-                    <span class="keyword-badge">GEMM操作</span>
-                    
-                    <span class="keyword-badge">能效优化</span>
-                    
-                </div>
-                
-                
-                <div class="paper-meta">作者单位: Department of Computer Science, University of California, Irvine</div>
-                
-                <div>
-                    <span class="paper-score">推荐分数: 0.389</span>
-                </div>
-                <div class="paper-summary">
-                    
-                    <strong>📖 简介：</strong>本文提出了T-SAR框架，解决了边缘设备上三元大语言模型（LLM）推理中的计算和内存瓶颈问题。通过在CPU的SIMD寄存器内动态生成查找表，T-SAR显著提高了GEMM和GEMV操作的性能，分别实现了5.6-24.5倍和1.1-86.2倍的速度提升，同时保持低功耗和硬件开销，展现出优于现有解决方案的能效。
-                    
-                </div>
-                
-                <div class="paper-image">
-                    
-                    <img src="../../images/2025-11-18/51fe307d8ba96caf5309a7aabb2b7797d1e380f8be0637222299f2a38a7bfcfe.jpg" alt="核心思路示意图" />
-                </div>
-                
-                
-                
-                <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.13676v1&redirect_url=%2Freports%2F2025-11-18%2F2511_13676v1.html" class="paper-link">查看详细解读 →</a>
-            </div>
-            
-        </div>
-
-        <div class="footer">
-            <p>生成时间: 2025-11-19 17:24:53</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+        <div class="page-footer">
+            <p>生成时间: 2025-11-20 13:08:11</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

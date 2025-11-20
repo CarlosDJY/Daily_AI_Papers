@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-10-31</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-10-31</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,360 +302,411 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 大规模语言模型的推理能力与对齐</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Beyond Reasoning Gains: Mitigating General Capabilities Forgetting in Large Reasoning Models</strong>
-                        <span class="contribution">提出了一种方法来减轻大规模推理模型在强化学习后遗忘能力的风险。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Reducing the Probability of Undesirable Outputs in Language Models Using Probabilistic Inference</strong>
-                        <span class="contribution">引入了一种基于概率推理的方法，以降低语言模型生成不良输出的概率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>How to Auto-optimize Prompts for Domain Tasks? Adaptive Prompting and Reasoning through Evolutionary Domain Knowledge Adaptation</strong>
-                        <span class="contribution">提出了一种自适应提示优化方法，通过进化领域知识适应来提升特定领域任务的推理效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Chain of Execution Supervision Promotes General Reasoning in Large Language Models</strong>
-                        <span class="contribution">通过代码作为训练源，促进了大规模语言模型的通用推理能力的提升。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Self-Rewarding PPO: Aligning Large Language Models with Demonstrations Only</strong>
-                        <span class="contribution">提出了一种自奖励的PPO方法，旨在通过仅利用演示数据来对齐大规模语言模型。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Multi-turn Training with Basic Human Feedback Helps Little on LLM Reasoning</strong>
-                        <span class="contribution">探讨了多轮训练与基本人类反馈对大规模语言模型推理能力的有限帮助。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Penalizing Length: Uncovering Systematic Bias in Quality Estimation Metrics</strong>
-                        <span class="contribution">揭示了质量估计指标中存在的长度偏见，并探讨其对机器翻译评估的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PARL: Prompt-based Agents for Reinforcement Learning</strong>
-                        <span class="contribution">评估了大规模语言模型作为强化学习代理的潜力，特别是在自然语言任务中的应用。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 图神经网络在生物信息学中的应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>M-GLC: Motif-Driven Global-Local Context Graphs for Few-shot Molecular Property Prediction</strong>
-                        <span class="contribution">提出了一种基于图的少样本分子性质预测方法，利用全局和局部上下文信息来提升预测性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Pruning and Quantization Impact on Graph Neural Networks</strong>
-                        <span class="contribution">探讨了剪枝和量化对图神经网络性能的影响，提出了有效的模型压缩策略以降低计算成本。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Multimodal Human Protein Embeddings Database: DeepDrug Protein Embeddings Bank (DPEB)</strong>
-                        <span class="contribution">构建了一个集成多种嵌入类型的人类蛋白质数据库，以支持蛋白质-蛋白质相互作用的计算预测。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Deep Learning on Real-World Graphs</strong>
-                        <span class="contribution">提出了一种新的方法来应对图神经网络在真实世界系统中的可扩展性和不确定性问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Boltzmann Graph Ensemble Embeddings for Aptamer Libraries</strong>
-                        <span class="contribution">引入了一种基于Boltzmann图集成嵌入的方法，以提高对适配体库的性质和结构预测能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Leveraging Classical Algorithms for Graph Neural Networks</strong>
-                        <span class="contribution">探讨了将经典算法与图神经网络结合的潜力，以提高其在分子数据上的泛化能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Relieving the Over-Aggregating Effect in Graph Transformers</strong>
-                        <span class="contribution">揭示了图变换器中的过度聚合现象，并提出了相应的解决方案以改善图学习任务的性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Adaptive Graph Mixture of Residual Experts: Unsupervised Learning on Diverse Graphs with Heterogeneous Specialization</strong>
-                        <span class="contribution">提出了一种自适应图混合专家模型，以应对多样化图结构中的学习挑战。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 强化学习中的优化与公平性</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Online Optimization for Offline Safe Reinforcement Learning</strong>
-                        <span class="contribution">提出了一种新颖的离线安全强化学习方法，通过将问题框架化为极小极大目标来解决固定数据下的奖励最大化策略学习。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Investigating Scale Independent UCT Exploration Factor Strategies</strong>
-                        <span class="contribution">研究了UCT算法在不同奖励规模下的探索因子策略，提出了针对稠密奖励游戏的改进方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Neural Index Policies for Restless Multi-Action Bandits with Heterogeneous Budgets</strong>
-                        <span class="contribution">提出了一种神经索引策略，适用于具有异质预算的多动作不安静多臂赌博机，扩展了经典模型的应用范围。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Unified token representations for sequential decision models</strong>
-                        <span class="contribution">提出了一种统一的令牌表示方法，优化了基于变换器的离线强化学习模型，减少了冗余令牌化和计算复杂性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Oracle-Efficient Combinatorial Semi-Bandits</strong>
-                        <span class="contribution">研究了组合半赌博机问题，提出了一种高效的算法来处理组合优化的高成本问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Revisiting Social Welfare in Bandits: UCB is (Nearly) All You Need</strong>
-                        <span class="contribution">探讨了在随机多臂赌博机中，传统的后悔度度量如何不足以考虑公平性，并提出了UCB算法的有效性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 多模态模型的理解与优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>VLM-SlideEval: Evaluating VLMs on Structured Comprehension and Perturbation Sensitivity in PPT</strong>
-                        <span class="contribution">提出了VLM-SlideEval评估框架，专注于视觉语言模型在演示文稿理解和扰动敏感性方面的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Enabling Robust In-Context Memory and Rapid Task Adaptation in Transformers with Hebbian and Gradient-Based Plasticity</strong>
-                        <span class="contribution">探讨了生物启发的突触可塑性如何使变换器具备更强的上下文记忆和快速任务适应能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Large Language Models as Model Organisms for Human Associative Learning</strong>
-                        <span class="contribution">利用大型语言模型作为实验对象，研究人类联想学习中的表征变化。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Head Pursuit: Probing Attention Specialization in Multimodal Transformers</strong>
-                        <span class="contribution">分析了文本生成模型中个别注意力头如何专注于特定的语义或视觉属性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>VL-SAE: Interpreting and Enhancing Vision-Language Alignment with a Unified Concept Set</strong>
-                        <span class="contribution">提出了一种统一概念集的方法，以解释和增强视觉语言模型的对齐能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>LightAgent: Mobile Agentic Foundation Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Securing AI Agent Execution</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SBASH: a Framework for Designing and Evaluating RAG vs. Prompt-Tuned LLM Honeypots</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Soft Instruction De-escalation Defense</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>ColorEcosystem: Powering Personalized, Standardized, and Trustworthy Agentic Service in massive-agent Ecosystem</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>From Black-box to Causal-box: Towards Building More Interpretable Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Confounding Robust Deep Reinforcement Learning: A Causal Approach</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Computational Hardness of Reinforcement Learning with Partial $q^π$-Realizability</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>On the Sample Complexity of Differentially Private Policy Optimization</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Causality Meets Locality: Provably Generalizable and Scalable Policy Learning for Networked Systems</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 机器人操控中的多模态学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Two-Steps Diffusion Policy for Robotic Manipulation via Genetic Denoising</strong>
-                        <span class="contribution">提出了一种两步扩散策略，通过遗传去噪技术提升机器人操控的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Scalable Vision-Language-Action Model Pretraining for Robotic Manipulation with Real-Life Human Activity Videos</strong>
-                        <span class="contribution">利用真实人类活动视频进行视觉-语言-动作模型的预训练，增强机器人操控能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Gaze-VLM:Bridging Gaze and VLMs through Attention Regularization for Egocentric Understanding</strong>
-                        <span class="contribution">提出了一种注视正则化框架，提升视觉-语言模型在自我中心理解任务中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Generalizable Hierarchical Skill Learning via Object-Centric Representation</strong>
-                        <span class="contribution">引入对象中心技能的层次化学习框架，显著提高了机器人操控的政策泛化和样本效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Enhancing Tactile-based Reinforcement Learning for Robotic Control</strong>
-                        <span class="contribution">探讨了触觉传感在强化学习中的应用，提升了机器人控制的安全性和可靠性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 大语言模型中的检索增强生成</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>A Comparison of Conversational Models and Humans in Answering Technical Questions: the Firefox Case</strong>
-                        <span class="contribution">本研究评估了大型语言模型在软件开发中支持技术问题回答的有效性，并与人类进行比较。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>NeuroGenPoisoning: Neuron-Guided Attacks on Retrieval-Augmented Generation of LLM via Genetic Optimization of External Knowledge</strong>
-                        <span class="contribution">提出了一种新颖的攻击方法，通过基因优化外部知识对检索增强生成的模型进行干扰。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Bridging Language Gaps with Adaptive RAG: Improving Indonesian Language Question Answering</strong>
-                        <span class="contribution">通过自适应检索增强生成技术显著提升了印尼语问答系统的准确性和信息性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Leverage Unlearning to Sanitize LLMs</strong>
-                        <span class="contribution">探讨了如何通过去学习技术来清理大型语言模型中的敏感数据，从而提高其安全性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Redefining Retrieval Evaluation in the Era of LLMs</strong>
-                        <span class="contribution">重新定义了在检索增强生成系统中评估信息检索的标准，挑战了传统评估指标的有效性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 大型语言模型的越狱攻击</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Jailbreak Mimicry: Automated Discovery of Narrative-Based Jailbreaks for Large Language Models</strong>
-                        <span class="contribution">提出了一种系统的方法论，通过训练紧凑的攻击模型来自动发现基于叙事的越狱攻击。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Toward Understanding the Transferability of Adversarial Suffixes in Large Language Models</strong>
-                        <span class="contribution">探讨了离散优化生成的越狱后缀的可转移性，揭示了它们在不同提示和模型上的成功率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Uncovering the Persuasive Fingerprint of LLMs in Jailbreaking Attacks</strong>
-                        <span class="contribution">分析了越狱攻击中大型语言模型的说服性特征，强调了其在攻击策略中的人类可读性和可转移性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Adversarial Déjà Vu: Jailbreak Dictionary Learning for Stronger Generalization to Unseen Attacks</strong>
-                        <span class="contribution">提出了一种越狱字典学习的方法，通过对抗训练增强模型对新型越狱攻击的泛化能力。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 因果推断与模型优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Towards Error-Centric Intelligence II: Energy-Structured Causal Models</strong>
-                        <span class="contribution">提出了一种能量结构因果模型，旨在通过提供可干预的内部机制来提升机器学习系统的因果透明度。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Differentiable Constraint-Based Causal Discovery</strong>
-                        <span class="contribution">介绍了一种可微分的约束基础因果发现方法，推动了从观察数据中提取因果关系的研究。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Shylock: Causal Discovery in Multivariate Time Series based on Hybrid Constraints</strong>
-                        <span class="contribution">提出了一种基于混合约束的多变量时间序列因果发现方法，克服了传统方法的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Bridging Prediction and Attribution: Identifying Forward and Backward Causal Influence Ranges Using Assimilative Causal Inference</strong>
-                        <span class="contribution">开发了一种同化因果推断方法，通过结合观察与动态模型来识别因果影响范围。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 大规模语言模型的推理能力与对齐</div>
+                <div class="cluster-count">8 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond Reasoning Gains: Mitigating General Capabilities Forgetting in Large Reasoning Models</span>
+                        <span class="paper-contrib">提出了一种方法来减轻大规模推理模型在强化学习后遗忘能力的风险。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reducing the Probability of Undesirable Outputs in Language Models Using Probabilistic Inference</span>
+                        <span class="paper-contrib">引入了一种基于概率推理的方法，以降低语言模型生成不良输出的概率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">How to Auto-optimize Prompts for Domain Tasks? Adaptive Prompting and Reasoning through Evolutionary Domain Knowledge Adaptation</span>
+                        <span class="paper-contrib">提出了一种自适应提示优化方法，通过进化领域知识适应来提升特定领域任务的推理效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Chain of Execution Supervision Promotes General Reasoning in Large Language Models</span>
+                        <span class="paper-contrib">通过代码作为训练源，促进了大规模语言模型的通用推理能力的提升。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Self-Rewarding PPO: Aligning Large Language Models with Demonstrations Only</span>
+                        <span class="paper-contrib">提出了一种自奖励的PPO方法，旨在通过仅利用演示数据来对齐大规模语言模型。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Multi-turn Training with Basic Human Feedback Helps Little on LLM Reasoning</span>
+                        <span class="paper-contrib">探讨了多轮训练与基本人类反馈对大规模语言模型推理能力的有限帮助。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Penalizing Length: Uncovering Systematic Bias in Quality Estimation Metrics</span>
+                        <span class="paper-contrib">揭示了质量估计指标中存在的长度偏见，并探讨其对机器翻译评估的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PARL: Prompt-based Agents for Reinforcement Learning</span>
+                        <span class="paper-contrib">评估了大规模语言模型作为强化学习代理的潜力，特别是在自然语言任务中的应用。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 图神经网络在生物信息学中的应用</div>
+                <div class="cluster-count">8 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">M-GLC: Motif-Driven Global-Local Context Graphs for Few-shot Molecular Property Prediction</span>
+                        <span class="paper-contrib">提出了一种基于图的少样本分子性质预测方法，利用全局和局部上下文信息来提升预测性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Pruning and Quantization Impact on Graph Neural Networks</span>
+                        <span class="paper-contrib">探讨了剪枝和量化对图神经网络性能的影响，提出了有效的模型压缩策略以降低计算成本。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Multimodal Human Protein Embeddings Database: DeepDrug Protein Embeddings Bank (DPEB)</span>
+                        <span class="paper-contrib">构建了一个集成多种嵌入类型的人类蛋白质数据库，以支持蛋白质-蛋白质相互作用的计算预测。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Deep Learning on Real-World Graphs</span>
+                        <span class="paper-contrib">提出了一种新的方法来应对图神经网络在真实世界系统中的可扩展性和不确定性问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Boltzmann Graph Ensemble Embeddings for Aptamer Libraries</span>
+                        <span class="paper-contrib">引入了一种基于Boltzmann图集成嵌入的方法，以提高对适配体库的性质和结构预测能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Leveraging Classical Algorithms for Graph Neural Networks</span>
+                        <span class="paper-contrib">探讨了将经典算法与图神经网络结合的潜力，以提高其在分子数据上的泛化能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Relieving the Over-Aggregating Effect in Graph Transformers</span>
+                        <span class="paper-contrib">揭示了图变换器中的过度聚合现象，并提出了相应的解决方案以改善图学习任务的性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adaptive Graph Mixture of Residual Experts: Unsupervised Learning on Diverse Graphs with Heterogeneous Specialization</span>
+                        <span class="paper-contrib">提出了一种自适应图混合专家模型，以应对多样化图结构中的学习挑战。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 强化学习中的优化与公平性</div>
+                <div class="cluster-count">6 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Online Optimization for Offline Safe Reinforcement Learning</span>
+                        <span class="paper-contrib">提出了一种新颖的离线安全强化学习方法，通过将问题框架化为极小极大目标来解决固定数据下的奖励最大化策略学习。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Investigating Scale Independent UCT Exploration Factor Strategies</span>
+                        <span class="paper-contrib">研究了UCT算法在不同奖励规模下的探索因子策略，提出了针对稠密奖励游戏的改进方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Neural Index Policies for Restless Multi-Action Bandits with Heterogeneous Budgets</span>
+                        <span class="paper-contrib">提出了一种神经索引策略，适用于具有异质预算的多动作不安静多臂赌博机，扩展了经典模型的应用范围。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unified token representations for sequential decision models</span>
+                        <span class="paper-contrib">提出了一种统一的令牌表示方法，优化了基于变换器的离线强化学习模型，减少了冗余令牌化和计算复杂性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Oracle-Efficient Combinatorial Semi-Bandits</span>
+                        <span class="paper-contrib">研究了组合半赌博机问题，提出了一种高效的算法来处理组合优化的高成本问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Revisiting Social Welfare in Bandits: UCB is (Nearly) All You Need</span>
+                        <span class="paper-contrib">探讨了在随机多臂赌博机中，传统的后悔度度量如何不足以考虑公平性，并提出了UCB算法的有效性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 多模态模型的理解与优化</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VLM-SlideEval: Evaluating VLMs on Structured Comprehension and Perturbation Sensitivity in PPT</span>
+                        <span class="paper-contrib">提出了VLM-SlideEval评估框架，专注于视觉语言模型在演示文稿理解和扰动敏感性方面的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Enabling Robust In-Context Memory and Rapid Task Adaptation in Transformers with Hebbian and Gradient-Based Plasticity</span>
+                        <span class="paper-contrib">探讨了生物启发的突触可塑性如何使变换器具备更强的上下文记忆和快速任务适应能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Large Language Models as Model Organisms for Human Associative Learning</span>
+                        <span class="paper-contrib">利用大型语言模型作为实验对象，研究人类联想学习中的表征变化。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Head Pursuit: Probing Attention Specialization in Multimodal Transformers</span>
+                        <span class="paper-contrib">分析了文本生成模型中个别注意力头如何专注于特定的语义或视觉属性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VL-SAE: Interpreting and Enhancing Vision-Language Alignment with a Unified Concept Set</span>
+                        <span class="paper-contrib">提出了一种统一概念集的方法，以解释和增强视觉语言模型的对齐能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LightAgent: Mobile Agentic Foundation Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Securing AI Agent Execution</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SBASH: a Framework for Designing and Evaluating RAG vs. Prompt-Tuned LLM Honeypots</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Soft Instruction De-escalation Defense</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ColorEcosystem: Powering Personalized, Standardized, and Trustworthy Agentic Service in massive-agent Ecosystem</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Black-box to Causal-box: Towards Building More Interpretable Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Confounding Robust Deep Reinforcement Learning: A Causal Approach</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Computational Hardness of Reinforcement Learning with Partial $q^π$-Realizability</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">On the Sample Complexity of Differentially Private Policy Optimization</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Causality Meets Locality: Provably Generalizable and Scalable Policy Learning for Networked Systems</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 机器人操控中的多模态学习</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Two-Steps Diffusion Policy for Robotic Manipulation via Genetic Denoising</span>
+                        <span class="paper-contrib">提出了一种两步扩散策略，通过遗传去噪技术提升机器人操控的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Scalable Vision-Language-Action Model Pretraining for Robotic Manipulation with Real-Life Human Activity Videos</span>
+                        <span class="paper-contrib">利用真实人类活动视频进行视觉-语言-动作模型的预训练，增强机器人操控能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Gaze-VLM:Bridging Gaze and VLMs through Attention Regularization for Egocentric Understanding</span>
+                        <span class="paper-contrib">提出了一种注视正则化框架，提升视觉-语言模型在自我中心理解任务中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generalizable Hierarchical Skill Learning via Object-Centric Representation</span>
+                        <span class="paper-contrib">引入对象中心技能的层次化学习框架，显著提高了机器人操控的政策泛化和样本效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Enhancing Tactile-based Reinforcement Learning for Robotic Control</span>
+                        <span class="paper-contrib">探讨了触觉传感在强化学习中的应用，提升了机器人控制的安全性和可靠性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 大语言模型中的检索增强生成</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Comparison of Conversational Models and Humans in Answering Technical Questions: the Firefox Case</span>
+                        <span class="paper-contrib">本研究评估了大型语言模型在软件开发中支持技术问题回答的有效性，并与人类进行比较。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">NeuroGenPoisoning: Neuron-Guided Attacks on Retrieval-Augmented Generation of LLM via Genetic Optimization of External Knowledge</span>
+                        <span class="paper-contrib">提出了一种新颖的攻击方法，通过基因优化外部知识对检索增强生成的模型进行干扰。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Bridging Language Gaps with Adaptive RAG: Improving Indonesian Language Question Answering</span>
+                        <span class="paper-contrib">通过自适应检索增强生成技术显著提升了印尼语问答系统的准确性和信息性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Leverage Unlearning to Sanitize LLMs</span>
+                        <span class="paper-contrib">探讨了如何通过去学习技术来清理大型语言模型中的敏感数据，从而提高其安全性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Redefining Retrieval Evaluation in the Era of LLMs</span>
+                        <span class="paper-contrib">重新定义了在检索增强生成系统中评估信息检索的标准，挑战了传统评估指标的有效性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 大型语言模型的越狱攻击</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Jailbreak Mimicry: Automated Discovery of Narrative-Based Jailbreaks for Large Language Models</span>
+                        <span class="paper-contrib">提出了一种系统的方法论，通过训练紧凑的攻击模型来自动发现基于叙事的越狱攻击。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Toward Understanding the Transferability of Adversarial Suffixes in Large Language Models</span>
+                        <span class="paper-contrib">探讨了离散优化生成的越狱后缀的可转移性，揭示了它们在不同提示和模型上的成功率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Uncovering the Persuasive Fingerprint of LLMs in Jailbreaking Attacks</span>
+                        <span class="paper-contrib">分析了越狱攻击中大型语言模型的说服性特征，强调了其在攻击策略中的人类可读性和可转移性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adversarial Déjà Vu: Jailbreak Dictionary Learning for Stronger Generalization to Unseen Attacks</span>
+                        <span class="paper-contrib">提出了一种越狱字典学习的方法，通过对抗训练增强模型对新型越狱攻击的泛化能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 因果推断与模型优化</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards Error-Centric Intelligence II: Energy-Structured Causal Models</span>
+                        <span class="paper-contrib">提出了一种能量结构因果模型，旨在通过提供可干预的内部机制来提升机器学习系统的因果透明度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Differentiable Constraint-Based Causal Discovery</span>
+                        <span class="paper-contrib">介绍了一种可微分的约束基础因果发现方法，推动了从观察数据中提取因果关系的研究。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Shylock: Causal Discovery in Multivariate Time Series based on Hybrid Constraints</span>
+                        <span class="paper-contrib">提出了一种基于混合约束的多变量时间序列因果发现方法，克服了传统方法的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Bridging Prediction and Attribution: Identifying Forward and Backward Causal Influence Ranges Using Assimilative Causal Inference</span>
+                        <span class="paper-contrib">开发了一种同化因果推断方法，通过结合观察与动态模型来识别因果影响范围。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-10-30</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-10-30</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,260 +302,311 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 大型推理模型的能力与评估</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Code-enabled language models can outperform reasoning models on diverse tasks</strong>
-                        <span class="contribution">展示了代码增强的语言模型在多样化任务中超越传统推理模型的能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Are Large Reasoning Models Good Translation Evaluators? Analysis and Performance Boost</strong>
-                        <span class="contribution">分析了大型推理模型在机器翻译质量评估中的潜力，并提出了性能提升的方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>The Reasoning Lingua Franca: A Double-Edged Sword for Multilingual AI</strong>
-                        <span class="contribution">探讨了大型推理模型在多语言环境中的局限性，尤其是在非英语问题上的推理偏向。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>What Defines Good Reasoning in LLMs? Dissecting Reasoning Steps with Multi-Aspect Evaluation</strong>
-                        <span class="contribution">提出了一种多维度评估方法，以更细致地分析大型语言模型的推理过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Teaching Language Models to Reason with Tools</strong>
-                        <span class="contribution">探讨了如何通过集成计算工具来提高大型推理模型在复杂数学操作中的表现。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 深度学习中的资源预测与优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>GPU Memory Requirement Prediction for Deep Learning Task Based on Bidirectional Gated Recurrent Unit Optimization Transformer</strong>
-                        <span class="contribution">提出了一种集成双向门控递归单元的深度学习模型，以优化深度学习任务中的GPU内存需求预测。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Fusing Narrative Semantics for Financial Volatility Forecasting</strong>
-                        <span class="contribution">介绍了M2VN框架，通过结合时间序列特征与非结构化新闻数据来提升金融波动性预测的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>xMem: A CPU-Based Approach for Accurate Estimation of GPU Memory in Deep Learning Training Workloads</strong>
-                        <span class="contribution">提出了一种CPU基础的方法，用于准确估计深度学习训练工作负载中的GPU内存需求，以防止内存溢出错误。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SynTSBench: Rethinking Temporal Pattern Learning in Deep Learning Models for Time Series</strong>
-                        <span class="contribution">探讨了在深度学习模型中重新思考时间序列模式学习的方法，以提高在实际应用中的鲁棒性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 医学图像分析中的深度学习应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Focal Modulation and Bidirectional Feature Fusion Network for Medical Image Segmentation</strong>
-                        <span class="contribution">提出了一种新的网络架构，通过焦点调制和双向特征融合来提高医学图像分割的精度和效率。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Deep Learning in Dental Image Analysis: A Systematic Review of Datasets, Methodologies, and Emerging Challenges</strong>
-                        <span class="contribution">系统回顾了牙科图像分析中的数据集、方法论及面临的新挑战，为未来研究提供了重要参考。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>DB-FGA-Net: Dual Backbone Frequency Gated Attention Network for Multi-Class Brain Tumor Classification with Grad-CAM Interpretability</strong>
-                        <span class="contribution">提出了一种双主干频率门控注意力网络，增强了多类脑肿瘤分类的准确性并提供了Grad-CAM可解释性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Efficient Meningioma Tumor Segmentation Using Ensemble Learning</strong>
-                        <span class="contribution">利用集成学习方法提高了脑膜瘤MRI扫描的分割效率，助力临床治疗决策。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 多模态推理与解释</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Small Drafts, Big Verdict: Information-Intensive Visual Reasoning via Speculation</strong>
-                        <span class="contribution">提出了一种新的推理方法，通过对信息密集型图像进行推测来提高视觉推理的准确性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Open-o3 Video: Grounded Video Reasoning with Explicit Spatio-Temporal Evidence</strong>
-                        <span class="contribution">开发了一种视频推理模型，能够明确指示关键证据的时空位置，从而增强视频理解能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Fake-in-Facext: Towards Fine-Grained Explainable DeepFake Analysis</strong>
-                        <span class="contribution">引入了一种可解释的深伪分析方法，专注于细粒度的伪造特征识别，提升了深伪检测的透明度。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>GranViT: A Fine-Grained Vision Model With Autoregressive Perception For MLLMs</strong>
-                        <span class="contribution">提出了一种自回归感知的细粒度视觉模型，改善了多模态大语言模型在视觉任务中的表现。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 空间推理与多模态学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>From Questions to Queries: An AI-powered Multi-Agent Framework for Spatial Text-to-SQL</strong>
-                        <span class="contribution">提出了一种多代理框架，利用AI将自然语言转换为空间SQL查询，降低了非专家分析空间数据的门槛。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>GeoThought: A Dataset for Enhancing Mathematical Geometry Reasoning in Vision-Language Models</strong>
-                        <span class="contribution">构建了一个新的数据集GeoThought，以提升视觉语言模型在几何推理任务中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Stuck in the Matrix: Probing Spatial Reasoning in Large Language Models</strong>
-                        <span class="contribution">通过五个任务评估了大型语言模型在空间推理和多步骤问题解决中的能力，揭示了其在空间理解方面的局限性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: 云计算中的智能代理</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>AgentArcEval: An Architecture Evaluation Method for Foundation Model based Agents</strong>
-                        <span class="contribution">提出了一种评估基础模型驱动的智能代理架构的方法，强调架构决策对代理性能的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Exploring Large Language Models for Access Control Policy Synthesis and Summarization</strong>
-                        <span class="contribution">探讨了大型语言模型在云计算环境中合成和总结访问控制策略的应用，旨在简化政策编写过程。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Automated Cloud Infrastructure-as-Code Reconciliation with AI Agents</strong>
-                        <span class="contribution">介绍了一种利用AI代理自动化云基础设施代码的对账过程，提升了基础设施管理的效率和准确性。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 生成模型的进展与应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Generative AI in Depth: A Survey of Recent Advances, Model Variants, and Real-World Applications</strong>
-                        <span class="contribution">综述了深度学习生成模型的最新进展、模型变体及其在各个领域的实际应用。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Towards General Modality Translation with Contrastive and Predictive Latent Diffusion Bridge</strong>
-                        <span class="contribution">提出了一种对比和预测潜在扩散桥接的方法，以扩展扩散模型在多模态转换中的能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Distilled Decoding 2: One-step Sampling of Image Auto-regressive Models with Conditional Score Distillation</strong>
-                        <span class="contribution">介绍了一种条件评分蒸馏的单步采样方法，以提高图像自回归模型的生成速度。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 脉冲神经网络在神经解码中的应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Exploring Spiking Neural Networks for Binary Classification in Multivariate Time Series at the Edge</strong>
-                        <span class="contribution">提出了一种用于多变量时间序列二分类的脉冲神经网络训练框架，强调了逐步预测和低虚警率的高精度。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>A Scalable, Causal, and Energy Efficient Framework for Neural Decoding with Spiking Neural Networks</strong>
-                        <span class="contribution">开发了一种可扩展的因果和节能的框架，用于通过脉冲神经网络进行神经解码，旨在提升脑机接口的性能。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>MEIcoder: Decoding Visual Stimuli from Neural Activity by Leveraging Most Exciting Inputs</strong>
-                        <span class="contribution">提出了一种MEIcoder方法，通过利用最激发的输入来解码神经活动中的视觉刺激，旨在克服生物数据稀缺的问题。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 自监督学习与领域适应</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>VESSA: Video-based objEct-centric Self-Supervised Adaptation for Visual Foundation Models</strong>
-                        <span class="contribution">提出了一种基于视频的自监督适应方法，旨在提高视觉基础模型在分布变化和标签稀缺领域的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Unsupervised Domain Adaptation via Similarity-based Prototypes for Cross-Modality Segmentation</strong>
-                        <span class="contribution">提出了一种基于相似性原型的无监督领域适应方法，以减小模型在跨模态分割任务中的领域差距。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Bi-CoG: Bi-Consistency-Guided Self-Training for Vision-Language Models</strong>
-                        <span class="contribution">介绍了一种双一致性引导的自我训练方法，旨在提升视觉语言模型在标签稀缺场景下的学习效果。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 图优化与生成模型</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Exploration through Generation: Applying GFlowNets to Structured Search</strong>
-                        <span class="contribution">该论文将生成流网络（GFlowNets）应用于图优化问题，展示了其在旅行商问题、最小生成树和最短路径中的有效性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>AlphaFlow: Understanding and Improving MeanFlow Models</strong>
-                        <span class="contribution">本研究揭示了MeanFlow目标的自然分解，提供了对其成功的深入理解，并提出了改进的方向。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Empowering Targeted Neighborhood Search via Hyper Tour for Large-Scale TSP</strong>
-                        <span class="contribution">该论文提出了一种基于超巡回的目标邻域搜索方法，以解决大规模旅行商问题中的内存约束挑战。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 大型推理模型的能力与评估</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Code-enabled language models can outperform reasoning models on diverse tasks</span>
+                        <span class="paper-contrib">展示了代码增强的语言模型在多样化任务中超越传统推理模型的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Are Large Reasoning Models Good Translation Evaluators? Analysis and Performance Boost</span>
+                        <span class="paper-contrib">分析了大型推理模型在机器翻译质量评估中的潜力，并提出了性能提升的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Reasoning Lingua Franca: A Double-Edged Sword for Multilingual AI</span>
+                        <span class="paper-contrib">探讨了大型推理模型在多语言环境中的局限性，尤其是在非英语问题上的推理偏向。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">What Defines Good Reasoning in LLMs? Dissecting Reasoning Steps with Multi-Aspect Evaluation</span>
+                        <span class="paper-contrib">提出了一种多维度评估方法，以更细致地分析大型语言模型的推理过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Teaching Language Models to Reason with Tools</span>
+                        <span class="paper-contrib">探讨了如何通过集成计算工具来提高大型推理模型在复杂数学操作中的表现。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 深度学习中的资源预测与优化</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GPU Memory Requirement Prediction for Deep Learning Task Based on Bidirectional Gated Recurrent Unit Optimization Transformer</span>
+                        <span class="paper-contrib">提出了一种集成双向门控递归单元的深度学习模型，以优化深度学习任务中的GPU内存需求预测。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Fusing Narrative Semantics for Financial Volatility Forecasting</span>
+                        <span class="paper-contrib">介绍了M2VN框架，通过结合时间序列特征与非结构化新闻数据来提升金融波动性预测的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">xMem: A CPU-Based Approach for Accurate Estimation of GPU Memory in Deep Learning Training Workloads</span>
+                        <span class="paper-contrib">提出了一种CPU基础的方法，用于准确估计深度学习训练工作负载中的GPU内存需求，以防止内存溢出错误。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SynTSBench: Rethinking Temporal Pattern Learning in Deep Learning Models for Time Series</span>
+                        <span class="paper-contrib">探讨了在深度学习模型中重新思考时间序列模式学习的方法，以提高在实际应用中的鲁棒性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 医学图像分析中的深度学习应用</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Focal Modulation and Bidirectional Feature Fusion Network for Medical Image Segmentation</span>
+                        <span class="paper-contrib">提出了一种新的网络架构，通过焦点调制和双向特征融合来提高医学图像分割的精度和效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Deep Learning in Dental Image Analysis: A Systematic Review of Datasets, Methodologies, and Emerging Challenges</span>
+                        <span class="paper-contrib">系统回顾了牙科图像分析中的数据集、方法论及面临的新挑战，为未来研究提供了重要参考。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DB-FGA-Net: Dual Backbone Frequency Gated Attention Network for Multi-Class Brain Tumor Classification with Grad-CAM Interpretability</span>
+                        <span class="paper-contrib">提出了一种双主干频率门控注意力网络，增强了多类脑肿瘤分类的准确性并提供了Grad-CAM可解释性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Efficient Meningioma Tumor Segmentation Using Ensemble Learning</span>
+                        <span class="paper-contrib">利用集成学习方法提高了脑膜瘤MRI扫描的分割效率，助力临床治疗决策。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 多模态推理与解释</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Small Drafts, Big Verdict: Information-Intensive Visual Reasoning via Speculation</span>
+                        <span class="paper-contrib">提出了一种新的推理方法，通过对信息密集型图像进行推测来提高视觉推理的准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Open-o3 Video: Grounded Video Reasoning with Explicit Spatio-Temporal Evidence</span>
+                        <span class="paper-contrib">开发了一种视频推理模型，能够明确指示关键证据的时空位置，从而增强视频理解能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Fake-in-Facext: Towards Fine-Grained Explainable DeepFake Analysis</span>
+                        <span class="paper-contrib">引入了一种可解释的深伪分析方法，专注于细粒度的伪造特征识别，提升了深伪检测的透明度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GranViT: A Fine-Grained Vision Model With Autoregressive Perception For MLLMs</span>
+                        <span class="paper-contrib">提出了一种自回归感知的细粒度视觉模型，改善了多模态大语言模型在视觉任务中的表现。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 空间推理与多模态学习</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Questions to Queries: An AI-powered Multi-Agent Framework for Spatial Text-to-SQL</span>
+                        <span class="paper-contrib">提出了一种多代理框架，利用AI将自然语言转换为空间SQL查询，降低了非专家分析空间数据的门槛。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GeoThought: A Dataset for Enhancing Mathematical Geometry Reasoning in Vision-Language Models</span>
+                        <span class="paper-contrib">构建了一个新的数据集GeoThought，以提升视觉语言模型在几何推理任务中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Stuck in the Matrix: Probing Spatial Reasoning in Large Language Models</span>
+                        <span class="paper-contrib">通过五个任务评估了大型语言模型在空间推理和多步骤问题解决中的能力，揭示了其在空间理解方面的局限性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: 云计算中的智能代理</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AgentArcEval: An Architecture Evaluation Method for Foundation Model based Agents</span>
+                        <span class="paper-contrib">提出了一种评估基础模型驱动的智能代理架构的方法，强调架构决策对代理性能的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Exploring Large Language Models for Access Control Policy Synthesis and Summarization</span>
+                        <span class="paper-contrib">探讨了大型语言模型在云计算环境中合成和总结访问控制策略的应用，旨在简化政策编写过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Automated Cloud Infrastructure-as-Code Reconciliation with AI Agents</span>
+                        <span class="paper-contrib">介绍了一种利用AI代理自动化云基础设施代码的对账过程，提升了基础设施管理的效率和准确性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 生成模型的进展与应用</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generative AI in Depth: A Survey of Recent Advances, Model Variants, and Real-World Applications</span>
+                        <span class="paper-contrib">综述了深度学习生成模型的最新进展、模型变体及其在各个领域的实际应用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards General Modality Translation with Contrastive and Predictive Latent Diffusion Bridge</span>
+                        <span class="paper-contrib">提出了一种对比和预测潜在扩散桥接的方法，以扩展扩散模型在多模态转换中的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Distilled Decoding 2: One-step Sampling of Image Auto-regressive Models with Conditional Score Distillation</span>
+                        <span class="paper-contrib">介绍了一种条件评分蒸馏的单步采样方法，以提高图像自回归模型的生成速度。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 脉冲神经网络在神经解码中的应用</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Exploring Spiking Neural Networks for Binary Classification in Multivariate Time Series at the Edge</span>
+                        <span class="paper-contrib">提出了一种用于多变量时间序列二分类的脉冲神经网络训练框架，强调了逐步预测和低虚警率的高精度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Scalable, Causal, and Energy Efficient Framework for Neural Decoding with Spiking Neural Networks</span>
+                        <span class="paper-contrib">开发了一种可扩展的因果和节能的框架，用于通过脉冲神经网络进行神经解码，旨在提升脑机接口的性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MEIcoder: Decoding Visual Stimuli from Neural Activity by Leveraging Most Exciting Inputs</span>
+                        <span class="paper-contrib">提出了一种MEIcoder方法，通过利用最激发的输入来解码神经活动中的视觉刺激，旨在克服生物数据稀缺的问题。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 自监督学习与领域适应</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VESSA: Video-based objEct-centric Self-Supervised Adaptation for Visual Foundation Models</span>
+                        <span class="paper-contrib">提出了一种基于视频的自监督适应方法，旨在提高视觉基础模型在分布变化和标签稀缺领域的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unsupervised Domain Adaptation via Similarity-based Prototypes for Cross-Modality Segmentation</span>
+                        <span class="paper-contrib">提出了一种基于相似性原型的无监督领域适应方法，以减小模型在跨模态分割任务中的领域差距。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Bi-CoG: Bi-Consistency-Guided Self-Training for Vision-Language Models</span>
+                        <span class="paper-contrib">介绍了一种双一致性引导的自我训练方法，旨在提升视觉语言模型在标签稀缺场景下的学习效果。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 图优化与生成模型</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Exploration through Generation: Applying GFlowNets to Structured Search</span>
+                        <span class="paper-contrib">该论文将生成流网络（GFlowNets）应用于图优化问题，展示了其在旅行商问题、最小生成树和最短路径中的有效性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">AlphaFlow: Understanding and Improving MeanFlow Models</span>
+                        <span class="paper-contrib">本研究揭示了MeanFlow目标的自然分解，提供了对其成功的深入理解，并提出了改进的方向。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Empowering Targeted Neighborhood Search via Hyper Tour for Large-Scale TSP</span>
+                        <span class="paper-contrib">该论文提出了一种基于超巡回的目标邻域搜索方法，以解决大规模旅行商问题中的内存约束挑战。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>

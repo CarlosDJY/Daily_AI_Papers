@@ -5,141 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主题聚类分析 - 2025-11-01</title>
     <style>
+        :root {
+            /* 系统色 */
+            --primary-color: #4f46e5;   /* Indigo (Links/UI) */
+            --meso-color: #f59e0b;      /* Amber (Theme Highlight) */
+            --meso-light: #fffbeb;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             line-height: 1.6;
-            color: #333;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+        /* SVG 图标样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .header h1 {
-            color: #ffa500;
-            margin: 0;
-            font-size: 28px;
-        }
-        .nav-links {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 15px;
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             font-size: 14px;
         }
-        .nav-links a:hover {
-            text-decoration: underline;
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
-        .macro-summary-section {
-            background-color: #f0f7ff;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 30px;
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
         }
-        .macro-summary-section h2 {
-            color: #007bff;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .macro-summary-content {
-            color: #333;
-            line-height: 1.8;
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px; /* 对齐标题文字 */
         }
-        .macro-summary-content h3 {
-            color: #2c3e50;
-            margin-top: 20px;
-            margin-bottom: 10px;
+
+        /* 宏观趋势卡片 */
+        .macro-section {
+            background-color: #eff6ff; /* 淡蓝背景 */
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
         }
-        .macro-summary-content ul, .macro-summary-content ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .macro-summary-content li {
-            margin: 8px 0;
-        }
-        .content-section {
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .cluster-item {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .cluster-item h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .macro-title {
+            color: var(--primary-color);
             font-size: 18px;
-            border-bottom: 2px solid #ffa500;
-            padding-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .cluster-item ul {
-            margin: 15px 0;
-            padding-left: 20px;
+
+        .macro-content {
+            color: #334155;
+            line-height: 1.7;
         }
-        .cluster-item li {
-            margin: 12px 0;
+        
+        /* 移除宏观内容中 Markdown 默认的 margin */
+        .macro-content p { margin-bottom: 10px; }
+        .macro-content ul { margin-left: 20px; margin-bottom: 10px; }
+
+        /* 聚类列表 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .cluster-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .cluster-header {
+            background-color: var(--meso-light);
+            padding: 16px 24px;
+            border-bottom: 1px solid #fcd34d; /* Amber 300 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cluster-title {
+            color: #92400e; /* Amber 800 */
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .cluster-count {
+            background-color: rgba(255,255,255,0.6);
+            color: #92400e;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .cluster-body {
+            padding: 24px;
+        }
+
+        .paper-list {
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 连接线效果 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 20px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        .cluster-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cluster-item .contribution {
-            color: #666;
-            font-size: 14px;
-        }
+
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: 60px;
             text-align: center;
-            color: #6c757d;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .cluster-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .paper-item { padding-left: 0; }
+            .paper-list::before { display: none; } /* 移动端移除连接线，节省空间 */
+            .paper-item::before { display: none; }
+            .paper-title { margin-bottom: 4px; color: var(--primary-color); }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
         <div class="header">
-            <h1>📊 主题聚类分析</h1>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
             <div class="date">2025-11-01</div>
         </div>
 
-        <div class="nav-links">
-            <a href="index.html">← 返回每日简报</a>
-            <a href="../../index.html">返回汇总页</a>
-            <a href="../../search.html">🔍 搜索历史归档</a>
-        </div>
-
-        <!-- 宏观研究趋势（如果存在） -->
         
-        <div class="macro-summary-section">
-            <h2>📈 宏观研究趋势</h2>
-            <div class="macro-summary-content">
+        <div class="macro-section">
+            <div class="macro-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
                 <h2>核心研究主题</h2>
 
 <ol>
@@ -162,327 +302,383 @@
         </div>
         
 
-        <!-- 主题聚类分析 -->
-        <div class="content-section">
-            <h2 style="color: #ffa500; margin-top: 0; margin-bottom: 20px;">🔍 主题聚类分析</h2>
-            
-            <div class="cluster-item">
-                <h3>主题 1: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Modeling Hierarchical Thinking in Large Reasoning Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Reasoning Models Reason Well, Until They Don't</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>The Structural Scalpel: Automated Contiguous Layer Pruning for Large Language Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LacMaterial: Large Language Models as Analogical Chemists for Materials Discovery</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>When Fewer Layers Break More Chains: Layer Pruning Harms Test-Time Scaling in LLMs</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>OptiTree: Hierarchical Thoughts Generation with Tree Search for LLM Optimization Modeling</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Controllable Mathematical Reasoning via Self-Optimizing Thought Vectors</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Every Activation Boosted: Scaling General Reasoner to 1 Trillion Open Language Foundation</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Mapping Faithful Reasoning in Language Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Simplifying Knowledge Transfer in Pretrained Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>From Slides to Chatbots: Enhancing Large Language Models with University Course Materials</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SteerX: Disentangled Steering for LLM Personalization</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Surface Reading LLMs: Synthetic Text and its Styles</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Generalization or Memorization: Dynamic Decoding for Mode Steering</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 2: 未生成主题（LLM 调用失败）</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Efficient Low Rank Attention for Long-Context Inference in Large Language Models</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Transformer Key-Value Memories Are Nearly as Interpretable as Sparse Autoencoders</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Scaling Up Efficient Small Language Models Serving and Deployment for Semantic Job Search</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>GigaEmbeddings: Efficient Russian Language Embedding Model</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Memory-based Language Models: An Efficient, Explainable, and Eco-friendly Approach to Large Language Modeling</strong>
-                        <span class="contribution">未生成贡献分析</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 3: 图神经网络的应用与优化</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>GraphTOP: Graph Topology-Oriented Prompting for Graph Neural Networks</strong>
-                        <span class="contribution">提出了一种图拓扑导向的提示方法，以增强图神经网络在无标签图数据上的预训练和适应能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Does Homophily Help in Robust Test-time Node Classification?</strong>
-                        <span class="contribution">探讨了同质性在节点分类中的作用，提出了同质性感知的图神经网络架构以提高鲁棒性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Dynamic Graph Neural Network for Data-Driven Physiologically Based Pharmacokinetic Modeling</strong>
-                        <span class="contribution">开发了一种动态图神经网络模型，以改进药物动力学建模的适应性，克服传统方法的局限性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Hierarchical Graph Networks for Accurate Weather Forecasting via Lightweight Training</strong>
-                        <span class="contribution">提出了一种分层图网络，通过轻量级训练方法实现对复杂气候事件的准确预测。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 4: 联邦学习与医疗应用</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Power to the Clients: Federated Learning in a Dictatorship Setting</strong>
-                        <span class="contribution">探讨了在专制环境下，联邦学习如何赋予客户端权力，同时揭示了其潜在的安全漏洞。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Privacy-Aware Federated nnU-Net for ECG Page Digitization</strong>
-                        <span class="contribution">提出了一种隐私保护的跨机构联邦学习框架，用于将ECG页面图像转化为可分析的波形。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>CFL-SparseMed: Communication-Efficient Federated Learning for Medical Imaging with Top-k Sparse Updates</strong>
-                        <span class="contribution">开发了一种通信高效的联邦学习方法，针对医疗影像中的稀疏更新问题进行优化。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Expert Validation of Synthetic Cervical Spine Radiographs Generated with a Denoising Diffusion Probabilistic Model</strong>
-                        <span class="contribution">评估了使用去噪扩散概率模型生成的合成颈椎X光片的可行性，为神经外科提供了数据生成的新途径。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 5: 多模态模型的局限性与改进</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Top-Down Semantic Refinement for Image Captioning</strong>
-                        <span class="contribution">提出了一种自上而下的语义精炼方法，以解决图像描述中的全局叙事一致性问题。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Mitigating Coordinate Prediction Bias from Positional Encoding Failures</strong>
-                        <span class="contribution">探讨了位置编码失败导致的坐标预测偏差，并提出了缓解这一问题的方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Mint: A Simple Test-Time Adaptation of Vision-Language Models against Common Corruptions</strong>
-                        <span class="contribution">研究了输入腐败对CLIP图像嵌入的影响，并提出了一种简单的测试时适应方法以应对常见的分布偏移。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 6: LLMs在学术研究中的可靠性评估</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Can Small and Reasoning Large Language Models Score Journal Articles for Research Quality and Do Averaging and Few-shot Help?</strong>
-                        <span class="contribution">探讨小型和推理能力强的语言模型在评估学术期刊文章质量方面的有效性，并分析了平均和少量学习的影响。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>PaperAsk: A Benchmark for Reliability Evaluation of LLMs in Paper Search and Reading</strong>
-                        <span class="contribution">提出了PaperAsk基准，系统评估LLMs在引用检索、内容提取和论文阅读等四个关键研究任务中的可靠性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Estimating the Error of Large Language Models at Pairwise Text Comparison</strong>
-                        <span class="contribution">测量LLMs在成对文本比较中的输出错误，提出了一种不依赖于真实值的误差估计方法。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 7: 多模态强化学习与城市感知</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>BLIP-FusePPO: A Vision-Language Deep Reinforcement Learning Framework for Lane Keeping in Autonomous Vehicles</strong>
-                        <span class="contribution">提出了一种基于视觉-语言预训练的融合状态表示的深度强化学习框架，以实现自动驾驶车辆的车道保持。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>CityRiSE: Reasoning Urban Socio-Economic Status in Vision-Language Models via Reinforcement Learning</strong>
-                        <span class="contribution">利用大型视觉-语言模型，通过强化学习推理城市社会经济状态，为可持续发展目标提供新的数据感知方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>LOC: A General Language-Guided Framework for Open-Set 3D Occupancy Prediction</strong>
-                        <span class="contribution">提出了一种通用的语言引导框架，适用于多种占用网络，以解决开放集3D场景理解中的数据稀缺问题。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 8: 空间推理与多模态学习</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>DynaSolidGeo: A Dynamic Benchmark for Genuine Spatial Mathematical Reasoning of VLMs in Solid Geometry</strong>
-                        <span class="contribution">提出了一个动态基准DynaSolidGeo，以评估视觉语言模型在立体几何中的空间数学推理能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Bridging Perception and Reasoning: Dual-Pipeline Neuro-Symbolic Landing for UAVs in Cluttered Environments</strong>
-                        <span class="contribution">提出了NeuroSymLand，一个双管道神经符号方法，提高无人机在复杂环境中的自主着陆能力。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>GRAID: Enhancing Spatial Reasoning of VLMs Through High-Fidelity Data Generation</strong>
-                        <span class="contribution">通过高保真数据生成方法GRAID，显著提升了视觉语言模型在空间推理任务中的表现。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 9: 多语言自然语言处理</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Multilingual Target-Stance Extraction</strong>
-                        <span class="contribution">提出了一种多语言环境下的目标立场提取方法，旨在分析社交媒体上对争议问题的公众意见。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Irony Detection in Urdu Text: A Comparative Study Using Machine Learning Models and Large Language Models</strong>
-                        <span class="contribution">通过将英语讽刺语料库翻译为乌尔都语，评估了多种机器学习模型和大型语言模型在乌尔都语讽刺检测中的表现。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SentiMaithili: A Benchmark Dataset for Sentiment and Reason Generation for the Low-Resource Maithili Language</strong>
-                        <span class="contribution">为低资源的Maithili语言开发了基准数据集，以支持情感和理由生成的研究。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 10: 机器学习中的不确定性与安全性</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>Epistemic Deep Learning: Enabling Machine Learning Models to Know When They Do Not Know</strong>
-                        <span class="contribution">提出了一种方法，使机器学习模型能够识别其不确定性，从而提高在安全关键领域的可靠性。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>Stable neural networks and connections to continuous dynamical systems</strong>
-                        <span class="contribution">探讨了神经网络的稳定性与连续动力系统之间的联系，为理解和增强神经网络的稳定性提供了新的视角。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>SecureLearn -- An Attack-agnostic Defense for Multiclass Machine Learning Against Data Poisoning Attacks</strong>
-                        <span class="contribution">提出了一种攻击无关的防御机制，旨在保护多类机器学习模型免受数据中毒攻击的影响。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
-            <div class="cluster-item">
-                <h3>主题 11: 低空无线网络中的协作通信</h3>
-                <ul>
-                    
-                    <li>
-                        <strong>When UAV Swarm Meets IRS: Collaborative Secure Communications in Low-altitude Wireless Networks</strong>
-                        <span class="contribution">提出了一种结合无人机群和智能反射面（IRS）以增强低空无线网络安全通信的方法。</span>
-                    </li>
-                    
-                    <li>
-                        <strong>STAR-RIS-assisted Collaborative Beamforming for Low-altitude Wireless Networks</strong>
-                        <span class="contribution">引入了STAR-RIS辅助的协作波束成形技术，以解决低空无线网络中信号衰减的问题。</span>
-                    </li>
-                    
-                </ul>
-            </div>
-            
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 11 个研究热点
         </div>
 
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 1: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">14 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Modeling Hierarchical Thinking in Large Reasoning Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reasoning Models Reason Well, Until They Don't</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Structural Scalpel: Automated Contiguous Layer Pruning for Large Language Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LacMaterial: Large Language Models as Analogical Chemists for Materials Discovery</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">When Fewer Layers Break More Chains: Layer Pruning Harms Test-Time Scaling in LLMs</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">OptiTree: Hierarchical Thoughts Generation with Tree Search for LLM Optimization Modeling</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Controllable Mathematical Reasoning via Self-Optimizing Thought Vectors</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Every Activation Boosted: Scaling General Reasoner to 1 Trillion Open Language Foundation</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mapping Faithful Reasoning in Language Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Simplifying Knowledge Transfer in Pretrained Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Slides to Chatbots: Enhancing Large Language Models with University Course Materials</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SteerX: Disentangled Steering for LLM Personalization</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Surface Reading LLMs: Synthetic Text and its Styles</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Generalization or Memorization: Dynamic Decoding for Mode Steering</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 2: 未生成主题（LLM 调用失败）</div>
+                <div class="cluster-count">5 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Efficient Low Rank Attention for Long-Context Inference in Large Language Models</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Transformer Key-Value Memories Are Nearly as Interpretable as Sparse Autoencoders</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Scaling Up Efficient Small Language Models Serving and Deployment for Semantic Job Search</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GigaEmbeddings: Efficient Russian Language Embedding Model</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Memory-based Language Models: An Efficient, Explainable, and Eco-friendly Approach to Large Language Modeling</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 3: 图神经网络的应用与优化</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GraphTOP: Graph Topology-Oriented Prompting for Graph Neural Networks</span>
+                        <span class="paper-contrib">提出了一种图拓扑导向的提示方法，以增强图神经网络在无标签图数据上的预训练和适应能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Does Homophily Help in Robust Test-time Node Classification?</span>
+                        <span class="paper-contrib">探讨了同质性在节点分类中的作用，提出了同质性感知的图神经网络架构以提高鲁棒性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Dynamic Graph Neural Network for Data-Driven Physiologically Based Pharmacokinetic Modeling</span>
+                        <span class="paper-contrib">开发了一种动态图神经网络模型，以改进药物动力学建模的适应性，克服传统方法的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Hierarchical Graph Networks for Accurate Weather Forecasting via Lightweight Training</span>
+                        <span class="paper-contrib">提出了一种分层图网络，通过轻量级训练方法实现对复杂气候事件的准确预测。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 4: 联邦学习与医疗应用</div>
+                <div class="cluster-count">4 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Power to the Clients: Federated Learning in a Dictatorship Setting</span>
+                        <span class="paper-contrib">探讨了在专制环境下，联邦学习如何赋予客户端权力，同时揭示了其潜在的安全漏洞。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Privacy-Aware Federated nnU-Net for ECG Page Digitization</span>
+                        <span class="paper-contrib">提出了一种隐私保护的跨机构联邦学习框架，用于将ECG页面图像转化为可分析的波形。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CFL-SparseMed: Communication-Efficient Federated Learning for Medical Imaging with Top-k Sparse Updates</span>
+                        <span class="paper-contrib">开发了一种通信高效的联邦学习方法，针对医疗影像中的稀疏更新问题进行优化。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Expert Validation of Synthetic Cervical Spine Radiographs Generated with a Denoising Diffusion Probabilistic Model</span>
+                        <span class="paper-contrib">评估了使用去噪扩散概率模型生成的合成颈椎X光片的可行性，为神经外科提供了数据生成的新途径。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 5: 多模态模型的局限性与改进</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Top-Down Semantic Refinement for Image Captioning</span>
+                        <span class="paper-contrib">提出了一种自上而下的语义精炼方法，以解决图像描述中的全局叙事一致性问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mitigating Coordinate Prediction Bias from Positional Encoding Failures</span>
+                        <span class="paper-contrib">探讨了位置编码失败导致的坐标预测偏差，并提出了缓解这一问题的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mint: A Simple Test-Time Adaptation of Vision-Language Models against Common Corruptions</span>
+                        <span class="paper-contrib">研究了输入腐败对CLIP图像嵌入的影响，并提出了一种简单的测试时适应方法以应对常见的分布偏移。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 6: LLMs在学术研究中的可靠性评估</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Can Small and Reasoning Large Language Models Score Journal Articles for Research Quality and Do Averaging and Few-shot Help?</span>
+                        <span class="paper-contrib">探讨小型和推理能力强的语言模型在评估学术期刊文章质量方面的有效性，并分析了平均和少量学习的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PaperAsk: A Benchmark for Reliability Evaluation of LLMs in Paper Search and Reading</span>
+                        <span class="paper-contrib">提出了PaperAsk基准，系统评估LLMs在引用检索、内容提取和论文阅读等四个关键研究任务中的可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Estimating the Error of Large Language Models at Pairwise Text Comparison</span>
+                        <span class="paper-contrib">测量LLMs在成对文本比较中的输出错误，提出了一种不依赖于真实值的误差估计方法。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 7: 多模态强化学习与城市感知</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BLIP-FusePPO: A Vision-Language Deep Reinforcement Learning Framework for Lane Keeping in Autonomous Vehicles</span>
+                        <span class="paper-contrib">提出了一种基于视觉-语言预训练的融合状态表示的深度强化学习框架，以实现自动驾驶车辆的车道保持。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CityRiSE: Reasoning Urban Socio-Economic Status in Vision-Language Models via Reinforcement Learning</span>
+                        <span class="paper-contrib">利用大型视觉-语言模型，通过强化学习推理城市社会经济状态，为可持续发展目标提供新的数据感知方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LOC: A General Language-Guided Framework for Open-Set 3D Occupancy Prediction</span>
+                        <span class="paper-contrib">提出了一种通用的语言引导框架，适用于多种占用网络，以解决开放集3D场景理解中的数据稀缺问题。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 8: 空间推理与多模态学习</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DynaSolidGeo: A Dynamic Benchmark for Genuine Spatial Mathematical Reasoning of VLMs in Solid Geometry</span>
+                        <span class="paper-contrib">提出了一个动态基准DynaSolidGeo，以评估视觉语言模型在立体几何中的空间数学推理能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Bridging Perception and Reasoning: Dual-Pipeline Neuro-Symbolic Landing for UAVs in Cluttered Environments</span>
+                        <span class="paper-contrib">提出了NeuroSymLand，一个双管道神经符号方法，提高无人机在复杂环境中的自主着陆能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GRAID: Enhancing Spatial Reasoning of VLMs Through High-Fidelity Data Generation</span>
+                        <span class="paper-contrib">通过高保真数据生成方法GRAID，显著提升了视觉语言模型在空间推理任务中的表现。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 9: 多语言自然语言处理</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Multilingual Target-Stance Extraction</span>
+                        <span class="paper-contrib">提出了一种多语言环境下的目标立场提取方法，旨在分析社交媒体上对争议问题的公众意见。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Irony Detection in Urdu Text: A Comparative Study Using Machine Learning Models and Large Language Models</span>
+                        <span class="paper-contrib">通过将英语讽刺语料库翻译为乌尔都语，评估了多种机器学习模型和大型语言模型在乌尔都语讽刺检测中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SentiMaithili: A Benchmark Dataset for Sentiment and Reason Generation for the Low-Resource Maithili Language</span>
+                        <span class="paper-contrib">为低资源的Maithili语言开发了基准数据集，以支持情感和理由生成的研究。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 10: 机器学习中的不确定性与安全性</div>
+                <div class="cluster-count">3 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Epistemic Deep Learning: Enabling Machine Learning Models to Know When They Do Not Know</span>
+                        <span class="paper-contrib">提出了一种方法，使机器学习模型能够识别其不确定性，从而提高在安全关键领域的可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Stable neural networks and connections to continuous dynamical systems</span>
+                        <span class="paper-contrib">探讨了神经网络的稳定性与连续动力系统之间的联系，为理解和增强神经网络的稳定性提供了新的视角。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SecureLearn -- An Attack-agnostic Defense for Multiclass Machine Learning Against Data Poisoning Attacks</span>
+                        <span class="paper-contrib">提出了一种攻击无关的防御机制，旨在保护多类机器学习模型免受数据中毒攻击的影响。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-title">主题 11: 低空无线网络中的协作通信</div>
+                <div class="cluster-count">2 篇相关论文</div>
+            </div>
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">When UAV Swarm Meets IRS: Collaborative Secure Communications in Low-altitude Wireless Networks</span>
+                        <span class="paper-contrib">提出了一种结合无人机群和智能反射面（IRS）以增强低空无线网络安全通信的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">STAR-RIS-assisted Collaborative Beamforming for Low-altitude Wireless Networks</span>
+                        <span class="paper-contrib">引入了STAR-RIS辅助的协作波束成形技术，以解决低空无线网络中信号衰减的问题。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
         <div class="footer">
-            <p>生成时间: 2025-11-06 19:38:42</p>
-            <p>数据来源: arXiv AI 论文推荐系统</p>
+            <p>生成时间: 2025-11-20 13:08:12</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
 </body>
