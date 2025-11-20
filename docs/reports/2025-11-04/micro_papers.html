@@ -6,9 +6,8 @@
     <title>微观深度解读 - 2025-11-04</title>
     <style>
         :root {
-            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
             --primary-color: #4f46e5;
-            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --micro-color: #0ea5e9;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #0f172a;
@@ -24,7 +23,6 @@
             
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             
             --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
@@ -117,6 +115,7 @@
             padding: 30px;
             position: relative;
             transition: all 0.2s ease;
+            overflow: hidden;
         }
 
         .paper-card:hover {
@@ -124,7 +123,6 @@
             border-color: #cbd5e1;
         }
 
-        /* 序号水印 */
         .paper-index {
             position: absolute;
             top: 20px;
@@ -137,11 +135,11 @@
             z-index: 0;
         }
 
-        /* 卡片头部 */
         .card-header {
             position: relative;
             z-index: 1;
             margin-bottom: 20px;
+            padding-right: 40px;
         }
 
         .paper-title {
@@ -149,13 +147,12 @@
             font-weight: 700;
             margin-bottom: 12px;
             line-height: 1.4;
-            padding-right: 40px; /* 给序号留位 */
         }
 
         .paper-title a {
             color: var(--text-main);
             text-decoration: none;
-            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0);
             background-size: 0 10px;
             background-repeat: no-repeat;
             background-position: bottom;
@@ -167,7 +164,6 @@
             color: var(--primary-color);
         }
 
-        /* 元数据行 */
         .meta-row {
             display: flex;
             flex-wrap: wrap;
@@ -175,7 +171,7 @@
             align-items: center;
             font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .meta-item {
@@ -192,30 +188,45 @@
             border-radius: 6px;
             font-size: 12px;
         }
-
-        /* 关键词 */
+        
         .keywords-row {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 20px;
         }
 
         .keyword-tag {
             background-color: var(--tag-bg);
             color: var(--tag-text);
             font-size: 12px;
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 99px;
             font-weight: 500;
         }
 
-        /* 摘要内容 */
+        /* 内容布局 */
+        .card-body-flex {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-column {
+            flex: 0 0 280px;
+            max-width: 40%;
+        }
+
         .summary-content {
             font-size: 15px;
             color: #334155;
             line-height: 1.7;
-            margin-bottom: 20px;
             text-align: justify;
         }
         
@@ -225,43 +236,141 @@
             margin-right: 4px;
         }
 
+        /* --- 图片预览容器 (带放大提示) --- */
+        .image-wrapper {
+            width: 100%;
+            height: 180px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in; /* 鼠标变为放大镜 */
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .image-wrapper:hover {
+            border-color: var(--micro-color);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        /* 悬停时显示的放大图标遮罩 */
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.05); /* 极淡的遮罩 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper:hover .zoom-overlay {
+            opacity: 1;
+        }
+
+        .zoom-icon {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- 灯箱 Modal 样式 --- */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 现代感毛玻璃背景 */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f5f9;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
         /* 警告框 */
         .warning-box {
             background-color: var(--warn-bg);
             color: var(--warn-text);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 13px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: flex-start;
             gap: 8px;
+            border-left: 3px solid #fdba74;
         }
         
-        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+        .warning-box .icon { flex-shrink: 0; margin-top: 3px; }
 
-        /* 图片容器 */
-        .image-wrapper {
-            margin: 20px 0;
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* 底部操作栏 */
         .card-footer {
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 1px dashed var(--border-color);
             display: flex;
             justify-content: flex-end;
@@ -271,21 +380,19 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s;
-            border: 1px solid var(--border-color);
         }
 
         .btn-read:hover {
-            background-color: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
+            background-color: #f1f5f9;
+            color: var(--primary-color);
         }
 
         .page-footer {
@@ -298,12 +405,28 @@
         }
 
         /* 移动端适配 */
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
             .paper-card { padding: 20px; }
             .paper-index { font-size: 30px; top: 15px; right: 15px; }
             .paper-title { font-size: 18px; padding-right: 30px; }
-            .card-footer { justify-content: stretch; }
-            .btn-read { width: 100%; justify-content: center; }
+            
+            .card-body-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .image-column {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .image-wrapper {
+                height: 200px;
+            }
+            
+            .card-footer { justify-content: space-between; }
         }
     </style>
 </head>
@@ -327,25 +450,21 @@
 
         <div class="paper-list">
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#1</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.25741v2&redirect_url=%2Freports%2F2025-11-04%2F2510_25741v2.html">
-                            Scaling Latent Reasoning via Looped Language Models
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.25741v2&redirect_url=%2Freports%2F2025-11-04%2F2510_25741v2.html">Scaling Latent Reasoning via Looped Language Models</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.554 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.554 分</span></div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -363,27 +482,37 @@
                     
                 </div>
 
-                <div class="summary-content">
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="warning-box">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <span><strong>降级提示：</strong>LLM 解读异常，已显示基础摘要。</span>
+                        </div>
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>现代大型语言模型（LLMs）主要通过显式文本生成（如思维链（CoT））进行“思考”，将推理推迟到训练后，并未充分利用预训练数据。我们提出并开源了Ouro，命名源自递归的乌洛波罗斯，这是一类预训练的循环语言模型（LoopLM），它通过以下方式将推理融入预训练阶段：（i）在潜在空间中的迭代计算，（ii）用于学习深度分配的熵正则化目标，以及（iii）扩展到7.7万亿个标记。Ouro 1.4B和2.6B模型在广泛的基准测试中表现优越，性能与高达12B的最先进大型语言模型（SOTA LLMs）相匹配。
+                        </div>
+                    </div>
+
                     
-                    <div class="warning-box">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        <span><strong>降级提示：</strong>由于 LLM 解读异常，已显示基础摘要。(enrich failed, fallback to abstract)</span>
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/38879976c4bc078d94884bdcbe7c4decd77ea14b8e794df9bbe619191497049d.jpg')">
+                            <img src="../../images/2025-11-04/38879976c4bc078d94884bdcbe7c4decd77ea14b8e794df9bbe619191497049d.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-
-                    <span class="summary-label">简介：</span>现代大型语言模型（LLMs）主要通过显式文本生成（如思维链（CoT））进行“思考”，将推理推迟到训练后，并未充分利用预训练数据。我们提出并开源了Ouro，命名源自递归的乌洛波罗斯，这是一类预训练的循环语言模型（LoopLM），它通过以下方式将推理融入预训练阶段：（i）在潜在空间中的迭代计算，（ii）用于学习深度分配的熵正则化目标，以及（iii）扩展到7.7万亿个标记。Ouro 1.4B和2.6B模型在广泛的基准测试中表现优越，性能与高达12B的最先进大型语言模型（SOTA LLMs）相匹配。
                 </div>
-
-                
-                <div class="image-wrapper">
-                    
-                    <img src="../../images/2025-11-04/38879976c4bc078d94884bdcbe7c4decd77ea14b8e794df9bbe619191497049d.jpg" alt="核心思路示意图" loading="lazy" />
-                </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.25741v2&redirect_url=%2Freports%2F2025-11-04%2F2510_25741v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -391,25 +520,21 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#2</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.27630v2&redirect_url=%2Freports%2F2025-11-04%2F2510_27630v2.html">
-                            Interaction as Intelligence Part II: Asynchronous Human-Agent Rollout for Long-Horizon Task Training
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.27630v2&redirect_url=%2Freports%2F2025-11-04%2F2510_27630v2.html">Interaction as Intelligence Part II: Asynchronous Human-Agent Rollout for Long-Horizon Task Training</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.494 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.494 分</span></div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -427,27 +552,37 @@
                     
                 </div>
 
-                <div class="summary-content">
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="warning-box">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <span><strong>降级提示：</strong>LLM 解读异常，已显示基础摘要。</span>
+                        </div>
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>大型语言模型（LLM）代理最近在自动编码、深度研究和图形用户界面操作等领域展现出强大的潜力。然而，训练它们在长时间跨度、领域专门化任务上取得成功仍然具有挑战性。目前的方法主要分为两类。
+                        </div>
+                    </div>
+
                     
-                    <div class="warning-box">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        <span><strong>降级提示：</strong>由于 LLM 解读异常，已显示基础摘要。(enrich failed, fallback to abstract)</span>
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/76a8f7ba9548a2a8fdfa882ebbae1cc169330274cd2f4977c45cc3faa5915457.jpg')">
+                            <img src="../../images/2025-11-04/76a8f7ba9548a2a8fdfa882ebbae1cc169330274cd2f4977c45cc3faa5915457.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-
-                    <span class="summary-label">简介：</span>大型语言模型（LLM）代理最近在自动编码、深度研究和图形用户界面操作等领域展现出强大的潜力。然而，训练它们在长时间跨度、领域专门化任务上取得成功仍然具有挑战性。目前的方法主要分为两类。
                 </div>
-
-                
-                <div class="image-wrapper">
-                    
-                    <img src="../../images/2025-11-04/76a8f7ba9548a2a8fdfa882ebbae1cc169330274cd2f4977c45cc3faa5915457.jpg" alt="核心思路示意图" loading="lazy" />
-                </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.27630v2&redirect_url=%2Freports%2F2025-11-04%2F2510_27630v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -455,25 +590,21 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#3</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.13136v2&redirect_url=%2Freports%2F2025-11-04%2F2505_13136v2.html">
-                            New Encoders for German Trained from Scratch: Comparing ModernGBERT with Converted LLM2Vec Models
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.13136v2&redirect_url=%2Freports%2F2025-11-04%2F2505_13136v2.html">New Encoders for German Trained from Scratch: Comparing ModernGBERT with Converted LLM2Vec Models</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.470 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.470 分</span></div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -491,29 +622,39 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
-                    <div class="warning-box">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        <span><strong>降级提示：</strong>由于 LLM 解读异常，已显示基础摘要。(enrich failed, fallback to abstract)</span>
-                    </div>
-                    
-
-                    <span class="summary-label">简介：</span>尽管解码器仅的语言模型（LLMs）逐渐兴起，编码器在高效的德语自然语言处理（NLP）和自然语言理解（NLU）场景中仍然至关重要。本研究在相同的数据和训练条件下探讨了高质量德语编码器的两种途径：1）从头开始训练，2）通过LLM2Vec转换解码器。我们引入了两个资源：ModernGBERT（134M, 1B），完全透明的德语编码器，采用ModernBERT风格，以及LL\"aMmleinVec（120M, 1B, 7B），通过掩码下一个标记预测训练的解码器到编码器转换，均扩展到8,192个标记的上下文。
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="warning-box">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <span><strong>降级提示：</strong>LLM 解读异常，已显示基础摘要。</span>
+                        </div>
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>尽管解码器仅的语言模型（LLMs）逐渐兴起，编码器在高效的德语自然语言处理（NLP）和自然语言理解（NLU）场景中仍然至关重要。本研究在相同的数据和训练条件下探讨了高质量德语编码器的两种途径：1）从头开始训练，2）通过LLM2Vec转换解码器。我们引入了两个资源：ModernGBERT（134M, 1B），完全透明的德语编码器，采用ModernBERT风格，以及LL\"aMmleinVec（120M, 1B, 7B），通过掩码下一个标记预测训练的解码器到编码器转换，均扩展到8,192个标记的上下文。
 
 在SuperGLEBer上，ModernGBERT 1B创造了新的最佳表现（平均0.808），超越了GBERT Large（+4%）和七倍大的转换7B模型（0.787）。
-                </div>
+                        </div>
+                    </div>
 
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-04/fc4426c0393788bc043f127868301a4662fd9f12c38594556790b90348050067.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/fc4426c0393788bc043f127868301a4662fd9f12c38594556790b90348050067.jpg')">
+                            <img src="../../images/2025-11-04/fc4426c0393788bc043f127868301a4662fd9f12c38594556790b90348050067.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.13136v2&redirect_url=%2Freports%2F2025-11-04%2F2505_13136v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -521,22 +662,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#4</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.23433v2&redirect_url=%2Freports%2F2025-11-04%2F2505_23433v2.html">
-                            Diversity-Aware Policy Optimization for Large Language Model Reasoning
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.23433v2&redirect_url=%2Freports%2F2025-11-04%2F2505_23433v2.html">Diversity-Aware Policy Optimization for Large Language Model Reasoning</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.461 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.461 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -544,7 +682,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -562,22 +699,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新颖的多样性感知策略优化方法R1-zero-Div，旨在提升大语言模型（LLM）在强化学习（RL）训练中的推理能力。通过设计基于熵的token级别多样性度量并选择性应用于正样本，研究表明解决方案多样性与模型推理潜力之间存在强正相关，最终在多个数学推理基准上实现了3.5%的性能提升。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新颖的多样性感知策略优化方法R1-zero-Div，旨在提升大语言模型（LLM）在强化学习（RL）训练中的推理能力。通过设计基于熵的token级别多样性度量并选择性应用于正样本，研究表明解决方案多样性与模型推理潜力之间存在强正相关，最终在多个数学推理基准上实现了3.5%的性能提升。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-04/f536cf3c8858445fa4959598530b851048e42698905ae9e4ffde9e88f1e49c2b.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/f536cf3c8858445fa4959598530b851048e42698905ae9e4ffde9e88f1e49c2b.jpg')">
+                            <img src="../../images/2025-11-04/f536cf3c8858445fa4959598530b851048e42698905ae9e4ffde9e88f1e49c2b.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2505.23433v2&redirect_url=%2Freports%2F2025-11-04%2F2505_23433v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -585,22 +732,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#5</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2508.03665v4&redirect_url=%2Freports%2F2025-11-04%2F2508_03665v4.html">
-                            A DbC Inspired Neurosymbolic Layer for Trustworthy Agent Design
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2508.03665v4&redirect_url=%2Freports%2F2025-11-04%2F2508_03665v4.html">A DbC Inspired Neurosymbolic Layer for Trustworthy Agent Design</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.460 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.460 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -608,7 +752,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -626,22 +769,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种基于设计契约（DbC）的方法，通过引入合同层来解决大型语言模型（LLMs）在生成输出时缺乏可验证保证的问题。该合同层定义了输入输出的语义和类型要求，并通过概率修复确保生成内容符合这些要求，从而增强了LLMs的可靠性和一致性。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种基于设计契约（DbC）的方法，通过引入合同层来解决大型语言模型（LLMs）在生成输出时缺乏可验证保证的问题。该合同层定义了输入输出的语义和类型要求，并通过概率修复确保生成内容符合这些要求，从而增强了LLMs的可靠性和一致性。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-04/96f7f9a1a1bc604c907ba10c2fe51c84e63995eadea9065f7034fefff27875de.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/96f7f9a1a1bc604c907ba10c2fe51c84e63995eadea9065f7034fefff27875de.jpg')">
+                            <img src="../../images/2025-11-04/96f7f9a1a1bc604c907ba10c2fe51c84e63995eadea9065f7034fefff27875de.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2508.03665v4&redirect_url=%2Freports%2F2025-11-04%2F2508_03665v4.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -649,22 +802,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#6</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2504.16129v4&redirect_url=%2Freports%2F2025-11-04%2F2504_16129v4.html">
-                            MARFT: Multi-Agent Reinforcement Fine-Tuning
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2504.16129v4&redirect_url=%2Freports%2F2025-11-04%2F2504_16129v4.html">MARFT: Multi-Agent Reinforcement Fine-Tuning</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.409 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.409 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -672,7 +822,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -690,22 +839,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新颖的多智能体强化微调框架（MARFT），旨在解决大型语言模型（LLM）在多智能体系统中的应用挑战。通过引入灵活马尔可夫博弈（Flex-MG）和序列决策重构，MARFT显著提升了智能体在动态环境中的协作能力和任务解决性能。实验结果表明，MARFT在复杂推理任务中优于传统单智能体方法，推动了LLM在多智能体系统中的有效应用。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新颖的多智能体强化微调框架（MARFT），旨在解决大型语言模型（LLM）在多智能体系统中的应用挑战。通过引入灵活马尔可夫博弈（Flex-MG）和序列决策重构，MARFT显著提升了智能体在动态环境中的协作能力和任务解决性能。实验结果表明，MARFT在复杂推理任务中优于传统单智能体方法，推动了LLM在多智能体系统中的有效应用。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-04/cccb376509a715743b66c6deb83077f9b12dec9ca4202c304a0829cbcd424213.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-04/cccb376509a715743b66c6deb83077f9b12dec9ca4202c304a0829cbcd424213.jpg')">
+                            <img src="../../images/2025-11-04/cccb376509a715743b66c6deb83077f9b12dec9ca4202c304a0829cbcd424213.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2504.16129v4&redirect_url=%2Freports%2F2025-11-04%2F2504_16129v4.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -716,9 +875,48 @@
         </div>
 
         <div class="page-footer">
-            <p>生成时间: 2025-11-20 13:39:36</p>
+            <p>生成时间: 2025-11-20 13:55:38</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script>
+        // 打开模态框
+        function openModal(src) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImg');
+            
+            modalImg.src = src;
+            
+            // 显示并添加动画类
+            modal.classList.add('show');
+            
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            
+            // 移除动画类
+            modal.classList.remove('show');
+            
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 按 ESC 关闭
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

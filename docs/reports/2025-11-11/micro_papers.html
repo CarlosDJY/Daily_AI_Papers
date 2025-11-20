@@ -6,9 +6,8 @@
     <title>微观深度解读 - 2025-11-11</title>
     <style>
         :root {
-            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
             --primary-color: #4f46e5;
-            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --micro-color: #0ea5e9;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #0f172a;
@@ -24,7 +23,6 @@
             
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             
             --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
@@ -117,6 +115,7 @@
             padding: 30px;
             position: relative;
             transition: all 0.2s ease;
+            overflow: hidden;
         }
 
         .paper-card:hover {
@@ -124,7 +123,6 @@
             border-color: #cbd5e1;
         }
 
-        /* 序号水印 */
         .paper-index {
             position: absolute;
             top: 20px;
@@ -137,11 +135,11 @@
             z-index: 0;
         }
 
-        /* 卡片头部 */
         .card-header {
             position: relative;
             z-index: 1;
             margin-bottom: 20px;
+            padding-right: 40px;
         }
 
         .paper-title {
@@ -149,13 +147,12 @@
             font-weight: 700;
             margin-bottom: 12px;
             line-height: 1.4;
-            padding-right: 40px; /* 给序号留位 */
         }
 
         .paper-title a {
             color: var(--text-main);
             text-decoration: none;
-            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0);
             background-size: 0 10px;
             background-repeat: no-repeat;
             background-position: bottom;
@@ -167,7 +164,6 @@
             color: var(--primary-color);
         }
 
-        /* 元数据行 */
         .meta-row {
             display: flex;
             flex-wrap: wrap;
@@ -175,7 +171,7 @@
             align-items: center;
             font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .meta-item {
@@ -192,30 +188,45 @@
             border-radius: 6px;
             font-size: 12px;
         }
-
-        /* 关键词 */
+        
         .keywords-row {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 20px;
         }
 
         .keyword-tag {
             background-color: var(--tag-bg);
             color: var(--tag-text);
             font-size: 12px;
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 99px;
             font-weight: 500;
         }
 
-        /* 摘要内容 */
+        /* 内容布局 */
+        .card-body-flex {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-column {
+            flex: 0 0 280px;
+            max-width: 40%;
+        }
+
         .summary-content {
             font-size: 15px;
             color: #334155;
             line-height: 1.7;
-            margin-bottom: 20px;
             text-align: justify;
         }
         
@@ -225,43 +236,141 @@
             margin-right: 4px;
         }
 
+        /* --- 图片预览容器 (带放大提示) --- */
+        .image-wrapper {
+            width: 100%;
+            height: 180px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in; /* 鼠标变为放大镜 */
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .image-wrapper:hover {
+            border-color: var(--micro-color);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        /* 悬停时显示的放大图标遮罩 */
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.05); /* 极淡的遮罩 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper:hover .zoom-overlay {
+            opacity: 1;
+        }
+
+        .zoom-icon {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- 灯箱 Modal 样式 --- */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 现代感毛玻璃背景 */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f5f9;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
         /* 警告框 */
         .warning-box {
             background-color: var(--warn-bg);
             color: var(--warn-text);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 13px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: flex-start;
             gap: 8px;
+            border-left: 3px solid #fdba74;
         }
         
-        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+        .warning-box .icon { flex-shrink: 0; margin-top: 3px; }
 
-        /* 图片容器 */
-        .image-wrapper {
-            margin: 20px 0;
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* 底部操作栏 */
         .card-footer {
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 1px dashed var(--border-color);
             display: flex;
             justify-content: flex-end;
@@ -271,21 +380,19 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s;
-            border: 1px solid var(--border-color);
         }
 
         .btn-read:hover {
-            background-color: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
+            background-color: #f1f5f9;
+            color: var(--primary-color);
         }
 
         .page-footer {
@@ -298,12 +405,28 @@
         }
 
         /* 移动端适配 */
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
             .paper-card { padding: 20px; }
             .paper-index { font-size: 30px; top: 15px; right: 15px; }
             .paper-title { font-size: 18px; padding-right: 30px; }
-            .card-footer { justify-content: stretch; }
-            .btn-read { width: 100%; justify-content: center; }
+            
+            .card-body-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .image-column {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .image-wrapper {
+                height: 200px;
+            }
+            
+            .card-footer { justify-content: space-between; }
         }
     </style>
 </head>
@@ -327,22 +450,19 @@
 
         <div class="paper-list">
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#1</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.06942v1&redirect_url=%2Freports%2F2025-11-11%2F2511_06942v1.html">
-                            HLPD: Aligning LLMs to Human Language Preference for Machine-Revised Text Detection
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.06942v1&redirect_url=%2Freports%2F2025-11-11%2F2511_06942v1.html">HLPD: Aligning LLMs to Human Language Preference for Machine-Revised Text Detection</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.518 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.518 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -350,7 +470,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -368,22 +487,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了人类语言偏好检测（HLPD）方法，旨在解决在黑箱环境下准确识别机器生成和修订文本的挑战。HLPD通过人类语言偏好优化（HLPO）机制，增强模型对人类写作风格的敏感性，显著提高了检测性能。在多项实验中，HLPD在识别GPT系列模型修订文本时，AUROC表现优于现有基线，展示了其卓越的准确性和鲁棒性。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了人类语言偏好检测（HLPD）方法，旨在解决在黑箱环境下准确识别机器生成和修订文本的挑战。HLPD通过人类语言偏好优化（HLPO）机制，增强模型对人类写作风格的敏感性，显著提高了检测性能。在多项实验中，HLPD在识别GPT系列模型修订文本时，AUROC表现优于现有基线，展示了其卓越的准确性和鲁棒性。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/d16529c7b54262f78453327dfb7a0e14e35b3e70362304cee7aab8fba52bfda7.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/d16529c7b54262f78453327dfb7a0e14e35b3e70362304cee7aab8fba52bfda7.jpg')">
+                            <img src="../../images/2025-11-11/d16529c7b54262f78453327dfb7a0e14e35b3e70362304cee7aab8fba52bfda7.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.06942v1&redirect_url=%2Freports%2F2025-11-11%2F2511_06942v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -391,22 +520,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#2</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07419v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07419v1.html">
-                            Routing Manifold Alignment Improves Generalization of Mixture-of-Experts LLMs
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07419v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07419v1.html">Routing Manifold Alignment Improves Generalization of Mixture-of-Experts LLMs</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.515 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.515 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -414,7 +540,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -432,22 +557,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了路由流形对齐（RoMA）方法，旨在解决稀疏混合专家（MoE）模型中任务理解与专家选择之间的不对齐问题。通过引入流形正则化，RoMA实现了路由权重与任务嵌入的对齐，显著提升了模型的泛化能力和准确性（提升7-15%），同时保持低推理成本。实验验证了RoMA在多个基准上的优越性能，增强了小模型的竞争力。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了路由流形对齐（RoMA）方法，旨在解决稀疏混合专家（MoE）模型中任务理解与专家选择之间的不对齐问题。通过引入流形正则化，RoMA实现了路由权重与任务嵌入的对齐，显著提升了模型的泛化能力和准确性（提升7-15%），同时保持低推理成本。实验验证了RoMA在多个基准上的优越性能，增强了小模型的竞争力。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/8533bd345022465f351af246da339b7e0c4d6b4bfd4100e7885e2e6d4a0dc5a4.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/8533bd345022465f351af246da339b7e0c4d6b4bfd4100e7885e2e6d4a0dc5a4.jpg')">
+                            <img src="../../images/2025-11-11/8533bd345022465f351af246da339b7e0c4d6b4bfd4100e7885e2e6d4a0dc5a4.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07419v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07419v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -455,22 +590,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#3</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07112v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07112v1.html">
-                            More Agents Helps but Adversarial Robustness Gap Persists
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07112v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07112v1.html">More Agents Helps but Adversarial Robustness Gap Persists</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.495 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.495 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -478,7 +610,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -496,22 +627,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种统一的采样与投票框架（Agent Forest），系统评估多代理大语言模型（LLM）在面对数学问题时的鲁棒性。研究表明，尽管增加代理数量能提高准确性，但对抗性输入的鲁棒性并未显著改善，尤其是人类拼写错误对性能影响更大。这一发现揭示了准确性与鲁棒性之间的分离，为未来AI系统的设计提供了重要见解。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种统一的采样与投票框架（Agent Forest），系统评估多代理大语言模型（LLM）在面对数学问题时的鲁棒性。研究表明，尽管增加代理数量能提高准确性，但对抗性输入的鲁棒性并未显著改善，尤其是人类拼写错误对性能影响更大。这一发现揭示了准确性与鲁棒性之间的分离，为未来AI系统的设计提供了重要见解。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/696e159c91030e64975e54733f8f8d711d87fc4d073d6dc442ff68fc75f711d2.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/696e159c91030e64975e54733f8f8d711d87fc4d073d6dc442ff68fc75f711d2.jpg')">
+                            <img src="../../images/2025-11-11/696e159c91030e64975e54733f8f8d711d87fc4d073d6dc442ff68fc75f711d2.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07112v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07112v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -519,22 +660,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#4</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07074v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07074v1.html">
-                            Importance-Aware Data Selection for Efficient LLM Instruction Tuning
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07074v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07074v1.html">Importance-Aware Data Selection for Efficient LLM Instruction Tuning</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.493 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.493 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -542,7 +680,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -560,22 +697,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新颖的“模型指令弱点值”（MIWV）指标，用于量化指令数据对大语言模型（LLM）能力提升的重要性。通过比较模型在使用和不使用特定指令样本时的性能差异，MIWV能够有效筛选出最具价值的高质量数据。实验表明，仅使用前1%至15%的MIWV高分样本进行指令调优，模型性能显著优于使用全量数据集，验证了“少即是多”的策略。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新颖的“模型指令弱点值”（MIWV）指标，用于量化指令数据对大语言模型（LLM）能力提升的重要性。通过比较模型在使用和不使用特定指令样本时的性能差异，MIWV能够有效筛选出最具价值的高质量数据。实验表明，仅使用前1%至15%的MIWV高分样本进行指令调优，模型性能显著优于使用全量数据集，验证了“少即是多”的策略。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/812147f271ace4309819f15f5461f2e075c4873fb7588a2389ebfbce0c4e4a0a.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/812147f271ace4309819f15f5461f2e075c4873fb7588a2389ebfbce0c4e4a0a.jpg')">
+                            <img src="../../images/2025-11-11/812147f271ace4309819f15f5461f2e075c4873fb7588a2389ebfbce0c4e4a0a.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07074v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07074v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -583,22 +730,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#5</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07328v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07328v1.html">
-                            Q-RAG: Long Context Multi-step Retrieval via Value-based Embedder Training
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07328v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07328v1.html">Q-RAG: Long Context Multi-step Retrieval via Value-based Embedder Training</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.490 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.490 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -606,7 +750,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -624,22 +767,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了Q-RAG方法，通过将多步骤检索建模为马尔可夫决策过程，利用强化学习高效训练嵌入器，实现长上下文中的复杂问答。Q-RAG在多个基准测试中表现出色，显著降低资源消耗并提高检索准确率，尤其在处理超长文本时展现出优越性。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了Q-RAG方法，通过将多步骤检索建模为马尔可夫决策过程，利用强化学习高效训练嵌入器，实现长上下文中的复杂问答。Q-RAG在多个基准测试中表现出色，显著降低资源消耗并提高检索准确率，尤其在处理超长文本时展现出优越性。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/3718ab1b1b090048bae85c8e885ef42af4c94c79bbee06c747108aed61258ad9.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/3718ab1b1b090048bae85c8e885ef42af4c94c79bbee06c747108aed61258ad9.jpg')">
+                            <img src="../../images/2025-11-11/3718ab1b1b090048bae85c8e885ef42af4c94c79bbee06c747108aed61258ad9.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07328v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07328v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -647,22 +800,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#6</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07176v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07176v1.html">
-                            Graph Representation-based Model Poisoning on the Heterogeneous Internet of Agents
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07176v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07176v1.html">Graph Representation-based Model Poisoning on the Heterogeneous Internet of Agents</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.435 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.435 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -670,7 +820,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -688,22 +837,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新型的模型中毒攻击框架GRMP，利用图表示学习技术，通过构建参数相关图和生成恶意模型，成功绕过现有防御机制，显著降低联邦学习系统的准确性。该研究揭示了在异构智能代理环境中，现有防御的脆弱性，强调了对更强安全措施的需求。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新型的模型中毒攻击框架GRMP，利用图表示学习技术，通过构建参数相关图和生成恶意模型，成功绕过现有防御机制，显著降低联邦学习系统的准确性。该研究揭示了在异构智能代理环境中，现有防御的脆弱性，强调了对更强安全措施的需求。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-11-11/e1cb2d12152e93d56cb3d6de295c5e49daf49cba84f73880d25e0629813b5b65.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-11/e1cb2d12152e93d56cb3d6de295c5e49daf49cba84f73880d25e0629813b5b65.jpg')">
+                            <img src="../../images/2025-11-11/e1cb2d12152e93d56cb3d6de295c5e49daf49cba84f73880d25e0629813b5b65.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.07176v1&redirect_url=%2Freports%2F2025-11-11%2F2511_07176v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -714,9 +873,48 @@
         </div>
 
         <div class="page-footer">
-            <p>生成时间: 2025-11-20 13:39:36</p>
+            <p>生成时间: 2025-11-20 13:55:38</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script>
+        // 打开模态框
+        function openModal(src) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImg');
+            
+            modalImg.src = src;
+            
+            // 显示并添加动画类
+            modal.classList.add('show');
+            
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            
+            // 移除动画类
+            modal.classList.remove('show');
+            
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 按 ESC 关闭
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

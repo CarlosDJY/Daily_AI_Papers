@@ -6,9 +6,8 @@
     <title>微观深度解读 - 2025-10-31</title>
     <style>
         :root {
-            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
             --primary-color: #4f46e5;
-            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --micro-color: #0ea5e9;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #0f172a;
@@ -24,7 +23,6 @@
             
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             
             --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
@@ -117,6 +115,7 @@
             padding: 30px;
             position: relative;
             transition: all 0.2s ease;
+            overflow: hidden;
         }
 
         .paper-card:hover {
@@ -124,7 +123,6 @@
             border-color: #cbd5e1;
         }
 
-        /* 序号水印 */
         .paper-index {
             position: absolute;
             top: 20px;
@@ -137,11 +135,11 @@
             z-index: 0;
         }
 
-        /* 卡片头部 */
         .card-header {
             position: relative;
             z-index: 1;
             margin-bottom: 20px;
+            padding-right: 40px;
         }
 
         .paper-title {
@@ -149,13 +147,12 @@
             font-weight: 700;
             margin-bottom: 12px;
             line-height: 1.4;
-            padding-right: 40px; /* 给序号留位 */
         }
 
         .paper-title a {
             color: var(--text-main);
             text-decoration: none;
-            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0);
             background-size: 0 10px;
             background-repeat: no-repeat;
             background-position: bottom;
@@ -167,7 +164,6 @@
             color: var(--primary-color);
         }
 
-        /* 元数据行 */
         .meta-row {
             display: flex;
             flex-wrap: wrap;
@@ -175,7 +171,7 @@
             align-items: center;
             font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .meta-item {
@@ -192,30 +188,45 @@
             border-radius: 6px;
             font-size: 12px;
         }
-
-        /* 关键词 */
+        
         .keywords-row {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 20px;
         }
 
         .keyword-tag {
             background-color: var(--tag-bg);
             color: var(--tag-text);
             font-size: 12px;
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 99px;
             font-weight: 500;
         }
 
-        /* 摘要内容 */
+        /* 内容布局 */
+        .card-body-flex {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-column {
+            flex: 0 0 280px;
+            max-width: 40%;
+        }
+
         .summary-content {
             font-size: 15px;
             color: #334155;
             line-height: 1.7;
-            margin-bottom: 20px;
             text-align: justify;
         }
         
@@ -225,43 +236,141 @@
             margin-right: 4px;
         }
 
+        /* --- 图片预览容器 (带放大提示) --- */
+        .image-wrapper {
+            width: 100%;
+            height: 180px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in; /* 鼠标变为放大镜 */
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .image-wrapper:hover {
+            border-color: var(--micro-color);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        /* 悬停时显示的放大图标遮罩 */
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.05); /* 极淡的遮罩 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper:hover .zoom-overlay {
+            opacity: 1;
+        }
+
+        .zoom-icon {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- 灯箱 Modal 样式 --- */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 现代感毛玻璃背景 */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f5f9;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
         /* 警告框 */
         .warning-box {
             background-color: var(--warn-bg);
             color: var(--warn-text);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 13px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: flex-start;
             gap: 8px;
+            border-left: 3px solid #fdba74;
         }
         
-        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+        .warning-box .icon { flex-shrink: 0; margin-top: 3px; }
 
-        /* 图片容器 */
-        .image-wrapper {
-            margin: 20px 0;
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* 底部操作栏 */
         .card-footer {
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 1px dashed var(--border-color);
             display: flex;
             justify-content: flex-end;
@@ -271,21 +380,19 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s;
-            border: 1px solid var(--border-color);
         }
 
         .btn-read:hover {
-            background-color: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
+            background-color: #f1f5f9;
+            color: var(--primary-color);
         }
 
         .page-footer {
@@ -298,12 +405,28 @@
         }
 
         /* 移动端适配 */
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
             .paper-card { padding: 20px; }
             .paper-index { font-size: 30px; top: 15px; right: 15px; }
             .paper-title { font-size: 18px; padding-right: 30px; }
-            .card-footer { justify-content: stretch; }
-            .btn-read { width: 100%; justify-content: center; }
+            
+            .card-body-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .image-column {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .image-wrapper {
+                height: 200px;
+            }
+            
+            .card-footer { justify-content: space-between; }
         }
     </style>
 </head>
@@ -327,22 +450,19 @@
 
         <div class="paper-list">
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#1</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21322v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21322v1.html">
-                            Leverage Unlearning to Sanitize LLMs
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21322v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21322v1.html">Leverage Unlearning to Sanitize LLMs</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.568 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.568 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -350,7 +470,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -368,22 +487,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了SANI框架，通过“擦除-修复”策略有效去除大型语言模型中的敏感信息。该方法首先重置特定神经元以破坏信息记忆，然后进行短暂微调以避免重新学习敏感数据。实验结果表明，SANI显著降低了敏感信息的再现率，同时保持了模型在下游任务上的性能，为处理敏感数据的行业提供了高效的解决方案。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了SANI框架，通过“擦除-修复”策略有效去除大型语言模型中的敏感信息。该方法首先重置特定神经元以破坏信息记忆，然后进行短暂微调以避免重新学习敏感数据。实验结果表明，SANI显著降低了敏感信息的再现率，同时保持了模型在下游任务上的性能，为处理敏感数据的行业提供了高效的解决方案。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/170bbab6de16654b7308a3286c0821f255dd2b8919ceb2f7da3860670a5799c6.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/170bbab6de16654b7308a3286c0821f255dd2b8919ceb2f7da3860670a5799c6.jpg')">
+                            <img src="../../images/2025-10-31/170bbab6de16654b7308a3286c0821f255dd2b8919ceb2f7da3860670a5799c6.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21322v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21322v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -391,22 +520,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#2</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21513v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21513v2.html">
-                            Wisdom and Delusion of LLM Ensembles for Code Generation and Repair
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21513v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21513v2.html">Wisdom and Delusion of LLM Ensembles for Code Generation and Repair</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.566 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.566 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -414,7 +540,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -432,22 +557,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种多样性驱动的选择策略，以解决软件工程任务中大型语言模型（LLM）集成的有效性问题。通过比较十个LLM的互补性，研究发现该策略能够显著提升集成模型的性能，避免共识策略的“流行陷阱”，实现理论潜力的95%。此方法为软件工程实践者提供了利用多模型提升代码生成和修复成功率的有效路径。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种多样性驱动的选择策略，以解决软件工程任务中大型语言模型（LLM）集成的有效性问题。通过比较十个LLM的互补性，研究发现该策略能够显著提升集成模型的性能，避免共识策略的“流行陷阱”，实现理论潜力的95%。此方法为软件工程实践者提供了利用多模型提升代码生成和修复成功率的有效路径。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/0af1ce4024dfde2cb1040eb55672abb8e981381dfa73c682c9bf380871a043f4.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/0af1ce4024dfde2cb1040eb55672abb8e981381dfa73c682c9bf380871a043f4.jpg')">
+                            <img src="../../images/2025-10-31/0af1ce4024dfde2cb1040eb55672abb8e981381dfa73c682c9bf380871a043f4.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21513v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21513v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -455,22 +590,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#3</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21118v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21118v2.html">
-                            The Gray Zone of Faithfulness: Taming Ambiguity in Unfaithfulness Detection
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21118v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21118v2.html">The Gray Zone of Faithfulness: Taming Ambiguity in Unfaithfulness Detection</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.561 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.561 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -478,7 +610,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -496,22 +627,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新的信度注释框架，通过引入“Out-Dependent”类别，解决了大型语言模型生成摘要时的注释模糊性问题。基于此框架，构建了VeriGray基准数据集，揭示了当前最先进模型在处理不忠实性时的局限性，特别是在需要外部知识验证的情况下，推动了不忠实性检测技术的发展。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新的信度注释框架，通过引入“Out-Dependent”类别，解决了大型语言模型生成摘要时的注释模糊性问题。基于此框架，构建了VeriGray基准数据集，揭示了当前最先进模型在处理不忠实性时的局限性，特别是在需要外部知识验证的情况下，推动了不忠实性检测技术的发展。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/0ffed7b49acd2e3ae11fc7f6e33b92dc533417e0c7f6f5600b3301be185d3323.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/0ffed7b49acd2e3ae11fc7f6e33b92dc533417e0c7f6f5600b3301be185d3323.jpg')">
+                            <img src="../../images/2025-10-31/0ffed7b49acd2e3ae11fc7f6e33b92dc533417e0c7f6f5600b3301be185d3323.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21118v2&redirect_url=%2Freports%2F2025-10-31%2F2510_21118v2.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -519,22 +660,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#4</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21460v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21460v1.html">
-                            Risk Management for Mitigating Benchmark Failure Modes: BenchRisk
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21460v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21460v1.html">Risk Management for Mitigating Benchmark Failure Modes: BenchRisk</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.547 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.547 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -542,7 +680,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -560,22 +697,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了BenchRisk框架，旨在识别和量化大语言模型（LLM）基准测试中的57种失败模式，并提供196种缓解策略。该框架通过评估基准的可靠性风险，帮助用户做出更安全的模型部署决策。研究表明，所有分析的26个基准在多个维度上存在显著风险，强调了对LLM基准可靠性评估的迫切需求。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了BenchRisk框架，旨在识别和量化大语言模型（LLM）基准测试中的57种失败模式，并提供196种缓解策略。该框架通过评估基准的可靠性风险，帮助用户做出更安全的模型部署决策。研究表明，所有分析的26个基准在多个维度上存在显著风险，强调了对LLM基准可靠性评估的迫切需求。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/9909c95d109254c56b11757ab81a450cf4fe4e8a75be700936f2d49c5f6b281c.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/9909c95d109254c56b11757ab81a450cf4fe4e8a75be700936f2d49c5f6b281c.jpg')">
+                            <img src="../../images/2025-10-31/9909c95d109254c56b11757ab81a450cf4fe4e8a75be700936f2d49c5f6b281c.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21460v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21460v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -583,22 +730,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#5</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21193v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21193v1.html">
-                            Estonian Native Large Language Model Benchmark
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21193v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21193v1.html">Estonian Native Large Language Model Benchmark</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.532 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.532 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -606,7 +750,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -624,22 +767,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了首个针对爱沙尼亚语的大型语言模型（LLM）综合评估基准，涵盖七个多样化任务集，解决了低资源语言评估缺乏标准化的问题。通过对6个基础模型和26个指令调优模型的系统评估，验证了基准与人类评估的一致性，并展示了LLM作为自动化评估工具的有效性，推动了爱沙尼亚语及其他低资源语言的NLP研究。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了首个针对爱沙尼亚语的大型语言模型（LLM）综合评估基准，涵盖七个多样化任务集，解决了低资源语言评估缺乏标准化的问题。通过对6个基础模型和26个指令调优模型的系统评估，验证了基准与人类评估的一致性，并展示了LLM作为自动化评估工具的有效性，推动了爱沙尼亚语及其他低资源语言的NLP研究。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/f663838250043c2f119f601361c857fe221e70e34ef3a6fec43a6013552c5fce.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/f663838250043c2f119f601361c857fe221e70e34ef3a6fec43a6013552c5fce.jpg')">
+                            <img src="../../images/2025-10-31/f663838250043c2f119f601361c857fe221e70e34ef3a6fec43a6013552c5fce.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21193v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21193v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -647,22 +800,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#6</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21425v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21425v1.html">
-                            Advancing Symbolic Integration in Large Language Models: Beyond Conventional Neurosymbolic AI
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21425v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21425v1.html">Advancing Symbolic Integration in Large Language Models: Beyond Conventional Neurosymbolic AI</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.404 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.404 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -670,7 +820,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -688,22 +837,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新的符号集成框架，旨在解决大语言模型（LLMs）在透明性和推理能力方面的不足。通过系统性回顾神经符号人工智能（NeSy AI）方法，作者提出了一个分类法和整合路线图，涵盖了多个维度的符号集成策略，以提升LLMs的可解释性和逻辑推理能力，为未来研究提供了方向。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新的符号集成框架，旨在解决大语言模型（LLMs）在透明性和推理能力方面的不足。通过系统性回顾神经符号人工智能（NeSy AI）方法，作者提出了一个分类法和整合路线图，涵盖了多个维度的符号集成策略，以提升LLMs的可解释性和逻辑推理能力，为未来研究提供了方向。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-31/d8e78b3f32272e5b3b79b65d2524b478414b6e9ac09056edd49e43a114270a3a.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-31/d8e78b3f32272e5b3b79b65d2524b478414b6e9ac09056edd49e43a114270a3a.jpg')">
+                            <img src="../../images/2025-10-31/d8e78b3f32272e5b3b79b65d2524b478414b6e9ac09056edd49e43a114270a3a.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.21425v1&redirect_url=%2Freports%2F2025-10-31%2F2510_21425v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -714,9 +873,48 @@
         </div>
 
         <div class="page-footer">
-            <p>生成时间: 2025-11-20 13:39:36</p>
+            <p>生成时间: 2025-11-20 13:55:38</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script>
+        // 打开模态框
+        function openModal(src) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImg');
+            
+            modalImg.src = src;
+            
+            // 显示并添加动画类
+            modal.classList.add('show');
+            
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            
+            // 移除动画类
+            modal.classList.remove('show');
+            
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 按 ESC 关闭
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

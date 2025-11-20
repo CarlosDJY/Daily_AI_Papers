@@ -6,9 +6,8 @@
     <title>微观深度解读 - 2025-10-29</title>
     <style>
         :root {
-            /* 配色：Slate (基调) + Sky (微观主题色) + Indigo (交互) */
             --primary-color: #4f46e5;
-            --micro-color: #0ea5e9;    /* Sky 500 - 对应每日简报中的微观色条 */
+            --micro-color: #0ea5e9;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --text-main: #0f172a;
@@ -24,7 +23,6 @@
             
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             
             --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
@@ -117,6 +115,7 @@
             padding: 30px;
             position: relative;
             transition: all 0.2s ease;
+            overflow: hidden;
         }
 
         .paper-card:hover {
@@ -124,7 +123,6 @@
             border-color: #cbd5e1;
         }
 
-        /* 序号水印 */
         .paper-index {
             position: absolute;
             top: 20px;
@@ -137,11 +135,11 @@
             z-index: 0;
         }
 
-        /* 卡片头部 */
         .card-header {
             position: relative;
             z-index: 1;
             margin-bottom: 20px;
+            padding-right: 40px;
         }
 
         .paper-title {
@@ -149,13 +147,12 @@
             font-weight: 700;
             margin-bottom: 12px;
             line-height: 1.4;
-            padding-right: 40px; /* 给序号留位 */
         }
 
         .paper-title a {
             color: var(--text-main);
             text-decoration: none;
-            background-image: linear-gradient(transparent 90%, var(--micro-color) 0); /* 极简下划线 */
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0);
             background-size: 0 10px;
             background-repeat: no-repeat;
             background-position: bottom;
@@ -167,7 +164,6 @@
             color: var(--primary-color);
         }
 
-        /* 元数据行 */
         .meta-row {
             display: flex;
             flex-wrap: wrap;
@@ -175,7 +171,7 @@
             align-items: center;
             font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .meta-item {
@@ -192,30 +188,45 @@
             border-radius: 6px;
             font-size: 12px;
         }
-
-        /* 关键词 */
+        
         .keywords-row {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 20px;
         }
 
         .keyword-tag {
             background-color: var(--tag-bg);
             color: var(--tag-text);
             font-size: 12px;
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 99px;
             font-weight: 500;
         }
 
-        /* 摘要内容 */
+        /* 内容布局 */
+        .card-body-flex {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-column {
+            flex: 0 0 280px;
+            max-width: 40%;
+        }
+
         .summary-content {
             font-size: 15px;
             color: #334155;
             line-height: 1.7;
-            margin-bottom: 20px;
             text-align: justify;
         }
         
@@ -225,43 +236,141 @@
             margin-right: 4px;
         }
 
+        /* --- 图片预览容器 (带放大提示) --- */
+        .image-wrapper {
+            width: 100%;
+            height: 180px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in; /* 鼠标变为放大镜 */
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .image-wrapper:hover {
+            border-color: var(--micro-color);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        /* 悬停时显示的放大图标遮罩 */
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.05); /* 极淡的遮罩 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper:hover .zoom-overlay {
+            opacity: 1;
+        }
+
+        .zoom-icon {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- 灯箱 Modal 样式 --- */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 现代感毛玻璃背景 */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f5f9;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
         /* 警告框 */
         .warning-box {
             background-color: var(--warn-bg);
             color: var(--warn-text);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 13px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: flex-start;
             gap: 8px;
+            border-left: 3px solid #fdba74;
         }
         
-        .warning-box .icon { flex-shrink: 0; margin-top: 2px; }
+        .warning-box .icon { flex-shrink: 0; margin-top: 3px; }
 
-        /* 图片容器 */
-        .image-wrapper {
-            margin: 20px 0;
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* 底部操作栏 */
         .card-footer {
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 1px dashed var(--border-color);
             display: flex;
             justify-content: flex-end;
@@ -271,21 +380,19 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s;
-            border: 1px solid var(--border-color);
         }
 
         .btn-read:hover {
-            background-color: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
+            background-color: #f1f5f9;
+            color: var(--primary-color);
         }
 
         .page-footer {
@@ -298,12 +405,28 @@
         }
 
         /* 移动端适配 */
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
             .paper-card { padding: 20px; }
             .paper-index { font-size: 30px; top: 15px; right: 15px; }
             .paper-title { font-size: 18px; padding-right: 30px; }
-            .card-footer { justify-content: stretch; }
-            .btn-read { width: 100%; justify-content: center; }
+            
+            .card-body-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .image-column {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .image-wrapper {
+                height: 200px;
+            }
+            
+            .card-footer { justify-content: space-between; }
         }
     </style>
 </head>
@@ -327,22 +450,19 @@
 
         <div class="paper-list">
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#1</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.23949v1&redirect_url=%2Freports%2F2025-10-29%2F2510_23949v1.html">
-                            Uncovering the Potential Risks in Unlearning: Danger of English-only Unlearning in Multilingual LLMs
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.23949v1&redirect_url=%2Freports%2F2025-10-29%2F2510_23949v1.html">Uncovering the Potential Risks in Unlearning: Danger of English-only Unlearning in Multilingual LLMs</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.539 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.539 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -350,7 +470,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -368,22 +487,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新方法来解决多语言大语言模型（LLM）在遗忘过程中出现的语言混淆问题。通过引入N-gram-based Language-Mix（N-Mix）评分，量化语言混淆的严重性，并指出传统参考指标在此情况下失效。论文倡导采用基于语义的评估方法，并建议在遗忘过程中引入平行多语言数据，以有效评估和减少语言混淆现象。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新方法来解决多语言大语言模型（LLM）在遗忘过程中出现的语言混淆问题。通过引入N-gram-based Language-Mix（N-Mix）评分，量化语言混淆的严重性，并指出传统参考指标在此情况下失效。论文倡导采用基于语义的评估方法，并建议在遗忘过程中引入平行多语言数据，以有效评估和减少语言混淆现象。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/b81678cda9705389ea589531e853c6299d9ca9ca7ac1f8215c8d521cd110dfce.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/b81678cda9705389ea589531e853c6299d9ca9ca7ac1f8215c8d521cd110dfce.jpg')">
+                            <img src="../../images/2025-10-29/b81678cda9705389ea589531e853c6299d9ca9ca7ac1f8215c8d521cd110dfce.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.23949v1&redirect_url=%2Freports%2F2025-10-29%2F2510_23949v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -391,22 +520,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#2</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24273v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24273v1.html">
-                            SALS: Sparse Attention in Latent Space for KV cache Compression
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24273v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24273v1.html">SALS: Sparse Attention in Latent Space for KV cache Compression</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.512 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.512 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -414,7 +540,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -432,22 +557,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了SALS（Sparse Attention in Latent Space）框架，旨在解决大型语言模型在处理长上下文时的推理效率问题。通过将键值缓存压缩到潜在空间并进行稀疏令牌选择，SALS实现了高达6.4倍的KV缓存压缩和5.7倍的计算加速，同时保持了竞争力的准确性。这一方法有效克服了旋转位置编码对低秩压缩的挑战，为LLM的实际应用提供了显著优化。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了SALS（Sparse Attention in Latent Space）框架，旨在解决大型语言模型在处理长上下文时的推理效率问题。通过将键值缓存压缩到潜在空间并进行稀疏令牌选择，SALS实现了高达6.4倍的KV缓存压缩和5.7倍的计算加速，同时保持了竞争力的准确性。这一方法有效克服了旋转位置编码对低秩压缩的挑战，为LLM的实际应用提供了显著优化。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/831dcd542bcf5cf6bc3ceeeed2dab8afa414b07b2d35b7f0a6511bdd7cc369d7.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/831dcd542bcf5cf6bc3ceeeed2dab8afa414b07b2d35b7f0a6511bdd7cc369d7.jpg')">
+                            <img src="../../images/2025-10-29/831dcd542bcf5cf6bc3ceeeed2dab8afa414b07b2d35b7f0a6511bdd7cc369d7.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24273v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24273v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -455,22 +590,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#3</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24073v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24073v1.html">
-                            Challenging Multilingual LLMs: A New Taxonomy and Benchmark for Unraveling Hallucination in Translation
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24073v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24073v1.html">Challenging Multilingual LLMs: A New Taxonomy and Benchmark for Unraveling Hallucination in Translation</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.506 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.506 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -478,7 +610,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -496,22 +627,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了HalloMTBench，一个新型的诊断框架，旨在揭示大型语言模型（LLMs）在多语言机器翻译中的幻觉问题。通过分类“指令脱离”和“源内容脱离”，并构建包含5,435个高质量实例的基准数据集，研究评估了17个LLMs的翻译性能，揭示了不同模型的幻觉触发因素，为改进翻译可靠性提供了重要工具。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了HalloMTBench，一个新型的诊断框架，旨在揭示大型语言模型（LLMs）在多语言机器翻译中的幻觉问题。通过分类“指令脱离”和“源内容脱离”，并构建包含5,435个高质量实例的基准数据集，研究评估了17个LLMs的翻译性能，揭示了不同模型的幻觉触发因素，为改进翻译可靠性提供了重要工具。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/99d309504aec7bbb79b54d0eabb5b4bf6b9758304a1e177ebf81aa8547a8a63c.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/99d309504aec7bbb79b54d0eabb5b4bf6b9758304a1e177ebf81aa8547a8a63c.jpg')">
+                            <img src="../../images/2025-10-29/99d309504aec7bbb79b54d0eabb5b4bf6b9758304a1e177ebf81aa8547a8a63c.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24073v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24073v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -519,22 +660,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#4</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24299v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24299v1.html">
-                            Verifying Large Language Models' Reasoning Paths via Correlation Matrix Rank
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24299v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24299v1.html">Verifying Large Language Models' Reasoning Paths via Correlation Matrix Rank</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.492 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.492 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -542,7 +680,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -560,22 +697,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种新颖的Self-Indicator方法，通过分析大型语言模型（LLMs）内部生成的相关矩阵秩，评估推理路径的正确性。该方法无需外部资源，显著降低计算开销，并在多个数学推理基准上提升了超过8%的准确率，准确区分正确与错误推理路径的能力超过75%。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了一种新颖的Self-Indicator方法，通过分析大型语言模型（LLMs）内部生成的相关矩阵秩，评估推理路径的正确性。该方法无需外部资源，显著降低计算开销，并在多个数学推理基准上提升了超过8%的准确率，准确区分正确与错误推理路径的能力超过75%。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/e97ca453b9ddbd9fbc636cd30b203cb5f169d5c184500f7a4aae658188655e39.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/e97ca453b9ddbd9fbc636cd30b203cb5f169d5c184500f7a4aae658188655e39.jpg')">
+                            <img src="../../images/2025-10-29/e97ca453b9ddbd9fbc636cd30b203cb5f169d5c184500f7a4aae658188655e39.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24299v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24299v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -583,22 +730,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#5</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24694v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24694v1.html">
-                            Repurposing Synthetic Data for Fine-grained Search Agent Supervision
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24694v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24694v1.html">Repurposing Synthetic Data for Fine-grained Search Agent Supervision</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.483 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.483 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -606,7 +750,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -624,22 +767,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了实体意识的组相对策略优化（E-GRPO）框架，解决了传统GRPO方法中稀疏奖励导致的信息丢失问题。E-GRPO通过引入基于实体匹配率的密集奖励机制，使模型能够从“近乎正确”的失败样本中学习，从而显著提升了搜索代理在复杂知识任务中的准确性和推理效率。实验结果表明，E-GRPO在多项基准测试中优于现有方法。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了实体意识的组相对策略优化（E-GRPO）框架，解决了传统GRPO方法中稀疏奖励导致的信息丢失问题。E-GRPO通过引入基于实体匹配率的密集奖励机制，使模型能够从“近乎正确”的失败样本中学习，从而显著提升了搜索代理在复杂知识任务中的准确性和推理效率。实验结果表明，E-GRPO在多项基准测试中优于现有方法。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/f45f2e719d4cf76db5da57c9fb3609f9115bd3e10df4c2d2954cc2a63afabd94.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/f45f2e719d4cf76db5da57c9fb3609f9115bd3e10df4c2d2954cc2a63afabd94.jpg')">
+                            <img src="../../images/2025-10-29/f45f2e719d4cf76db5da57c9fb3609f9115bd3e10df4c2d2954cc2a63afabd94.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24694v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24694v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -647,22 +800,19 @@
                 </div>
             </div>
             
+            
+            
+            
+
             <div class="paper-card">
                 <div class="paper-index">#6</div>
                 
                 <div class="card-header">
                     <div class="paper-title">
-                        
-                        
-                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24605v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24605v1.html">
-                            Diffusion LLM with Native Variable Generation Lengths: Let [EOS] Lead the Way
-                        </a>
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24605v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24605v1.html">Diffusion LLM with Native Variable Generation Lengths: Let [EOS] Lead the Way</a>
                     </div>
-
                     <div class="meta-row">
-                        <div class="meta-item">
-                            <span class="score-badge">0.473 分</span>
-                        </div>
+                        <div class="meta-item"><span class="score-badge">0.473 分</span></div>
                         
                         <div class="meta-item">
                             <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
@@ -670,7 +820,6 @@
                         </div>
                         
                     </div>
-
                     
                     <div class="keywords-row">
                         
@@ -688,22 +837,32 @@
                     
                 </div>
 
-                <div class="summary-content">
-                    
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了dLLM-Var框架，解决了扩散基大语言模型（dLLMs）在文本生成中固定生成长度和低推理效率的问题。通过引入固定的EOS掩码和多样本打包的训练策略，dLLM-Var实现了原生可变长度生成，显著提高了推理速度（最高30.1倍）和生成准确性，推动了dLLMs的实际应用。
+                        </div>
+                    </div>
 
-                    <span class="summary-label">简介：</span>本文提出了dLLM-Var框架，解决了扩散基大语言模型（dLLMs）在文本生成中固定生成长度和低推理效率的问题。通过引入固定的EOS掩码和多样本打包的训练策略，dLLM-Var实现了原生可变长度生成，显著提高了推理速度（最高30.1倍）和生成准确性，推动了dLLMs的实际应用。
-                </div>
-
-                
-                <div class="image-wrapper">
                     
-                    <img src="../../images/2025-10-29/55abb5b0ac72958f94db0e25f02f726d205de82072cd2496b385f191c31bf058.jpg" alt="核心思路示意图" loading="lazy" />
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-10-29/55abb5b0ac72958f94db0e25f02f726d205de82072cd2496b385f191c31bf058.jpg')">
+                            <img src="../../images/2025-10-29/55abb5b0ac72958f94db0e25f02f726d205de82072cd2496b385f191c31bf058.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
-                
 
                 <div class="card-footer">
-                    
-                    
                     <a href="https://jycarlos1019.pp.ua/track?paper_id=2510.24605v1&redirect_url=%2Freports%2F2025-10-29%2F2510_24605v1.html" class="btn-read">
                         阅读详细解读
                         <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -714,9 +873,48 @@
         </div>
 
         <div class="page-footer">
-            <p>生成时间: 2025-11-20 13:39:36</p>
+            <p>生成时间: 2025-11-20 13:55:39</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script>
+        // 打开模态框
+        function openModal(src) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImg');
+            
+            modalImg.src = src;
+            
+            // 显示并添加动画类
+            modal.classList.add('show');
+            
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            
+            // 移除动画类
+            modal.classList.remove('show');
+            
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 按 ESC 关闭
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>
