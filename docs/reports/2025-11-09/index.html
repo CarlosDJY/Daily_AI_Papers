@@ -18,8 +18,13 @@
             /* 功能色：用于区分不同模块 */
             --color-meso: #f59e0b;      /* Amber: 聚类 */
             --color-meso-bg: #fffbeb;
+            
             --color-micro: #0ea5e9;     /* Sky: 深度 */
             --color-micro-bg: #f0f9ff;
+            
+            --color-direction: #f97316; /* Orange: 技术方向 (新增) */
+            --color-direction-bg: #fff7ed;
+            
             --color-mining: #8b5cf6;    /* Violet: 挖掘 */
             --color-mining-bg: #f5f3ff;
             
@@ -177,7 +182,7 @@
             flex: 3;
             display: flex;
             flex-direction: column;
-            gap: 0; /* 使用 border 分隔 */
+            gap: 0;
         }
 
         .stat-item {
@@ -237,9 +242,10 @@
             margin-left: 12px;
         }
 
+        /* --- 核心布局调整：改为 2 列以适应 4 个卡片 --- */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr); /* 2x2 布局，更平衡 */
             gap: 24px;
         }
 
@@ -266,12 +272,14 @@
             left: 0;
             width: 100%;
             height: 6px;
-            background-color: var(--text-light); /* 默认 */
+            background-color: var(--text-light);
             transition: height 0.2s;
         }
 
+        /* 颜色定义 */
         .nav-card.meso::before { background-color: var(--color-meso); }
         .nav-card.micro::before { background-color: var(--color-micro); }
+        .nav-card.directions::before { background-color: var(--color-direction); } /* 新增 */
         .nav-card.mining::before { background-color: var(--color-mining); }
 
         .nav-card:hover {
@@ -279,16 +287,16 @@
             box-shadow: var(--shadow-hover);
         }
         
-        /* Hover 时顶部条变宽一点 */
         .nav-card:hover::before { height: 8px; }
 
         .card-content {
-            padding: 32px 24px 24px; /* Top padding increased for the bar */
+            padding: 32px 24px 24px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
 
+        /* 图标容器 */
         .card-icon-wrapper {
             width: 48px;
             height: 48px;
@@ -302,11 +310,19 @@
         
         .nav-card:hover .card-icon-wrapper { transform: scale(1.1) rotate(-5deg); }
 
+        /* 图标背景色 */
         .nav-card.meso .card-icon-wrapper { background-color: var(--color-meso-bg); color: var(--color-meso); }
         .nav-card.micro .card-icon-wrapper { background-color: var(--color-micro-bg); color: var(--color-micro); }
+        .nav-card.directions .card-icon-wrapper { background-color: var(--color-direction-bg); color: var(--color-direction); } /* 新增 */
         .nav-card.mining .card-icon-wrapper { background-color: var(--color-mining-bg); color: var(--color-mining); }
         
         .card-icon-wrapper .icon { width: 24px; height: 24px; }
+
+        .card-text {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
         .card-title {
             font-size: 18px;
@@ -320,6 +336,7 @@
             color: var(--text-secondary);
             line-height: 1.5;
             margin-bottom: 24px;
+            flex-grow: 1; /* 确保描述填满空间，让 Footer 对齐 */
         }
 
         .card-footer {
@@ -328,12 +345,14 @@
             font-weight: 600;
             display: flex;
             align-items: center;
-            color: var(--text-light); /* 默认灰色 */
+            color: var(--text-light);
             transition: color 0.2s;
         }
 
+        /* Footer 颜色 */
         .nav-card.meso .card-footer { color: var(--color-meso); }
         .nav-card.micro .card-footer { color: var(--color-micro); }
+        .nav-card.directions .card-footer { color: var(--color-direction); } /* 新增 */
         .nav-card.mining .card-footer { color: var(--color-mining); }
 
         .card-footer .icon {
@@ -374,9 +393,7 @@
         @media (max-width: 850px) {
             .macro-dashboard {
                 flex-direction: column;
-                gap: 0;
                 padding: 0;
-                overflow: hidden;
             }
             
             .macro-wordcloud {
@@ -400,10 +417,10 @@
                 align-items: flex-start;
             }
             
-            .stat-icon { display: none; } /* 移动端隐藏图标简化 */
+            .stat-icon { display: none; }
 
             .cards-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; /* 移动端单列 */
                 gap: 20px;
             }
             
@@ -501,7 +518,9 @@
             <div class="section-line"></div>
         </div>
         
+        <!-- 4个卡片的 2x2 网格 -->
         <div class="cards-grid">
+            <!-- 1. 聚类分析 (Meso - Amber) -->
             <a href="https://jycarlos1019.pp.ua/reports/2025-11-09/meso_clusters.html" 
                class="nav-card meso ">
                 <div class="card-content">
@@ -521,6 +540,7 @@
                 </div>
             </a>
             
+            <!-- 2. 微观解读 (Micro - Sky) -->
             <a href="https://jycarlos1019.pp.ua/reports/2025-11-09/micro_papers.html" 
                class="nav-card micro">
                 <div class="card-content">
@@ -537,7 +557,32 @@
                     </div>
                 </div>
             </a>
+
+            <!-- 3. 主流技术方向 (Directions - Orange) -->
+            <a href="https://jycarlos1019.pp.ua/reports/2025-11-09/tech_directions.html" 
+               class="nav-card directions ">
+                <div class="card-content">
+                    <div class="card-icon-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2l7 7-7 7-7-7z"></path><path d="M2 12l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="card-text">
+                        <div class="card-title">几大技术方向</div>
+                        <div class="card-desc">
+                            
+                                按 RAG / LLM / Agent / RL 等核心赛道聚合，快速定位兴趣点。
+                            
+                        </div>
+                        <div class="card-footer">
+                            查看方向
+                            
+                            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            
+                        </div>
+                    </div>
+                </div>
+            </a>
             
+            <!-- 4. 课题挖掘 (Mining - Violet) -->
             <a href="https://jycarlos1019.pp.ua/reports/2025-11-09/topic_mining.html" 
                class="nav-card mining ">
                 <div class="card-content">
@@ -548,7 +593,7 @@
                         <div class="card-title">课题挖掘报告</div>
                         <div class="card-desc">发散性研究思路与潜在课题方向探索。</div>
                         <div class="card-footer">
-                            探索灵感
+                            查看课题挖掘报告
                             
                             <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                             
@@ -559,7 +604,7 @@
         </div>
         
         <div class="footer">
-            <p>生成时间: 2025-11-20 13:55:38</p>
+            <p>生成时间: 2025-11-20 17:15:57</p>
             <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
         </div>
     </div>

@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主流技术方向 - 2025-10-27</title>
+    <style>
+        :root {
+            /* 系统配色 */
+            --primary-color: #4f46e5;   /* Indigo */
+            --direction-color: #f97316; /* Orange 500 */
+            --direction-dark: #c2410c;  /* Orange 700 */
+            --direction-light: #fff7ed; /* Orange 50 */
+            --direction-border: #fdba74;/* Orange 300 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        .date-badge {
+            background-color: #e0e7ff;
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .header h1 .icon { color: var(--direction-color); width: 36px; height: 36px; }
+        
+        .header .subtitle { 
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* --- Tab 导航栏 --- */
+        .tabs-container {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 30px;
+            /* 磨砂玻璃效果 */
+            background: rgba(248, 250, 252, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 10px 0;
+            border-radius: 16px;
+        }
+
+        .tabs-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 4px 4px 12px 4px; /* 底部留空间给滚动条或阴影 */
+            
+            /* 隐藏滚动条但保持可滚动 */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE 10+ */
+            
+            /* 鼠标交互优化 */
+            cursor: grab; /* 提示可拖拽 */
+            user-select: none; /* 防止拖拽时选中文字 */
+        }
+        
+        .tabs-scroll::-webkit-scrollbar { 
+            display: none; /* Chrome/Safari */
+        }
+
+        /* 拖拽时的光标状态 */
+        .tabs-scroll.active {
+            cursor: grabbing;
+        }
+
+        .tab-btn {
+            flex-shrink: 0;
+            background-color: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 99px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            /* 防止图片/文字干扰拖拽 */
+            pointer-events: auto; 
+        }
+
+        .tab-btn:hover {
+            border-color: var(--direction-border);
+            color: var(--direction-color);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background-color: var(--direction-color);
+            color: white;
+            border-color: var(--direction-color);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); /* Orange glow */
+        }
+
+        .tab-count {
+            background-color: rgba(0,0,0,0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        
+        .tab-btn.active .tab-count {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* --- 内容区域 --- */
+        .tab-pane {
+            display: none; /* 默认隐藏 */
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .direction-block {
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .direction-header-info {
+            background-color: var(--direction-light);
+            padding: 24px 30px;
+            border-bottom: 1px solid var(--direction-border);
+        }
+        
+        .direction-title-lg {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--direction-dark);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .direction-desc-lg {
+            font-size: 15px;
+            color: #9a3412;
+            opacity: 0.9;
+        }
+
+        /* --- 手风琴论文列表 --- */
+        .paper-list {
+            padding: 10px 30px 30px;
+        }
+
+        .paper-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .paper-item:last-child { border-bottom: none; }
+
+        /* 折叠头部 (可点击) */
+        .paper-header {
+            padding: 20px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            group: paper-header;
+        }
+
+        .paper-title-row {
+            flex-grow: 1;
+        }
+
+        .paper-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            transition: color 0.2s;
+            margin-bottom: 6px;
+        }
+        
+        .paper-header:hover .paper-title {
+            color: var(--direction-color);
+        }
+
+        .paper-meta-preview {
+            font-size: 13px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .score-badge {
+            background-color: #f3f4f6;
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .toggle-icon {
+            color: var(--text-light);
+            transition: transform 0.3s ease, color 0.2s;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        /* 激活状态样式 */
+        .paper-item.expanded .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--direction-color);
+        }
+        
+        .paper-item.expanded .paper-title {
+            color: var(--direction-color);
+        }
+
+        /* 折叠内容区 */
+        .paper-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding-left: 4px; /* 微调对齐 */
+        }
+        
+        .paper-content-inner {
+            padding-bottom: 24px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+            text-align: justify;
+        }
+        
+        .paper-links {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+        }
+        
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .action-link:hover { text-decoration: underline; }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        
+        .footer a { color: var(--text-secondary); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            .container { padding: 20px 15px; }
+            .direction-header-info { padding: 20px; }
+            .paper-list { padding: 0 20px 20px; }
+            .paper-title { font-size: 16px; }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Tab 栏鼠标拖拽滚动 (Draggable Scroll)
+            const slider = document.querySelector('.tabs-scroll');
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            let isDragging = false; // 区分是“点击”还是“拖拽”
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                isDragging = false;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.classList.remove('active');
+            });
+
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.classList.remove('active');
+                // 如果是拖拽结束，为了防止触发 click，我们在 click 事件中做判断
+                setTimeout(() => { isDragging = false; }, 0);
+            });
+
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault(); // 防止选中文字
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // 滚动速度系数
+                slider.scrollLeft = scrollLeft - walk;
+                
+                // 如果移动距离超过 5px，则视为拖拽，不是点击
+                if (Math.abs(walk) > 5) {
+                    isDragging = true;
+                }
+            });
+
+            // 2. Tab 切换逻辑
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    // 如果刚才是在拖拽，则拦截点击，不切换 Tab
+                    if (isDragging) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+
+                    // 移除所有激活状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panes.forEach(p => p.classList.remove('active'));
+
+                    // 激活当前
+                    tab.classList.add('active');
+                    const targetId = tab.getAttribute('data-target');
+                    document.getElementById(targetId).classList.add('active');
+                    
+                    // 滚动 Tab 到可见区域 (移动端/拖拽后体验优化)
+                    tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                });
+            });
+
+            // 3. 论文折叠/展开逻辑
+            const paperHeaders = document.querySelectorAll('.paper-header');
+
+            paperHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const item = this.parentElement;
+                    const body = item.querySelector('.paper-body');
+                    
+                    // 切换状态
+                    item.classList.toggle('expanded');
+                    
+                    if (item.classList.contains('expanded')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航 -->
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <div class="date-badge">2025-10-27</div>
+        </div>
+
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                每日主流技术方向
+            </h1>
+            <div class="subtitle">聚合 RAG / LLM / Agent 等核心赛道，点击下方标签切换</div>
+        </div>
+
+        
+        
+        
+        
+        <!-- Tab 导航栏 (可拖拽) -->
+        <div class="tabs-container">
+            <div class="tabs-scroll">
+                
+                <button class="tab-btn active" data-target="tab-1">
+                    Alignment
+                    <span class="tab-count">1</span>
+                </button>
+                
+                <button class="tab-btn " data-target="tab-2">
+                    LLM
+                    <span class="tab-count">5</span>
+                </button>
+                
+                <button class="tab-btn " data-target="tab-3">
+                    Optimization
+                    <span class="tab-count">3</span>
+                </button>
+                
+                <button class="tab-btn " data-target="tab-4">
+                    Other
+                    <span class="tab-count">3</span>
+                </button>
+                
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-wrapper">
+            
+            <div id="tab-1" class="tab-pane active">
+                <div class="direction-block">
+                    <!-- 头部描述 -->
+                    <div class="direction-header-info">
+                        <div class="direction-title-lg">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Alignment
+                        </div>
+                        <div class="direction-desc-lg">
+                            本方向共收录 1 篇精选论文，按推荐分数排序。点击论文标题查看摘要。
+                        </div>
+                    </div>
+
+                    <!-- 论文列表 (手风琴) -->
+                    <div class="paper-list">
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        LLMs Encode How Difficult Problems Are
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.514</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            University of Oxford
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了一种方法，通过线性探测器分析大型语言模型（LLM）内部的难度表示，发现人类标注的难度与模型激活之间存在强线性关系，而LLM自身生成的难度评分则较弱且不稳定。研究表明，引导模型朝向“更简单”的表示可以提高其在复杂任务中的准确性，减少幻觉现象，从而解决LLM在简单问题上表现不佳的问题。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_18147v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.18147v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-2" class="tab-pane ">
+                <div class="direction-block">
+                    <!-- 头部描述 -->
+                    <div class="direction-header-info">
+                        <div class="direction-title-lg">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            LLM
+                        </div>
+                        <div class="direction-desc-lg">
+                            本方向共收录 5 篇精选论文，按推荐分数排序。点击论文标题查看摘要。
+                        </div>
+                    </div>
+
+                    <!-- 论文列表 (手风琴) -->
+                    <div class="paper-list">
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        MemoryBench: A Benchmark for Memory and Continual Learning in LLM Systems
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.538</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            Department of Computer Science and Technology, Tsinghua University
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了MemoryBench，一个综合性基准框架，用于评估大型语言模型系统（LLMsys）的记忆和持续学习能力。该框架通过模拟用户反馈，涵盖多领域和多任务，填补了现有评估标准的空白。实验结果表明，当前记忆增强型LLMsys在利用用户反馈进行学习方面表现不足，强调了未来研究的改进方向。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17281v2.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17281v2" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        DVAGen: Dynamic Vocabulary Augmented Generation
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.524</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            School of Computer Science and Technology, East China Normal University, School of Computer Science, Fudan University
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了DVAGen，一个统一的开源框架，旨在解决大型语言模型（LLM）在处理新词和复杂短语时的泛化能力不足问题。DVAGen通过动态扩展词汇表、冻结模型参数以降低内存需求，并提供CLI和WebUI工具，显著提升了生成质量和推理效率，支持批量推理，优化了模型的部署可行性。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17115v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17115v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        EduAdapt: A Question Answer Benchmark Dataset for Evaluating Grade-Level Adaptability in LLMs
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.516</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            MBZUAI, The University of British Columbia
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了EduAdapt基准，包含近48,000个按年级标记的QA对，旨在评估大型语言模型（LLMs）在K-12教育中的年级适应性。研究发现现有LLMs在生成适合低年级学生的内容时表现不佳，特别是在复杂性和词汇方面。通过引入自我反思机制的QA生成流程，论文为开发更符合教育需求的AI系统提供了有效的方法和数据支持。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17389v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17389v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        LLMs Encode How Difficult Problems Are
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.514</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            University of Oxford
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了一种方法，通过线性探测器分析大型语言模型（LLM）内部的难度表示，发现人类标注的难度与模型激活之间存在强线性关系，而LLM自身生成的难度评分则较弱且不稳定。研究表明，引导模型朝向“更简单”的表示可以提高其在复杂任务中的准确性，减少幻觉现象，从而解决LLM在简单问题上表现不佳的问题。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_18147v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.18147v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        Unbiased Gradient Low-Rank Projection
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.484</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            University of Illinois Urbana-Champaign, National University of Singapore
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了一种名为GUM（GaLore Unbiased with Muon）的新算法，旨在解决大型语言模型训练中低秩投影方法引入的偏差和收敛性问题。GUM结合了GaLore的内存效率与Muon优化器的收敛保证，通过概率性全秩更新消除系统性偏差，实验证明其在多项任务中性能超越GaLore，并与全参数训练相媲美。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17802v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17802v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-3" class="tab-pane ">
+                <div class="direction-block">
+                    <!-- 头部描述 -->
+                    <div class="direction-header-info">
+                        <div class="direction-title-lg">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Optimization
+                        </div>
+                        <div class="direction-desc-lg">
+                            本方向共收录 3 篇精选论文，按推荐分数排序。点击论文标题查看摘要。
+                        </div>
+                    </div>
+
+                    <!-- 论文列表 (手风琴) -->
+                    <div class="paper-list">
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        DVAGen: Dynamic Vocabulary Augmented Generation
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.524</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            School of Computer Science and Technology, East China Normal University, School of Computer Science, Fudan University
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了DVAGen，一个统一的开源框架，旨在解决大型语言模型（LLM）在处理新词和复杂短语时的泛化能力不足问题。DVAGen通过动态扩展词汇表、冻结模型参数以降低内存需求，并提供CLI和WebUI工具，显著提升了生成质量和推理效率，支持批量推理，优化了模型的部署可行性。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17115v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17115v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        LLMs Encode How Difficult Problems Are
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.514</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            University of Oxford
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了一种方法，通过线性探测器分析大型语言模型（LLM）内部的难度表示，发现人类标注的难度与模型激活之间存在强线性关系，而LLM自身生成的难度评分则较弱且不稳定。研究表明，引导模型朝向“更简单”的表示可以提高其在复杂任务中的准确性，减少幻觉现象，从而解决LLM在简单问题上表现不佳的问题。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_18147v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.18147v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        Unbiased Gradient Low-Rank Projection
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.484</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            University of Illinois Urbana-Champaign, National University of Singapore
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了一种名为GUM（GaLore Unbiased with Muon）的新算法，旨在解决大型语言模型训练中低秩投影方法引入的偏差和收敛性问题。GUM结合了GaLore的内存效率与Muon优化器的收敛保证，通过概率性全秩更新消除系统性偏差，实验证明其在多项任务中性能超越GaLore，并与全参数训练相媲美。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17802v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17802v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-4" class="tab-pane ">
+                <div class="direction-block">
+                    <!-- 头部描述 -->
+                    <div class="direction-header-info">
+                        <div class="direction-title-lg">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Other
+                        </div>
+                        <div class="direction-desc-lg">
+                            本方向共收录 3 篇精选论文，按推荐分数排序。点击论文标题查看摘要。
+                        </div>
+                    </div>
+
+                    <!-- 论文列表 (手风琴) -->
+                    <div class="paper-list">
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        MemoryBench: A Benchmark for Memory and Continual Learning in LLM Systems
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.538</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            Department of Computer Science and Technology, Tsinghua University
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了MemoryBench，一个综合性基准框架，用于评估大型语言模型系统（LLMsys）的记忆和持续学习能力。该框架通过模拟用户反馈，涵盖多领域和多任务，填补了现有评估标准的空白。实验结果表明，当前记忆增强型LLMsys在利用用户反馈进行学习方面表现不足，强调了未来研究的改进方向。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17281v2.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17281v2" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        EduAdapt: A Question Answer Benchmark Dataset for Evaluating Grade-Level Adaptability in LLMs
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.516</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            MBZUAI, The University of British Columbia
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了EduAdapt基准，包含近48,000个按年级标记的QA对，旨在评估大型语言模型（LLMs）在K-12教育中的年级适应性。研究发现现有LLMs在生成适合低年级学生的内容时表现不佳，特别是在复杂性和词汇方面。通过引入自我反思机制的QA生成流程，论文为开发更符合教育需求的AI系统提供了有效的方法和数据支持。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17389v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17389v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="paper-item">
+                            <!-- 折叠头 -->
+                            <div class="paper-header">
+                                <div class="paper-title-row">
+                                    <div class="paper-title">
+                                        Intuitionistic $j$-Do-Calculus in Topos Causal Models
+                                    </div>
+                                    <div class="paper-meta-preview">
+                                        
+                                        <span class="score-badge">Score: 0.356</span>
+                                        
+                                        
+                                        <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            Adobe Research, University of Massachusetts, Amherst
+                                        </span>
+                                        
+                                    </div>
+                                </div>
+                                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            
+                            <!-- 折叠内容 -->
+                            <div class="paper-body">
+                                <div class="paper-content-inner">
+                                    本文提出了**j-do-calculus**，一个在拓扑因果模型中进行因果推断的新框架，旨在解决传统因果推断方法在处理复杂因果结构时的局限性。通过引入**j-稳定性**的概念，本文实现了对条件独立性和干预声明的局部真理的形式化定义，并提供了与Pearl经典规则相对应的新推理规则，增强了因果推理的灵活性和准确性。
+                                    
+                                    <div class="paper-links">
+                                        <a href="https://jycarlos1019.pp.ua/reports/2025-10-27/2510_17944v1.html" class="action-link" target="_blank">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            查看完整解读
+                                        </a>
+                                        <a href="http://arxiv.org/abs/2510.17944v1" class="action-link" target="_blank" style="color: var(--text-secondary);">
+                                            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                            arXiv 原文
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        
+
+        <div class="footer">
+            <p>生成时间: 2025-11-20 17:15:58</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
