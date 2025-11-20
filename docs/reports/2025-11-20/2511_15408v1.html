@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAMeGEn: Creative Name Generation via A Novel Agent-based Multiple Personalized Goal Enhancement Framework</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.15408v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">NAMeGEn: Creative Name Generation via A Novel Agent-based Multiple Personalized Goal Enhancement Framework</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">创意名称生成</span>
+                
+                <span class="tag">多代理优化框架</span>
+                
+                <span class="tag">个性化需求</span>
+                
+                <span class="tag">自然语言生成</span>
+                
+                <span class="tag">新生儿命名</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">School of Computer Science and Technology, Tongji University, Microsoft Research Asia, Northeastern University, The University of British Columbia</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.463</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.15408v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-20/cb3cad63266f4dba078a30f2b93fdcc0f7b015e289271344d4cf5d614f170770.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了NAMeGEn，一个多代理优化框架，旨在解决创意自然语言生成中的多目标灵活性和解释性复杂性问题。通过迭代目标提取、名称生成和评估，NAMeGEn能够满足个性化需求并提供有意义的解释，特别应用于中国新生儿命名任务。实验结果表明，该方法在生成质量和多样性上显著优于现有基线。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <p>好的，我已经根据您提供的详细解决方案内容，替换了报告大纲中的“解决方案”部分。</p>
+
+<p>以下是更新后的报告大纲：</p>
+
+<hr />
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决<strong>创意自然语言生成 (CNLG)</strong>，特别是短文本生成（如为新生儿命名）中的两大核心挑战：
+1.  <strong>多目标灵活性不足</strong>：现有的大语言模型 (LLMs) 难以同时满足用户多样化、个性化且细粒度的需求，尤其是在需要平衡多个显式和隐式目标时。
+2.  <strong>解释性和复杂性</strong>：创意生成不仅在于结果，还在于理解和解释其背后的文化和美学意义，以增强用户的感知和满意度。现有方法在这方面的能力有限。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：一个采用<strong>多代理协作和动态迭代优化</strong>的框架（NAMeGEn），能够有效解决短文本CNLG中的多目标优化问题。该框架可以通过迭代地进行目标提取、内容生成和评估，在满足用户明确约束（Explicit User Objectives, EUOs）的同时，生成具有美学价值和深刻内涵（Implicit Interpretation Objectives, IIOs）的创意文本，并提供有意义的解释。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的相关研究主要涵盖以下领域：
+1.  <strong>创意自然语言生成 (CNLG)</strong>：包括诗歌生成、故事创作、口号生成等经典任务。
+2.  <strong>可控文本生成 (CTG)</strong>：特别是多目标优化（MOO）和多方面可控文本生成（MCTG）的研究。
+3.  <strong>基于大语言模型的方法</strong>：包括不同的提示策略（如CoT, Few-shot）、检索增强方法以及基于LLM的多代理协作系统（如LLM-D, React, Reflexion）。</p>
+
+<h3>解决方案</h3>
+
+<p>本文提出了 <strong>NAMeGEn (Novel Agent-based Multi-Personalized-Goal Enhancement Framework)</strong> 框架，这是一个通过模拟专家团队协作，以动态迭代方式解决复杂创意生成任务的创新性多代理优化框架。</p>
+
+<h4><strong>核心架构：三位一体的智能代理</strong></h4>
+
+<p>NAMeGEn的核心由三个协同工作的智能代理组成：
+1.  <strong>多目标管理器 (Multi-Objective Manager, MOM)</strong>：作为“项目经理”，负责深入分析用户需求，提取用户的<strong>显式期望目标 (EUOs)</strong>，并定义评估解释质量的<strong>隐式解释目标 (IIOs)</strong>。
+2.  <strong>多目标生成器 (Multi-Objective Generator, MOG)</strong>：作为“创意核心”，利用大型语言模型（LLMs）根据MOM提供的目标和知识，生成初步的创意文本（如名称）及其对应解释。
+3.  <strong>多目标评估器 (Multi-Objective Evaluator, MOE)</strong>：作为“质量总监”，负责全面评估MOG的输出，判断其是否满足所有EUOs和IIOs，并为不合格的结果生成具体的优化反馈。</p>
+
+<h4><strong>工作流程：两阶段动态迭代优化</strong></h4>
+
+<ol>
+<li><strong>第一阶段：多目标信息准备</strong>：由<strong>MOM</strong>主导，解析用户查询，从知识库（如CPoetry数据集）中检索相关文化素材，并将用户需求形式化为清晰的EUOs和IIOs。</li>
+<li><strong>第二阶段：动态迭代目标优化 (DI-HMOO)</strong>：一个由<strong>MOG</strong>和<strong>MOE</strong>主导的闭环优化过程。MOG生成方案，MOE进行评估。若方案不达标，MOE会产生反馈，指导MOM和MOG进行新一轮的“生成-评估-反馈”循环，直至找到最优解决方案。</li>
+</ol>
+
+<h4><strong>优势与创新</strong></h4>
+
+<ul>
+<li><strong>高灵活性与适应性</strong>：作为“骨干模型无关”的框架，可与任意LLM集成。</li>
+<li><strong>增强的可解释性与可靠性</strong>：通过专门的IIOs和评估环节，显著减少LLM的“幻觉”。</li>
+<li><strong>高效的动态优化</strong>：通过上下文学习（In-Context Learning）实现迭代优化，避免了昂贵的模型微调。</li>
+<li><strong>卓越的创意与多样性</strong>：在生成结果的<strong>多样性（DIV）</strong>和<strong>综合完整性（CC）</strong>上表现出显著优势。</li>
+</ul>
+
+<h3>实验设计</h3>
+
+<p>实验主要围绕<strong>“为中国新生儿命名” (Naming Chinese Newborns, NCB)</strong> 这一具体的短文本CNLG任务展开。
+1.  <strong>数据集构建</strong>：研究者创建了一个新的基准数据集 <strong>CBNames</strong>（包含500个模拟命名请求）和一个大型的古典中文诗歌语料库 <strong>CPoetry</strong>（包含超过17万首诗）。
+2.  <strong>对比评估</strong>：将NAMeGEn框架与多种强基线方法（包括零样本、少样本、CoT、LLM-D等）在不同的基础LLM上进行性能比较。
+3.  <strong>评估指标</strong>：设计了定制化的评估指标来衡量对显式目标（EC）、隐式目标（IC）和综合目标（CC）的满足程度，并结合了人类评估。
+4.  <strong>消融实验</strong>：通过移除框架中的特定组件来验证其各自的贡献。</p>
+
+<h3>数据集和代码</h3>
+
+<p>本文创建并使用了两个主要数据集：
+1.  <strong>CBNames</strong>：一个为中文命名任务设计的基准数据集。
+2.  <strong>CPoetry</strong>：一个大型的古典中文诗歌语料库，用于提供文化和美学支持。</p>
+
+<p>在您提供的片段中，<strong>没有明确给出代码的公开链接</strong>。</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了论文的假设。NAMeGEn框架在各项评估指标上<strong>显著优于所有基线方法</strong>，并且在不同的大语言模型基础上都表现出稳定和优越的性能。结果表明，NAMeGEn能够更有效地生成满足用户多样化、个性化需求的创意名称，并提供有意义的解释，同时在生成质量、多样性和目标完成度上均有出色表现。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出NAMeGEn框架</strong>：首个针对短文本CNLG中混合多目标优化问题的、基于多代理协作的动态迭代框架。</li>
+<li><strong>创建新资源</strong>：开发并贡献了新的基准数据集（<strong>CBNames</strong>）和知识库（<strong>CPoetry</strong>），填补了相关领域研究资源的空白，并有助于减少LLM的幻觉。</li>
+<li><strong>提升生成质量和可解释性</strong>：为解决复杂的创意生成任务提供了一个有效且灵活的解决方案，显著提升了生成内容的质量、个性化程度和可解释性。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-20 22:43:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

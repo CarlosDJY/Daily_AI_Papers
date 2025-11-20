@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主题聚类分析 - 2025-11-20</title>
+    <style>
+        :root {
+            /* 配色系统：Amber (聚类主题色) + Indigo (系统色) */
+            --primary-color: #4f46e5;
+            --meso-color: #f59e0b;      /* Amber 500 */
+            --meso-dark: #b45309;       /* Amber 700 */
+            --meso-light: #fffbeb;      /* Amber 50 */
+            --meso-border: #fcd34d;     /* Amber 300 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px;
+        }
+
+        /* === 1. 宏观趋势卡片 (美化版) === */
+        .macro-section {
+            /* 使用更加现代的渐变背景，而非纯色 */
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08); /* 淡淡的蓝光阴影 */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 装饰性的顶部线条 */
+        .macro-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), #93c5fd);
+        }
+
+        .macro-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        /* 针对 Markdown 内容的深度定制 */
+        .macro-content {
+            color: #334155;
+        }
+
+        /* 模拟 H3 标题样式 (核心研究主题/技术趋势) */
+        .macro-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e40af; /* 深蓝 */
+            margin-top: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            background-color: #dbeafe;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .macro-content h3:first-child { margin-top: 0; }
+
+        /* 列表样式优化 */
+        .macro-content ol {
+            padding-left: 0;
+            list-style: none;
+            counter-reset: macro-counter;
+        }
+
+        .macro-content li {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        /* 自定义数字计数器 */
+        .macro-content li::before {
+            counter-increment: macro-counter;
+            content: counter(macro-counter);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .macro-content strong {
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        /* === 2. 聚类列表 (手风琴样式) === */
+        .section-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        
+        /* 悬停效果 */
+        .cluster-card:hover {
+            border-color: var(--meso-border);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 可点击的头部 */
+        .cluster-header {
+            background-color: var(--bg-card);
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .cluster-header:hover {
+            background-color: #fffbeb; /* 极淡的琥珀色 */
+        }
+        
+        /* 激活状态 */
+        .cluster-card.active .cluster-header {
+            background-color: var(--meso-light);
+            border-bottom: 1px solid var(--meso-border);
+        }
+
+        .cluster-info {
+            flex-grow: 1;
+            padding-right: 15px;
+        }
+
+        .cluster-title {
+            color: var(--text-main);
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+        
+        .cluster-card.active .cluster-title {
+            color: var(--meso-dark);
+        }
+
+        .cluster-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 箭头图标 */
+        .toggle-icon {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .cluster-card.active .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--meso-dark);
+        }
+
+        /* 折叠内容区 */
+        .cluster-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #ffffff;
+        }
+
+        .paper-list {
+            padding: 24px;
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 左侧连接线 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 31px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background-color: #f1f5f9;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 24px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 14px;
+            height: 14px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .paper-title:hover {
+            color: var(--primary-color);
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .macro-section { padding: 20px; }
+            .cluster-header { padding: 16px; }
+            .paper-list { padding: 16px; }
+            .paper-list::before { left: 23px; } /* 调整线位置 */
+            .paper-item { padding-left: 24px; }
+            .paper-title { font-size: 15px; }
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 手风琴交互逻辑
+            const headers = document.querySelectorAll('.cluster-header');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const card = this.parentElement;
+                    const body = card.querySelector('.cluster-body');
+                    
+                    // 切换当前卡片状态
+                    card.classList.toggle('active');
+                    
+                    // 重新计算高度
+                    if (card.classList.contains('active')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
+            <div class="date">2025-11-20</div>
+        </div>
+
+        
+        <div class="macro-section">
+            <div class="macro-header">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
+                <h2>核心研究主题</h2>
+
+<ol>
+<li>强化学习与推理能力提升正在推动智能体在复杂环境中的决策能力，使其能够更好地应对动态变化的任务。</li>
+<li>医学影像与深度学习的结合正在提高疾病诊断的准确性，尤其是在早期检测和个性化治疗方面展现出巨大潜力。</li>
+<li>多模态大语言模型评估与优化的研究正致力于提升模型在处理多种输入形式（如文本、图像和音频）时的表现和效率。</li>
+<li>大型语言模型的安全性与隐私风险问题日益受到重视，研究者们正在探索如何在保证模型性能的同时保护用户数据。</li>
+<li>AI研究代理的能力与影响正在改变科研的方式，使得自动化工具能够辅助研究人员进行数据分析和文献综述。</li>
+</ol>
+
+<h2>技术趋势</h2>
+
+<ol>
+<li>多模态学习技术正在迅速发展，推动不同类型数据的融合与协同处理，提升AI系统的综合理解能力。</li>
+<li>针对AI模型的鲁棒性与安全性，研究者们正在开发新的算法和框架，以应对潜在的攻击和数据偏差。</li>
+<li>GPU与内存架构优化的技术进步正在加速AI训练和推理过程，使得更大规模的模型得以在合理的时间内完成训练。</li>
+</ol>
+
+            </div>
+        </div>
+        
+
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点 (点击展开详情)
+        </div>
+
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 1: 强化学习与推理能力提升</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        12 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">VisPlay: Self-Evolving Vision-Language Models from Images</span>
+                        <span class="paper-contrib">提出了一种自我进化的视觉语言模型，通过强化学习在复杂推理任务中提升性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Terra Nova: A Comprehensive Challenge Environment for Intelligent Agents</span>
+                        <span class="paper-contrib">引入了一个新的综合挑战环境，旨在为强化学习研究提供多种经典挑战的统一平台。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Octopus: Agentic Multimodal Reasoning with Six-Capability Orchestration</span>
+                        <span class="paper-contrib">提出了一种多模态推理框架，具备自主探索多样推理路径的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">EntroPIC: Towards Stable Long-Term Training of LLMs via Entropy Stabilization with Proportional-Integral Control</span>
+                        <span class="paper-contrib">通过熵稳定化方法，提出了一种长效训练大语言模型的新策略，以防止模型性能下降。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">From Solving to Verifying: A Unified Objective for Robust Reasoning in LLMs</span>
+                        <span class="paper-contrib">提出了一个统一目标，以增强大语言模型自我验证推理过程的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ProRAC: A Neuro-symbolic Method for Reasoning about Actions with LLM-based Progression</span>
+                        <span class="paper-contrib">提出了一种神经符号框架，利用大语言模型进行行动与变化的推理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reasoning via Video: The First Evaluation of Video Models' Reasoning Abilities through Maze-Solving Tasks</span>
+                        <span class="paper-contrib">评估了视频模型在迷宫求解任务中的推理能力，推动了视频生成与推理的结合。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning Human-Like RL Agents Through Trajectory Optimization With Action Quantization</span>
+                        <span class="paper-contrib">通过轨迹优化与动作量化，提出了一种学习人类行为的强化学习代理的新方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Impact of Quantization on Large Reasoning Model Reinforcement Learning</span>
+                        <span class="paper-contrib">探讨了量化对大规模推理模型强化学习的影响，揭示了其在无监督微调中的应用潜力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GRPO-RM: Fine-Tuning Representation Models via GRPO-Driven Reinforcement Learning</span>
+                        <span class="paper-contrib">提出了一种基于GRPO的强化学习方法，用于微调表示学习模型的有效性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Reasoning in Diffusion Large Language Models is Concentrated in Dynamic Confusion Zones</span>
+                        <span class="paper-contrib">分析了扩散大型语言模型在推理过程中的动态混淆区域，揭示了其推理能力的集中性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SRPO: Self-Referential Policy Optimization for Vision-Language-Action Models</span>
+                        <span class="paper-contrib">提出了一种自我参考策略优化方法，以克服视觉语言行动模型中的专家演示偏差。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 2: 医学影像与深度学习</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        6 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">RS-CA-HSICT: A Residual and Spatial Channel Augmented CNN Transformer Framework for Monkeypox Detection</span>
+                        <span class="paper-contrib">提出了一种混合深度学习框架，结合CNN和Transformer以增强猴痘检测的性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DCL-SE: Dynamic Curriculum Learning for Spatiotemporal Encoding of Brain Imaging</span>
+                        <span class="paper-contrib">引入动态课程学习方法，提升神经影像分析中的时空编码能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CODE-II: A large-scale dataset for artificial intelligence in ECG analysis</span>
+                        <span class="paper-contrib">发布了一个大规模的ECG数据集，旨在解决人工智能分析中的注释质量和范围问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">NTK-Guided Implicit Neural Teaching</span>
+                        <span class="paper-contrib">提出了一种基于神经网络核的隐式神经教学方法，以优化高分辨率信号的拟合。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">EVA-Net: Interpretable Brain Age Prediction via Continuous Aging Prototypes from EEG</span>
+                        <span class="paper-contrib">开发了一种可解释的脑龄预测模型，通过连续衰老原型从EEG数据中提取信息。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">BrainRotViT: Transformer-ResNet Hybrid for Explainable Modeling of Brain Aging from 3D sMRI</span>
+                        <span class="paper-contrib">提出了一种Transformer-ResNet混合模型，以解释性方式建模3D结构MRI中的脑龄估计。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 3: 多模态大语言模型评估与优化</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Multimodal Evaluation of Russian-language Architectures</span>
+                        <span class="paper-contrib">探讨了多模态大语言模型在俄语环境中的智能、局限性和风险，提出了评估框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Physics-Based Benchmarking Metrics for Multimodal Synthetic Images</span>
+                        <span class="paper-contrib">提出了一种物理约束的多模态数据评估方法，以提高对合成图像的语义和结构准确性的评估。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MoDES: Accelerating Mixture-of-Experts Multimodal Large Language Models via Dynamic Expert Skipping</span>
+                        <span class="paper-contrib">通过动态专家跳过方法，减少混合专家多模态大语言模型的推理开销，提高计算效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Evaluating Multimodal Large Language Models on Vertically Written Japanese Text</span>
+                        <span class="paper-contrib">研究了多模态大语言模型在处理竖写日文文本中的应用，强调了视觉文档理解的复杂性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 4: 大型语言模型的安全性与隐私风险</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adversarial Poetry as a Universal Single-Turn Jailbreak Mechanism in Large Language Models</span>
+                        <span class="paper-contrib">提出对大型语言模型的对抗性诗歌作为一种普遍的单轮越狱机制，展示了其在多个模型中的高攻击成功率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Taxonomy, Evaluation and Exploitation of IPI-Centric LLM Agent Defense Frameworks</span>
+                        <span class="paper-contrib">对间接提示注入攻击的防御框架进行了分类和评估，强调了当前防御措施的碎片化问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">As If We've Met Before: LLMs Exhibit Certainty in Recognizing Seen Files</span>
+                        <span class="paper-contrib">探讨了大型语言模型在识别训练数据中的文件时的确定性，揭示了潜在的版权问题和隐私风险。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Effective Code Membership Inference for Code Completion Models via Adversarial Prompts</span>
+                        <span class="paper-contrib">提出了一种有效的代码成员推断方法，通过对抗性提示评估代码补全模型的隐私风险。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 5: AI研究代理的能力与影响</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">What Does It Take to Be a Good AI Research Agent? Studying the Role of Ideation Diversity</span>
+                        <span class="paper-contrib">探讨了创意多样性在AI研究代理成功中的关键作用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Exploring the use of AI authors and reviewers at Agents4Science</span>
+                        <span class="paper-contrib">首次组织了AI代理作为主要作者和审稿人的会议，评估其在科学研究中的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Realist and Pluralist Conceptions of Intelligence and Their Implications on AI Research</span>
+                        <span class="paper-contrib">分析了智能现实主义与智能多元主义对AI研究的不同影响。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 6: 印度语言的多语言ASR与评估</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Building Robust and Scalable Multilingual ASR for Indian Languages</span>
+                        <span class="paper-contrib">提出了一种适应性强的ASR系统，旨在提高对8种语言及其33种方言的语言和方言预测能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">HinTel-AlignBench: A Framework and Benchmark for Hindi-Telugu with English-Aligned Samples</span>
+                        <span class="paper-contrib">建立了一个评估框架和基准，促进多语言视觉-语言模型在低资源语言上的公平性进展。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">IndicGEC: Powerful Models, or a Measurement Mirage?</span>
+                        <span class="paper-contrib">探讨了在5种印度语言中使用零/少量样本提示的语言模型进行语法错误纠正的有效性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 7: 时间序列异常检测与生成</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">STREAM-VAE: Dual-Path Routing for Slow and Fast Dynamics in Vehicle Telemetry Anomaly Detection</span>
+                        <span class="paper-contrib">提出了一种双路径路由的变分自编码器，能够有效处理汽车遥测数据中的慢漂移和快尖峰现象，从而提高异常检测的可靠性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">FaultDiffusion: Few-Shot Fault Time Series Generation with Diffusion Model</span>
+                        <span class="paper-contrib">引入了一种基于扩散模型的少样本故障时间序列生成方法，解决了工业设备监测中故障数据稀缺的问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Fourier-KAN-Mamba: A Novel State-Space Equation Approach for Time-Series Anomaly Detection</span>
+                        <span class="paper-contrib">提出了一种新颖的状态空间方程方法，结合Mamba模型，显著提高了时间序列异常检测的效率，特别是在长序列建模方面。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 8: 多模态生物医学数据整合</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CASPER: Cross-modal Alignment of Spatial and single-cell Profiles for Expression Recovery</span>
+                        <span class="paper-contrib">提出了一种计算模型，通过整合单细胞RNA测序数据与空间转录组数据，实现基因表达的恢复。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Deep Pathomic Learning Defines Prognostic Subtypes and Molecular Drivers in Colorectal Cancer</span>
+                        <span class="paper-contrib">开发并验证了一种新的多实例学习模型TDAM-CRC，以提高结直肠癌的预后分层精度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SIGMMA: Hierarchical Graph-Based Multi-Scale Multi-modal Contrastive Alignment of Histopathology Image and Spatial Transcriptome</span>
+                        <span class="paper-contrib">提出了一种分层图形基础的多尺度对比对齐方法，以同时处理组织病理图像和空间转录组数据。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 9: GPU与内存架构优化在AI中的应用</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">GPU-Initiated Networking for NCCL</span>
+                        <span class="paper-contrib">提出了一种GPU发起的低延迟通信模型，以提高Mixture-of-Experts架构中的GPU间通信效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Tensor Compiler for Processing-In-Memory Architectures</span>
+                        <span class="paper-contrib">开发了一种张量编译器，旨在优化处理内存架构与高性能主机处理器的协同工作，以加速机器学习模型的内存密集型内核。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LLM-MemCluster: Empowering Large Language Models with Dynamic Memory for Text Clustering</span>
+                        <span class="paper-contrib">提出了一种动态内存机制，使大型语言模型能够进行文本聚类，从而克服了缺乏状态内存的限制。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 10: 鲁棒性与估计方法</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Near-optimal delta-convex estimation of Lipschitz functions</span>
+                        <span class="paper-contrib">提出了一种可行的算法用于从噪声观测中估计未知的Lipschitz函数，并建立了其收敛速率的上界。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Exponential Lasso: robust sparse penalization under heavy-tailed noise and outliers with exponential-type loss</span>
+                        <span class="paper-contrib">引入了一种新的稀疏惩罚方法，能够在重尾噪声和异常值的情况下进行稳健的变量选择和参数估计。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Robust Bayesian Optimisation with Unbounded Corruptions</span>
+                        <span class="paper-contrib">提出了一种新的对抗者模型，使得贝叶斯优化在面对极端异常值时能够保持鲁棒性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
+        <div class="footer">
+            <p>生成时间: 2025-11-20 22:43:54</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

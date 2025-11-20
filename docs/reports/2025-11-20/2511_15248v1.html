@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EntroPIC: Towards Stable Long-Term Training of LLMs via Entropy Stabilization with Proportional-Integral Control</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.15248v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">EntroPIC: Towards Stable Long-Term Training of LLMs via Entropy Stabilization with Proportional-Integral Control</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">熵控制</span>
+                
+                <span class="tag">大语言模型</span>
+                
+                <span class="tag">长期训练</span>
+                
+                <span class="tag">比例-积分控制</span>
+                
+                <span class="tag">损失权重调整</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Tencent Hunyuan, The Hong Kong University of Science and Technology</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.469</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.15248v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-20/3fadab3750612c6de15199894c383da798c8ea6ba5ff7565e4ae63dd7b490878.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种新颖的熵控制方法——EntroPIC，旨在解决大语言模型（LLM）长期训练中的熵不稳定问题。通过应用比例-积分控制机制，EntroPIC动态调整正负样本的损失权重，确保熵水平稳定，从而促进有效探索和优化训练过程。实验结果表明，该方法显著提升了模型在多个任务上的性能，克服了传统方法的局限性。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决在强化学习（特别是针对大语言模型LLM）的长期训练中，如何有效控制和稳定策略熵（entropy）的问题。这是一个长期存在且日益重要的问题，因为：
+- <strong>探索与利用的平衡</strong>：熵直接影响模型的探索能力。熵过低会导致模型过早收敛到次优策略，缺乏多样性；而熵的剧烈波动则会影响训练的稳定性。
+- <strong>现有方法的局限性</strong>：当前的方法（如GRPO）在长期训练中难以维持稳定的熵水平，常常导致后期“熵崩溃”，限制了模型的性能和输出多样性。
+- <strong>LLM应用的需求</strong>：随着LLM在复杂任务中的广泛应用，对其输出的多样性和创新性的需求日益增加，这使得稳定的熵控制变得至关重要。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>：通过应用控制理论中的比例-积分（PI）控制机制，可以动态调整训练过程中正负样本（或高概率token）的损失权重，从而将策略的熵精确且稳定地控制在预设的目标值附近。</li>
+<li><strong>关键发现</strong>：一个名为EntroPIC的方法，通过这种PI反馈机制，能够有效避免熵的剧烈波动和崩溃，从而维持模型的探索性。</li>
+<li><strong>预期结论</strong>：相比现有方法，EntroPIC能够在整个训练过程中保持熵的稳定，从而提升模型的最终性能、多样性和学习效率。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>强化学习中的熵控制/正则化方法</strong>：包括基于人类反馈的强化学习（RLHF）、可验证奖励强化学习（RLVR）、GRPO、AEC、Clip cov、KL cov等。</li>
+<li><strong>策略优化算法</strong>：策略梯度方法、软演员-评论家（SAC）、PPO等。</li>
+<li><strong>控制理论</strong>：比例控制（P-control）、比例-积分控制（PI-control）及其在动态系统中的稳定性分析（如Lyapunov方法）。</li>
+<li><strong>离线强化学习</strong>：重要性采样（Importance Sampling）及其在分布偏移问题中的应用。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3>完整解决方案：通过比例-积分控制实现熵稳定 (EntroPIC)</h3>
+
+<p>本文提出的核心解决方案是 <strong>Entropy Stabilization via Proportional-Integral Control (EntroPIC)</strong>，这是一种基于控制理论的先进方法，旨在解决大规模语言模型（LLMs）在长期强化学习（RL）训练中因策略熵（Policy Entropy）波动而导致的性能不稳定和收敛到次优解的问题。</p>
+
+<h4>一、 背景与问题：策略熵在LLM训练中的重要性</h4>
+
+<p>在强化学习框架下训练LLM时，策略熵是衡量模型在生成内容时不确定性的关键指标。维持一个适当的熵水平至关重要：
+*   <strong>熵过低</strong>：会导致模型输出变得单一和确定性，容易陷入“模式崩溃”（Mode Collapse），即反复生成相同的次优答案，丧失探索更优解的能力。
+*   <strong>熵过高</strong>：会导致模型输出过于随机和嘈杂，使得训练过程不稳定，难以收敛。</p>
+
+<p>传统的训练方法（如GRPO）常常在训练后期面临熵的急剧下降，即“熵崩溃”，这限制了模型的性能上限。EntroPIC正是为了解决这一核心问题而设计的。</p>
+
+<h4>二、 EntroPIC的核心思想与目标</h4>
+
+<p>EntroPIC的核心思想是将经典的<strong>控制理论</strong>（特别是比例-积分控制）引入到LLM的训练过程中，将策略熵作为一个需要精确控制的系统变量。</p>
+
+<p><strong>主要目标：</strong>
+1.  <strong>稳定熵水平</strong>：通过动态干预，将策略熵维持在一个预设的“目标熵”（Target Entropy, $H^{tar}$）附近，防止其剧烈波动或崩溃。
+2.  <strong>动态平衡探索与利用</strong>：确保模型在整个训练过程中既能有效利用已学到的知识，又能保持足够的探索能力，发现新的、更优的解决方案。
+3.  <strong>提升模型性能</strong>：通过稳定的熵控制，最终提升模型在下游任务（如数学推理、编程）上的准确率和通过率。</p>
+
+<h4>三、 EntroPIC的详细工作机制</h4>
+
+<p>EntroPIC通过动态调整训练过程中正、负样本的损失权重来实现对熵的控制。</p>
+
+<p><strong>1. 理论基础：样本对熵的影响</strong>
+论文首先从理论上证明了不同类型的样本对熵有不同的影响：
+*   <strong>正样本（高奖励）</strong>：倾向于增强模型对特定高概率序列的信心，从而<strong>降低</strong>策略熵。
+*   <strong>负样本（低奖励）</strong>：倾向于抑制某些序列的生成，促使模型探索其他可能性，从而<strong>增加</strong>策略熵。</p>
+
+<p><strong>2. 控制机制：比例-积分（PI）控制</strong>
+EntroPIC借鉴了自动化控制领域的PI控制器来动态计算一个调整系数 $\alpha$。</p>
+
+<ul>
+<li><p><strong>计算熵误差</strong>：在每个训练步骤 $t$，计算当前熵 $H<em>t$ 与目标熵 $H</em>t^{tar}$ 之间的误差 $e<em>t$。
+$e</em>t = H<em>t - H</em>t^{tar}$</p></li>
+<li><p><strong>PI控制器计算调整系数 $\alpha$</strong>：
+调整系数 $\alpha<em>t$ 由两部分组成：比例项（Proportional）和积分项（Integral）。
+$α</em>t = K<em>p(H</em>t - H<em>t^{tar}) + K</em>i \sum<em>{k=1}^{t-1}(H</em>k - H_k^{tar})$</p>
+
+<ul>
+<li><strong>比例项 ($K_p$)</strong>：根据<strong>当前</strong>的熵误差进行即时调整。误差越大，调整力度越大。</li>
+<li><strong>积分项 ($K_i$)</strong>：累积<strong>过去所有</strong>的误差。这有助于消除长期存在的稳态误差，即使当前误差很小，如果历史上一直偏离目标，积分项也会施加持续的修正力。</li>
+<li>$K<em>p$ 和 $K</em>i$ 是需要设定的超参数（比例和积分增益）。</li>
+</ul></li>
+</ul>
+
+<p><strong>3. 动态调整损失函数</strong>
+计算出的调整系数 $\alpha$ 被用于修改标准的策略梯度损失函数，以非对称的方式调整正负样本的权重。</p>
+
+<ul>
+<li><strong>核心思想</strong>：
+<ul>
+<li>当熵<strong>高于</strong>目标值时（$H<em>t &gt; H</em>t^{tar}$），$\alpha$ 为正。此时，系统会<strong>增加</strong>正样本的权重（降低熵），并<strong>减小</strong>负样本的权重（减缓熵的增加），从而引导熵下降。</li>
+<li>当熵<strong>低于</strong>目标值时（$H<em>t &lt; H</em>t^{tar}$），$\alpha$ 为负。此时，系统会<strong>减小</strong>正样本的权重（减缓熵的降低），并<strong>增加</strong>负样本的权重（增加熵），从而引导熵上升。</li>
+</ul></li>
+</ul>
+
+<p><strong>4. 简化实现：专注于高概率样本</strong>
+为了简化计算并提高效率，EntroPIC进一步提出只对<strong>高概率</strong>的样本进行权重调整。
+*   <strong>原理</strong>：高概率样本对熵的影响最大，且最容易识别。
+*   <strong>简化损失函数</strong>：
+    $L(θ) = L<em>{GRPO}(θ) - α \sum</em>{π<em>{θ}(a|s) &gt; τ} |A(s, a)| \log π</em>{θ}(a|s)$
+    其中，$L_{GRPO}(θ)$ 是基线损失函数，$A(s, a)$ 是优势函数，$τ$ 是一个高概率阈值（例如0.95）。这个额外的项通过系数 $\alpha$ 直接调节高概率Token的对数概率，从而控制熵。</p>
+
+<p><strong>5. 适应不同训练范式</strong>
+该方法同时适用于在线（On-policy）和离线（Off-policy）训练。在离线训练中，只需引入重要性采样比率进行修正即可。</p>
+
+<h4>四、 实验验证与效果</h4>
+
+<p>论文通过大规模实验验证了EntroPIC的有效性。
+*   <strong>熵控制效果</strong>：与不带熵控制的基线方法（如GRPO）相比，EntroPIC能够成功地将策略熵稳定在目标值附近，有效避免了训练后期的熵崩溃现象。
+*   <strong>性能提升</strong>：在多个数学和编程基准测试中，EntroPIC均取得了显著的性能提升。例如，在政策内训练中，平均通过率（pass@N）提升了3.5%。
+*   <strong>增强探索与反思</strong>：定性分析发现，使用EntroPIC训练的模型在生成答案时会表现出更多的“反思行为”，例如使用“等等”、“换个思路”等词语，这表明模型正在探索多种推理路径，而不是固守单一的线性思维。</p>
+
+<h4>五、 优势总结</h4>
+
+<ol>
+<li><strong>稳定性与鲁棒性</strong>：通过闭环反馈控制，有效稳定了训练过程，防止模型陷入局部最优或因熵崩溃而性能下降。</li>
+<li><strong>高效的探索能力</strong>：维持健康的熵水平，使模型能够持续探索解决方案空间，提升性能上限。</li>
+<li><strong>理论坚实</strong>：该方法基于成熟的控制理论，并提供了收敛性和稳定性的理论证明（如通过Lyapunov函数分析）。</li>
+<li><strong>适应性强</strong>：能够自动适应训练过程中的动态变化，并且可以轻松集成到现有的强化学习框架中（即插即用）。</li>
+</ol>
+
+<p>综上所述，<strong>EntroPIC</strong>通过巧妙地将控制理论与深度强化学习相结合，为解决大语言模型训练中的核心挑战——熵管理问题，提供了一个理论坚实、实现高效且效果显著的创新解决方案。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型与任务</strong>：主要使用Qwen3-8B-Base等大语言模型，在多个数学推理任务上进行评估。</li>
+<li><strong>训练框架</strong>：实验基于可验证奖励强化学习（RLVR）框架进行。</li>
+<li><strong>对比基线</strong>：将EntroPIC与GRPO、AEC等其他主流的熵控制方法进行性能对比。</li>
+<li><strong>消融实验</strong>：对比了PI控制与P控制的效果，验证了积分项在消除稳态误差和确保收敛性方面的关键作用。</li>
+<li><strong>理论分析</strong>：使用Lyapunov稳定性理论，从数学上证明了在合理的学习率和增益设置下，PI控制系统能够保证熵收敛到目标值。</li>
+<li><strong>硬件设置</strong>：实验在NVIDIA H20 96GB GPU上进行大规模训练，涉及上百万个提示和数百万个样本。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验使用了多个数学相关的数据集，包括DAPO-MATH-17K、OpenReasonerZero、DeepScaleR、OMNI-MATH、AIME2024和AIME2025等。</li>
+<li><strong>代码</strong>：实验代码基于VeRL代码库，并已在以下地址开源：https://github.com/volcengine/verl</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>熵控制效果</strong>：实验结果明确显示，EntroPIC成功地将模型的熵稳定在目标水平，有效避免了GRPO等方法中出现的熵崩溃现象。</li>
+<li><strong>模型性能</strong>：在熵稳定性的支持下，使用EntroPIC训练的模型在多个数学任务评估基准上（如avg@N和pass@N指标）均显著优于所有基线方法，达到了更高的性能上限。</li>
+<li><strong>理论验证</strong>：实验数据有力地支持了理论分析，证明了PI控制相比P控制在实现精确、无稳态误差的熵收敛方面的优越性。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>提出新方法</strong>：提出了EntroPIC，一种新颖的、基于PI控制理论的熵控制方法，有效解决了深度强化学习中长期存在的熵不稳定问题。</li>
+<li><strong>理论与实践结合</strong>：将控制理论（PI控制、Lyapunov稳定性）与深度强化学习的训练过程深度结合，并提供了严谨的理论证明和大规模的实验验证。</li>
+<li><strong>提升SOTA性能</strong>：在多个大规模LLM的训练任务中，证明了EntroPIC相比现有方法的优越性，为训练更具探索性和高性能的智能体提供了强大而可靠的工具。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-20 22:43:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
