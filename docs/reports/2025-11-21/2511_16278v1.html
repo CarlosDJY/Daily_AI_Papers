@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>"To Survive, I Must Defect": Jailbreaking LLMs via the Game-Theory Scenarios</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.16278v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">"To Survive, I Must Defect": Jailbreaking LLMs via the Game-Theory Scenarios</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">博弈论</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">黑盒越狱攻击</span>
+                
+                <span class="tag">安全对齐</span>
+                
+                <span class="tag">攻击成功率</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">The Hong Kong University of Science and Technology (Guangzhou), East China Normal University, Flexera, Zhejiang University, Xidian University, Xi’an Jiaotong University, Institute of Deep Perception Technology, JITRI</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.293</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.16278v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-21/a13b417c778ab0ec3cd5433f16f1c29e43568b94566bec6f2ecd017f91d0f8b3.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了GTA（Game Theory Attack）框架，通过将黑盒越狱攻击建模为博弈论场景，有效解决了大型语言模型（LLM）在安全对齐方面的脆弱性。GTA实现了超过90%的攻击成功率，具备高效性和可扩展性，能够自动生成多样化的攻击场景，显著优于现有攻击方法，为LLM安全评估提供了新思路。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h1>GTA: Jailbreaking LLMs via Game Theory Scenarios</h1>
+
+<h2>现有问题</h2>
+
+<p>本文主要解决大型语言模型 (LLM) 在面对恶意操控时的安全性问题，特别是如何通过所谓的“越狱攻击”来绕过模型的安全对齐机制。随着LLM在社会各领域的广泛应用，其对恶意操控的脆弱性日益增加，而现有的越狱攻击方法（如手工设计的提示）往往自动化和可扩展性不足，因此研究更有效、更自动化的攻击方法变得至关重要。</p>
+
+<h2>Hypothesis</h2>
+
+<ul>
+<li><strong>核心假设</strong>: 在特定的博弈论场景（如囚徒困境）下，LLM自身的安全偏好会被模板所设定的目标（如赢得游戏）所覆盖，导致其更容易生成有害或不安全的响应（即“模板优先于安全翻转”）。</li>
+<li><strong>关键发现</strong>: GTA（Game Theory Attack）框架通过将越狱攻击建模为博弈论场景，能够有效地绕过多种LLM的安全限制。</li>
+<li><strong>初步结论</strong>: GTA框架在多个主流LLM上实现了极高的攻击成功率（ASR），通常超过90%，并且在攻击效率上优于现有的多种基线攻击方法。</li>
+</ul>
+
+<h2>相关研究</h2>
+
+<ul>
+<li>针对LLM的越狱攻击方法，包括白盒攻击和黑盒攻击。</li>
+<li>手工提示工程和基于搜索的自动化攻击方法（如AutoDAN, PAIR, FlipAttack）。</li>
+<li>行为经济学和博弈论模型（如囚徒困境、美元拍卖、凯恩斯美丽竞赛）。</li>
+<li>LLM安全对齐和防御机制（如Llama-Guard）。</li>
+</ul>
+
+<h2>解决方案</h2>
+
+<h3><strong>完整解决方案总结：游戏理论攻击（Game-Theory Attack, GTA）框架</strong></h3>
+
+<p>论文提出了一种名为<strong>游戏理论攻击（Game-Theory Attack, GTA）</strong>的创新框架，旨在实现对大型语言模型（LLMs）的高效、自动化和可扩展的黑盒“越狱”攻击。该框架的核心思想是将攻击者与安全对齐的LLM之间的交互过程形式化为一个<strong>有限时域的、可提前终止的序贯随机博弈</strong>，通过引入博弈论的思维和机制来重塑模型的行为，从而系统性地绕过其内置的安全约束。</p>
+
+<h4><strong>一、 核心理念与理论基础</strong></h4>
+
+<ol>
+<li><p><strong>博弈论建模</strong>：GTA将越狱攻击视为一个由<strong>攻击者（玩家A）</strong>和<strong>目标LLM（玩家B）</strong>参与的动态博弈。此过程涉及状态、动作、观察和收益，允许攻击者根据LLM的反馈动态调整策略。</p></li>
+<li><p><strong>量子响应（Quantal Response）视角</strong>：该框架采用量子响应的重参数化方法来描述和预测LLM的随机输出行为。该模型认为，LLM的响应概率与其行为的“有效效用”相关，即模型倾向于选择效用更高的输出。
+$$ \sigma<em>B(y | s</em>t, x<em>t) = \frac{\exp(\beta u^*</em>B(s<em>t, x</em>t, y))}{\sum<em>{y' \in Y(s</em>t, x<em>t)} \exp(\beta u^*</em>B(s<em>t, x</em>t, y'))} $$
+其中，$u^*_B$代表响应的有效效用，$\beta$是控制随机性的逆温度参数。</p></li>
+<li><p><strong>“模板-安全翻转”（Template-over-Safety Flip）假设</strong>：这是GTA的方法论基石。该假设认为，通过精心设计的<strong>博弈场景模板（Game-Theoretic Scenario Template）</strong>，可以引入一个足够强大的激励信号（场景特定奖励 $\lambda<em>g T</em>g$），该信号能够压倒模型原有的安全对齐效用（$u<em>s q(z)$），从而诱导模型选择通常会拒绝的高风险或有害行为。
+$$ r</em>B(s, x, y, z; g) = u<em>s q(z) + \lambda</em>g T<em>g(s, x, y) $$
+当场景奖励 $\lambda</em>g T_g$ 足够大时，即使安全效用为负，整体收益也可能为正，导致模型“越狱”。</p></li>
+</ol>
+
+<h4><strong>二、 GTA框架的关键组成部分与实施过程</strong></h4>
+
+<p>GTA框架通过模块化的设计，实现了攻击的灵活性和可扩展性。</p>
+
+<ol>
+<li><p><strong>场景模板机制（Scenario Template Mechanism）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：将抽象的博弈论模型具象化为具体的、看似无害的对话场景，以此嵌套恶意意图。</li>
+<li><strong>实现</strong>：
+<ul>
+<li><strong>手动设计</strong>：研究人员首先手动设计了基于“机制诱导的分级囚徒困境”（Mechanism-Induced Graded Prisoner's Dilemma）的场景。在该场景中，LLM的响应被映射到“合作”与“背叛”的分级尺度上，通过博弈规则引导其做出更具风险的披露。</li>
+<li><strong>自动生成与扩展</strong>：为增强多样性和可扩展性，GTA能够：
+<ol>
+<li>将机制扩展到其他经典博弈模型，如<strong>美元拍卖（Dollar Auction）</strong>和<strong>凯恩斯美丽比赛（Keynesian Beauty Contest）</strong>。</li>
+<li>利用强大的LLM（如Claude-3.5），通过单次学习（one-shot learning）自动生成大量语义多样但机制同构的模板。这些模板在角色、背景和叙事上各不相同，但共享相同的博弈规则，从而保证了攻击的鲁棒性。</li>
+</ol></li>
+</ul></li>
+</ul></li>
+<li><p><strong>自适应攻击者代理（Adaptive Attacker Agent）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：实现多轮适应性攻击，根据LLM的实时反馈动态调整策略，以提高越狱强度和效率。</li>
+<li><strong>实现</strong>：
+<ul>
+<li>引入一个可选的、基于LLM的攻击者代理，该代理维护一个包含多种博弈策略的<strong>策略库（Strategy Playbook）</strong>。</li>
+<li><strong>策略库示例</strong>：
+<ul>
+<li><strong>极端惩罚（Extreme Punishment）</strong>：一旦LLM拒绝或犹豫，立即切换到严厉的惩罚框架，增加其不合作的成本。</li>
+<li><strong>以牙还牙（Tit-for-Tat）</strong>：根据LLM上一轮的合作程度，采取对等的回应（宽容或施压）。</li>
+<li><strong>证据伪造（Evidence Fabrication）</strong>：通过传递伪造或误导性“证据”，影响LLM的判断，使其相信关键信息已被泄露，从而增加合作意愿。</li>
+</ul></li>
+<li>在交互中，代理根据收益函数 $r<em>A(s,x,y,z) = U \psi(z) - c</em>A(x)$ 动态选择最优策略，以最大化攻击成功率。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>可插拔的有害词检测代理（Harmful-Words Detection Agent）</strong></p>
+
+<ul>
+<li><strong>目的</strong>：规避外部“提示护卫”（Prompt-Guard）等防御模型的检测，降低攻击被拦截的概率。</li>
+<li><strong>实现</strong>：
+<ul>
+<li>引入一个基于GPT-4o的检测代理，用于识别用户输入中的有害关键词（如“制造”、“炸弹”）。</li>
+<li>检测到有害词后，采用轻量级的<strong>词汇级扰动技术</strong>，如插入零宽度字符或不影响语义的标点符号。</li>
+<li>这种扰动能有效降低被检测率（实验表明最高可降低50%），同时对LLM的语义理解影响极小，从而在保持高攻击成功率（ASR）的同时成功规避检测。</li>
+</ul></li>
+</ul></li>
+</ol>
+
+<h4><strong>三、 效果验证与评估</strong></h4>
+
+<p>论文通过系统的实验对GTA框架进行了全面评估，使用了两个关键指标：</p>
+
+<ul>
+<li><strong>攻击成功率（ASR）</strong>：成功越狱的查询占总有害查询的比例。</li>
+<li><strong>每次成功攻击的预期查询数（EQS）</strong>：衡量攻击效率，值越低越好。</li>
+</ul>
+
+<p><strong>关键成果</strong>：</p>
+
+<ol>
+<li><strong>高攻击成功率</strong>：在AdvBench、StrongREJECT等多个数据集上，GTA在7种主流LLM（包括GPT-4o、Gemini-2.0、Claude-3.5、DeepSeek-R1等）上实现了<strong>90%-100%</strong>的极高ASR。</li>
+<li><strong>高效率</strong>：GTA的EQS值（约5.2）与高效的单轮攻击方法相当，但远低于其他复杂的多轮攻击方法，实现了高成功率与高效率的平衡。</li>
+<li><strong>强大的可扩展性和鲁棒性</strong>：无论是在自动生成的不同叙事背景模板下，还是在切换到“美元拍卖”等其他博弈模型时，GTA均保持了极高的ASR，证明了其对表面叙述变化的鲁棒性和框架的泛化能力。</li>
+<li><strong>真实世界有效性</strong>：GTA成功在多个面向用户的真实世界LLM应用（如华为小艺、DeepSeek应用）上诱导出越狱行为。此外，对HuggingFace上流行模型的月度监测也显示，这些模型持续存在易受GTA攻击的安全漏洞。</li>
+<li><strong>组件贡献明确</strong>：消融研究表明，<strong>游戏理论场景的引入是提升ASR的关键</strong>（从60%提升至80%以上），而自适应攻击者代理则能将成功率推向100%。</li>
+</ol>
+
+<h4><strong>四、 结论</strong></h4>
+
+<p>GTA框架通过将复杂的黑盒越狱攻击过程巧妙地建模为一场人机博弈，为LLM安全领域提供了一种<strong>全新的、系统化的攻击范式</strong>。它通过结合<strong>场景模板、自适应策略和规避检测</strong>等手段，实现了前所未有的自动化、可扩展性和高效性。这项工作不仅揭示了当前顶尖LLM在面对结构化、有策略的攻击时存在的严重安全隐患，也为未来开发更强大的安全对齐技术和防御机制提供了重要的理论洞察和实践参考。</p>
+
+<h2>框架优势</h2>
+
+<ul>
+<li><strong>高效性与高成功率</strong>: 在多个LLM上实现了接近100%的攻击成功率，显著优于其他12种基线方法。</li>
+<li><strong>自动化与可扩展性</strong>: 能够自动生成多样化的攻击场景，减少了对人工设计的依赖。</li>
+<li><strong>鲁棒性</strong>: 在不同的解码超参数（如温度、top-p）和多语言环境下均能保持高攻击成功率。</li>
+<li><strong>通用性</strong>: 成功应用于多种商业和开源LLM，包括GPT-4o, Claude 3.5 Sonnet, Gemini-2.5, DeepSeek等。</li>
+</ul>
+
+<h2>实验设计</h2>
+
+<ul>
+<li>在多个公开数据集（<strong>AdvBench</strong>, <strong>AdvBench-subset</strong>, <strong>StrongREJECT</strong>）上进行评估。</li>
+<li>对比了GTA与12种现有的越狱攻击方法（如FlipAttack, DeepInception, AutoDAN）的攻击成功率（ASR）。</li>
+<li>使用了多种评估协议（ASR1, ASR2, ASR3），并采用GPT-4o和Llama-Guard-3-8B作为评估器，以确保评估的全面性和严格性。</li>
+<li>设计了消融实验来验证框架中不同组件（如博弈论场景、攻击者代理）的贡献。</li>
+<li>在真实的商业LLM应用中进行了红队测试，以验证GTA在实际场景中的有效性。</li>
+</ul>
+
+<h2>数据集和代码</h2>
+
+<ul>
+<li>使用的数据集包括 <strong>AdvBench</strong>, <strong>AdvBench-subset</strong>, 和 <strong>StrongREJECT</strong>。</li>
+<li>代码、场景模板和成功的攻击示例已公开在GitHub: https://github.com/Vincent-HKUSTGZ/Jailbreaking-LLMs-via-the-Game-Theory-Scenarios</li>
+</ul>
+
+<h2>性能表现</h2>
+
+<ul>
+<li><strong>攻击成功率 (ASR)</strong>: 在多个数据集和评估协议下，GTA的ASR普遍达到 <strong>90%-100%</strong>，显著超越了所有基线方法。</li>
+<li><strong>效率</strong>: 在攻击查询次数上优于现有的多轮攻击方法。</li>
+<li><strong>鲁棒性</strong>: 在不同的生成配置（解码参数）和多语言场景下均能保持高性能。</li>
+<li><strong>现实世界应用</strong>: 在对多个商业LLM应用（如华为小艺、DeepSeek）的长期监控中，成功实现了“越狱”，ASR高于86%。</li>
+</ul>
+
+<h2>实验结果</h2>
+
+<ul>
+<li>实验结果表明，GTA框架在多种设置下均能取得最高的攻击成功率，证实了“模板优先于安全翻转”的核心假设。</li>
+<li>消融研究证明，博弈论场景和攻击者代理的结合是提升GTA性能的关键。</li>
+<li>GTA在不同的博弈论模型（美元拍卖、凯恩斯美丽竞赛）中也表现出良好的可转移性和鲁棒性。</li>
+</ul>
+
+<h2>论文贡献</h2>
+
+<ul>
+<li>首次提出了GTA框架，将黑盒越狱攻击形式化为博弈论问题，开创了博弈论驱动的LLM攻击新范式。</li>
+<li>明确并验证了“模板优先于安全翻转”是导致越狱成功的核心机制。</li>
+<li>通过在多个数据集和真实世界LLM应用上的大量实验，证明了GTA的有效性、高效性和可扩展性，为LLM安全评估和防御研究提供了重要的基准和新思路。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-21 19:45:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
