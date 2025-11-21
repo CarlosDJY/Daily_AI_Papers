@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond Tokens in Language Models: Interpreting Activations through Text Genre Chunks</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.16540v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Beyond Tokens in Language Models: Interpreting Activations through Text Genre Chunks</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">文本体裁</span>
+                
+                <span class="tag">内部激活</span>
+                
+                <span class="tag">可解释性</span>
+                
+                <span class="tag">表征能力</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Independent, Chalmers Technical University, Lund University</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.498</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.16540v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-21/f831edf780b1a6f938207f62a62ce8e54d9fd32bfcebd87618ab809ddc50ba9e.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种新方法，通过分析大型语言模型（LLM）内部激活，预测文本体裁。利用Mistral-7B模型，研究显示该方法在合成数据集上的F1分数高达98%，显著优于控制任务。这一框架为LLM的可解释性提供了新视角，揭示了模型在不同层次对文本类别的表征能力。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <p>好的，我已经阅读并整合了您提供的所有论文片段。以下是根据这些片段总结的综合答案，并按照您指定的格式呈现。</p>
+
+<hr />
+
+<h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）的可解释性问题，特别是如何从模型的内部激活中推断出文本体裁或类别等高层次的语义信息。当前的可解释性研究大多集中在单个词元（token）的层面，缺乏对整个文本块的理解。随着LLM的广泛应用，理解其内部工作机制、提升文本分类任务的准确性变得至关重要。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是：LLM的内部激活（特别是在较深的层次）编码了关于文本体裁或类别等高层次、人类可理解的信息。这些信息可以通过训练简单的线性分类器（探针）来有效提取，从而实现对文本的准确分类，并为模型的可解释性提供新的视角。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>机械可解释性 (Mechanical Interpretability)</strong>：主要研究神经元激活对单个词元输出的影响，以及从激活中提取人类可理解的概念。</li>
+<li><strong>特定模型研究</strong>：涉及对Mistral-7B等模型的应用和激活分析。</li>
+<li><strong>LLM在文本分析中的应用</strong>：如Galactica用于科学文本处理，QualiGPT用于定性编码。</li>
+<li><strong>激活操控技术</strong>：如Activation Addition，旨在通过干预激活来引导模型行为。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整详细解决方案：基于LLM激活的文本体裁预测框架</strong></h3>
+
+<p>本文提出了一种创新的预测框架，旨在通过分析大语言模型（LLM）在处理文本时的内部激活状态，来准确推断文本的体裁。该方法的核心是将文本分割成自然的“文本块”（chunks），并利用从模型中提取的激活信息来训练分类器，从而实现对这些文本块体裁的精准预测。</p>
+
+<p>以下是该解决方案的详细步骤和核心组成部分：</p>
+
+<hr />
+
+<h4><strong>第一步：构建高质量的标注数据集</strong></h4>
+
+<p>为了训练和验证预测框架，研究团队构建了两个关键数据集。其中，核心是一个手动策划和半自动生成的合成数据集。</p>
+
+<ol>
+<li><p><strong>定义文本类别</strong>：
+首先明确了需要分类的文本体裁，共五类：</p>
+
+<ul>
+<li><strong>叙述性 (Narrative)</strong>: 描述一系列关联事件的故事或陈述。</li>
+<li><strong>解释性 (Explanatory)</strong>: 旨在阐明某个概念或事实的陈述。</li>
+<li><strong>指令性 (Instructional)</strong>: 提供如何完成某项任务的详细步骤或信息。</li>
+<li><strong>演讲 (Speech)</strong>: 口头表达的书面记录。</li>
+<li><strong>代码 (Code)</strong>: 计算机编程语言的文本。</li>
+</ul></li>
+<li><p><strong>生成多样化文本</strong>：</p>
+
+<ul>
+<li>研究者首先手动编写了68个开放式提示，旨在引导LLM生成上述不同类别的文本。</li>
+<li>为进一步扩大提示的多样性，他们使用<code>Mistral-7B-Instruct-v2.0</code>模型，基于手动编写的提示列表生成了更多的合成提示。</li>
+<li>最终，使用这个包含669个提示的列表，驱动<code>Mistral-7B-Instruct-v2.0</code>生成大量文本样本。</li>
+</ul></li>
+<li><p><strong>文本分块与标注</strong>：</p>
+
+<ul>
+<li>生成的长文本通过双换行符（<code>\n\n</code>）被分割成自然的“文本块”，通常类似于段落。</li>
+<li>使用<code>GPT-4 Turbo Preview</code>模型对这些文本块进行自动分类和标注。</li>
+<li>最后，所有机器标注的结果都经过人工审核，以确保标注的准确性，最终形成了包含3914个独特文本块的合成数据集。</li>
+</ul></li>
+<li><p><strong>对比数据集</strong>：</p>
+
+<ul>
+<li>除了自建数据集，研究还使用了现有的<strong>CORE数据集</strong>作为对比，以验证框架在不同数据分布下的泛化能力。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第二步：设计并实施预测框架</strong></h4>
+
+<p>该框架的核心是提取LLM的内部状态并用其进行分类。</p>
+
+<ol>
+<li><p><strong>模型选择</strong>：</p>
+
+<ul>
+<li>研究使用拥有70亿参数的<code>Mistral-7B-Instruct-v2.0</code>模型作为分析对象。所有操作均通过Hugging Face Transformers库和PyTorch完成。</li>
+</ul></li>
+<li><p><strong>激活提取</strong>：</p>
+
+<ul>
+<li>当模型处理数据集中的每一个文本块时，研究团队从模型的每一层（all layers）提取其激活值和残差流（residual stream）。这些激活值被视为文本块在模型内部的高维表示。</li>
+</ul></li>
+<li><p><strong>分类器训练</strong>：</p>
+
+<ul>
+<li>将提取出的激活值作为特征输入，训练多个简单的浅层学习分类器（如逻辑回归、支持向量机等）。</li>
+<li>这些分类器的任务是学习激活模式与文本体裁标签（叙述性、解释性等）之间的映射关系。</li>
+</ul></li>
+<li><p><strong>设置控制实验</strong>：</p>
+
+<ul>
+<li>为了确保分类器的性能不是偶然的，研究者设计了对照任务。他们训练了使用随机参数的“探测器”（probe），并证明其性能远低于使用真实激活训练的分类器，从而验证了激活值中确实包含了与文本体裁相关的有效信息。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第三步：评估、分析与结果验证</strong></h4>
+
+<p>通过一系列实验，研究团队验证了该框架的有效性。</p>
+
+<ol>
+<li><p><strong>评估指标</strong>：</p>
+
+<ul>
+<li>数据集被划分为80%的训练集和20%的测试集。</li>
+<li>采用<strong>宏F1分数（Macro F1-score）</strong>作为主要评估指标，因为它能公平地评估模型在类别不平衡情况下的整体性能。</li>
+</ul></li>
+<li><p><strong>主要发现</strong>：</p>
+
+<ul>
+<li><strong>高预测准确率</strong>：该框架在自建的合成数据集上取得了高达<strong>98%</strong>的F1分数，在更具挑战性的CORE数据集上也达到了<strong>71%</strong>，证明了方法的有效性。</li>
+<li><strong>深层激活更有效</strong>：分析表明，随着模型层次的加深，分类性能显著提高。这说明模型的深层激活能够捕捉到更抽象、更高层次的文本结构和语义信息，从而更有利于体裁分类。</li>
+<li><strong>数据集特性影响性能</strong>：合成数据集的性能远优于CORE数据集。通过使用<strong>PHATE</strong>进行降维可视化分析发现，合成数据集中的不同类别在嵌入空间中形成了清晰的聚类；而CORE数据集中的类别存在大量重叠，导致模型难以区分。这表明类别定义的清晰度和差异性对预测性能有重要影响。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>优势、应用与未来展望</strong></h4>
+
+<p>该解决方案不仅在技术上取得了成功，还为理解和应用LLM提供了新的思路。</p>
+
+<ul>
+<li><strong>增强模型可解释性</strong>：通过分析激活状态，研究者可以“窥探”LLM的内部决策过程，理解它是如何表征和区分不同文本类型的，从而增强了模型的可解释性。</li>
+<li><strong>监控和评估模型输出</strong>：该方法可用于监控LLM生成内容的体裁分布，有助于评估输出的安全性、多样性和任务相关性。</li>
+<li><strong>为未来研究奠定基础</strong>：这项工作为从模型激活中提取更高层次的可理解概念铺平了道路。未来的研究可以扩展到更多的文本类别，研究模型如何处理重叠概念，甚至利用该框架预测标签序列，以提升模型的长文本理解与生成能力。</li>
+<li><strong>开放与可复现</strong>：研究团队在GitHub上开源了所有代码和数据集，确保了研究的透明度和可复现性，鼓励社区在此基础上进行更深入的探索。</li>
+</ul>
+
+<p><strong>总结而言，本文提出的基于激活的文本体裁预测框架，通过构建高质量数据集、提取模型内部状态并训练分类器，成功实现了对文本体裁的高精度推断。它不仅提供了一个有效的文本分析工具，更为深入理解和安全应用大语言模型开辟了新的途径。</strong></p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型</strong>：主要使用 Mistral-7B-Instruct-v2.0 进行文本生成和激活提取。</li>
+<li><strong>数据集</strong>：创建了一个包含669个提示、生成了3914个文本片段的合成数据集。实验还将此数据集与公开的CORE数据集进行了比较。</li>
+<li><strong>训练与评估</strong>：将数据集按80/20的比例划分为训练集和测试集，使用多种浅层学习分类器进行训练，并以宏F1分数（Macro F1 score）作为主要评估指标。实验还设置了控制任务以验证结果的显著性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<p>研究中使用的数据集和代码已在GitHub上公开：
+- <strong>链接</strong>: https://github.com/Aza-Spearal/Trajectories-Probing</p>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+- <strong>高分类精度</strong>：通过模型激活训练的分类器能够高效地预测文本体裁，在合成数据集上的F1分数最高可达98%。
+- <strong>深层激活更有效</strong>：实验发现，从模型更深的层次提取的激活能够带来更好的分类性能，表明高层次的语义信息在模型的后期处理阶段被更好地整合。
+- <strong>超越基线</strong>：探测模型的性能显著优于控制任务，证明了模型激活中确实包含了与文本类别相关的有效信息。</p>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出新方法</strong>：提出了一种从LLM内部激活中预测文本体裁的新方法，为LLM的可解释性研究提供了新的视角和工具。</li>
+<li><strong>揭示表征机制</strong>：揭示了LLM（特别是Mistral-7B）在不同网络层对文本类别的表征能力，并证实了深层激活在编码高层次信息方面的重要性。</li>
+<li><strong>提供新框架与资源</strong>：提供了一个完整的实验框架，用于生成、标注和分析LLM生成的文本，并公开了相关的数据集和代码，为后续研究奠定了基础。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-21 17:44:32</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主题聚类分析 - 2025-11-21</title>
+    <style>
+        :root {
+            /* 配色系统：Amber (聚类主题色) + Indigo (系统色) */
+            --primary-color: #4f46e5;
+            --meso-color: #f59e0b;      /* Amber 500 */
+            --meso-dark: #b45309;       /* Amber 700 */
+            --meso-light: #fffbeb;      /* Amber 50 */
+            --meso-border: #fcd34d;     /* Amber 300 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px;
+        }
+
+        /* === 1. 宏观趋势卡片 (美化版) === */
+        .macro-section {
+            /* 使用更加现代的渐变背景，而非纯色 */
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08); /* 淡淡的蓝光阴影 */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 装饰性的顶部线条 */
+        .macro-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), #93c5fd);
+        }
+
+        .macro-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        /* 针对 Markdown 内容的深度定制 */
+        .macro-content {
+            color: #334155;
+        }
+
+        /* 模拟 H3 标题样式 (核心研究主题/技术趋势) */
+        .macro-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e40af; /* 深蓝 */
+            margin-top: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            background-color: #dbeafe;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .macro-content h3:first-child { margin-top: 0; }
+
+        /* 列表样式优化 */
+        .macro-content ol {
+            padding-left: 0;
+            list-style: none;
+            counter-reset: macro-counter;
+        }
+
+        .macro-content li {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        /* 自定义数字计数器 */
+        .macro-content li::before {
+            counter-increment: macro-counter;
+            content: counter(macro-counter);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .macro-content strong {
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        /* === 2. 聚类列表 (手风琴样式) === */
+        .section-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        
+        /* 悬停效果 */
+        .cluster-card:hover {
+            border-color: var(--meso-border);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 可点击的头部 */
+        .cluster-header {
+            background-color: var(--bg-card);
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .cluster-header:hover {
+            background-color: #fffbeb; /* 极淡的琥珀色 */
+        }
+        
+        /* 激活状态 */
+        .cluster-card.active .cluster-header {
+            background-color: var(--meso-light);
+            border-bottom: 1px solid var(--meso-border);
+        }
+
+        .cluster-info {
+            flex-grow: 1;
+            padding-right: 15px;
+        }
+
+        .cluster-title {
+            color: var(--text-main);
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+        
+        .cluster-card.active .cluster-title {
+            color: var(--meso-dark);
+        }
+
+        .cluster-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 箭头图标 */
+        .toggle-icon {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .cluster-card.active .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--meso-dark);
+        }
+
+        /* 折叠内容区 */
+        .cluster-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #ffffff;
+        }
+
+        .paper-list {
+            padding: 24px;
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 左侧连接线 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 31px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background-color: #f1f5f9;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 24px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 14px;
+            height: 14px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .paper-title:hover {
+            color: var(--primary-color);
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .macro-section { padding: 20px; }
+            .cluster-header { padding: 16px; }
+            .paper-list { padding: 16px; }
+            .paper-list::before { left: 23px; } /* 调整线位置 */
+            .paper-item { padding-left: 24px; }
+            .paper-title { font-size: 15px; }
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 手风琴交互逻辑
+            const headers = document.querySelectorAll('.cluster-header');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const card = this.parentElement;
+                    const body = card.querySelector('.cluster-body');
+                    
+                    // 切换当前卡片状态
+                    card.classList.toggle('active');
+                    
+                    // 重新计算高度
+                    if (card.classList.contains('active')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
+            <div class="date">2025-11-21</div>
+        </div>
+
+        
+        <div class="macro-section">
+            <div class="macro-header">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
+                <h2>核心研究主题</h2>
+
+<ol>
+<li>大型语言模型的可解释性与优化正成为研究的重点，以提高模型的透明度和用户信任。</li>
+<li>可解释性与推理能力评估的研究旨在建立有效的评估标准，以确保模型在复杂任务中的可靠性。</li>
+<li>针对未生成主题的研究，关注如何处理和优化LLM调用失败的情况，以提升系统的鲁棒性。</li>
+<li>语言模型中的欺骗检测技术正在发展，以识别和防止恶意使用生成模型的潜在风险。</li>
+<li>生成推荐系统的解释性与效率研究，致力于提高推荐结果的透明度和用户满意度。</li>
+</ol>
+
+<h2>技术趋势</h2>
+
+<ol>
+<li>研究者越来越关注模型的可解释性，推动开发新的算法和工具以提升大型语言模型的透明度。</li>
+<li>随着AI应用的普及，针对生成模型的安全性和伦理问题的研究逐渐增多，特别是在欺骗检测和风险评估方面。</li>
+<li>生成推荐系统的效率优化与用户体验提升并行推进，强调在保证推荐质量的同时提高系统的响应速度。</li>
+</ol>
+
+            </div>
+        </div>
+        
+
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 5 个研究热点 (点击展开详情)
+        </div>
+
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 1: 大型语言模型的可解释性与优化</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        5 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond Tokens in Language Models: Interpreting Activations through Text Genre Chunks</span>
+                        <span class="paper-contrib">提出了一种通过文本类型块解释大型语言模型激活的初步方法，以提高其可解释性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning from Sufficient Rationales: Analysing the Relationship Between Explanation Faithfulness and Token-level Regularisation Strategies</span>
+                        <span class="paper-contrib">分析了人类解释与模型学习之间的关系，探讨了合理性充分性与标记级正则化策略的影响。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">PSM: Prompt Sensitivity Minimization via LLM-Guided Black-Box Optimization</span>
+                        <span class="paper-contrib">提出了一种通过大型语言模型引导的黑箱优化方法，旨在最小化系统提示的敏感性以增强安全性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ELPO: Ensemble Learning Based Prompt Optimization for Large Language Models</span>
+                        <span class="paper-contrib">介绍了一种基于集成学习的提示优化方法，以自动化大型语言模型的提示工程过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning Tractable Distributions Of Language Model Continuations</span>
+                        <span class="paper-contrib">提出了一种方法，通过可处理的分布来控制语言模型的生成，以满足序列级约束。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 2: 可解释性与推理能力评估</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ESGBench: A Benchmark for Explainable ESG Question Answering in Corporate Sustainability Reports</span>
+                        <span class="paper-contrib">提出了一个用于评估可解释性ESG问答系统的基准数据集和评估框架，专注于企业可持续发展报告中的多主题问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CARE-RAG - Clinical Assessment and Reasoning in RAG</span>
+                        <span class="paper-contrib">研究了在临床环境中，检索到的证据与大型语言模型推理能力之间的差距，强调了遵循结构化协议的重要性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">JudgeBoard: Benchmarking and Enhancing Small Language Models for Reasoning Evaluation</span>
+                        <span class="paper-contrib">评估了小型语言模型在判断答案正确性方面的能力，并提出了改进其推理评估的基准方法。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 3: 未生成主题（LLM 调用失败）</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        3 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Thinking-while-Generating: Interleaving Textual Reasoning throughout Visual Generation</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Nemotron Elastic: Towards Efficient Many-in-One Reasoning LLMs</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">OpenMMReasoner: Pushing the Frontiers for Multimodal Reasoning with an Open and General Recipe</span>
+                        <span class="paper-contrib">未生成贡献分析</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 4: 语言模型中的欺骗检测</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        2 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Can MLLMs Read the Room? A Multimodal Benchmark for Assessing Deception in Multi-Party Social Interactions</span>
+                        <span class="paper-contrib">提出了一个多模态基准，以评估大型语言模型在复杂社交互动中识别欺骗的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Liars' Bench: Evaluating Lie Detectors for Language Models</span>
+                        <span class="paper-contrib">引入了LIARS' BENCH，一个广泛的评估框架，用于测试语言模型在多样化环境中检测谎言的能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 5: 生成推荐系统的解释性与效率</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        2 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">The Oracle and The Prism: A Decoupled and Efficient Framework for Generative Recommendation Explanation</span>
+                        <span class="paper-contrib">提出了Prism，一个新颖的框架，通过解耦排名和解释的优化，提升生成推荐系统的效率和解释性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Music Recommendation with Large Language Models: Challenges, Opportunities, and Evaluation</span>
+                        <span class="paper-contrib">探讨了大型语言模型在音乐推荐系统中的应用，强调了传统信息检索方法的局限性，并提出了新的评估标准。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
+        <div class="footer">
+            <p>生成时间: 2025-11-21 17:44:32</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
