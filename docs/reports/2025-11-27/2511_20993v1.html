@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subgoal Graph-Augmented Planning for LLM-Guided Open-World Reinforcement Learning</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.20993v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Subgoal Graph-Augmented Planning for LLM-Guided Open-World Reinforcement Learning</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">子目标图</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">强化学习</span>
+                
+                <span class="tag">动态反馈</span>
+                
+                <span class="tag">开放世界游戏</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">The Key Laboratory of Cognition and Decision Intelligence for Complex Systems, Institute of Automation, Chinese Academy of Sciences, School of Artificial Intelligence, University of Chinese Academy of Sciences</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.460</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.20993v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-27/0613162dae4284ec95cb591673a2abe166ba027a8375d2707f584b3d17f753d6.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了SGA-ACR框架，旨在解决大型语言模型（LLM）在强化学习中的规划与执行不对齐问题。通过整合环境特定的子目标图和多LLM协作规划，该框架有效生成可执行的子目标，并通过子目标跟踪器实现动态反馈，显著提升了任务执行的可靠性和质量。在开放世界游戏“Crafter”的实验中，SGA-ACR展现了优越的性能。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）在开放世界强化学习（RL）环境中，计划与执行之间存在的不对齐问题。具体来说，LLM在分解复杂任务时，常会产生在语义上合理但在目标环境中不可行或不相关的子目标。这个问题很重要，因为：
+- 随着LLM在自主代理中的应用越来越广泛，如何提升其在复杂、动态环境中的规划可靠性和决策能力至关重要。
+- 现有的单一LLM规划方法缺乏有效的环境反馈和自我修正机制，导致计划的可靠性不足，尤其是在处理具有复杂依赖关系的任务时。
+- 传统的RL方法在处理需要高层次、长远规划的复杂任务时效率低下。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>: 通过将环境特定的结构化知识（子目标图和实体知识库）与多LLM协作规划管道相结合，可以显著解决LLM在规划与执行中的不对齐问题，从而生成高质量、可执行的计划来指导RL代理。</li>
+<li><strong>关键发现</strong>: 提出的SGA-ACR框架通过环境特定的子目标图和多LLM规划管道（演员-评论家-修正者模式），显著改善了计划的可执行性和可靠性。</li>
+<li><strong>初步结论</strong>: SGA-ACR能够成功生成高质量的计划，有效指导RL代理在复杂任务中进行探索和决策，从而提升其整体性能。</li>
+<li><strong>实验验证</strong>: 在开放世界游戏“Crafter”的22个多样化任务上进行了广泛实验，验证了该方法的有效性和鲁棒性。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>LLM用于规划的方法</strong>: 包括监督微调（SFT）、基于人类反馈的强化学习（RLHF）、检索增强生成（RAG）以及零-shot链式推理提示（如“计划与解决提示”）等。</li>
+<li><strong>LLM引导的RL方法</strong>: 如AdaRefiner、Causal-aware LLMs，利用LLM作为规划器指导RL代理。</li>
+<li><strong>LLM作为决策代理的方法</strong>: 如SPRING、Reflexion、ReAct。</li>
+<li><strong>多LLM协作范式</strong>: 先前的研究存在推理成本高和缺乏动态反馈的问题。</li>
+<li><strong>传统RL方法</strong>: 如PPO、Rainbow和DreamerV3。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：子目标图增强的演员-评论家-精炼器（SGA-ACR）框架</strong></h3>
+
+<p>本文提出了一种名为<strong>“子目标图增强的演员-评论家-精炼器”（SGA-ACR）</strong>的先进框架，旨在显著提升大型语言模型（LLMs）在开放世界强化学习（RL）环境中的规划与决策能力。该框架通过整合结构化的环境知识、采用多LLM协作的规划管道，并建立规划与执行之间的双向反馈机制，有效解决了LLMs在面对复杂任务时规划质量不高、易违反环境约束等核心挑战。</p>
+
+<p>SGA-ACR框架的运作分为两个主要阶段：<strong>离线知识构建</strong>和<strong>在线规划与执行</strong>。</p>
+
+<hr />
+
+<h4><strong>第一阶段：离线知识构建与基础</strong></h4>
+
+<p>在与环境交互之前，框架首先离线构建一个结构化的知识基础，为后续的在线规划提供精确、可靠的环境信息。这部分是整个框架的基石，主要包含两个核心组件：</p>
+
+<ol>
+<li><p><strong>子目标依赖图 (Subgoal Dependency Graph)</strong></p>
+
+<ul>
+<li><strong>定义与构建</strong>：首先，利用LLMs（如DeepSeek-V3）从环境的背景文档和核心代码中提取所有可能的子目标及其属性（名称、描述、前提条件、后置条件）。这些子目标被组织成一个有向无环图 \$ G(V, E) \$，其中节点 \$ V \$ 代表子目标，边 \$ E \$ 代表它们之间的依赖关系。</li>
+<li><strong>依赖关系类型</strong>：
+<ul>
+<li><strong>AND边</strong>：表示一个子目标需要多个前置条件全部满足才能实现（例如，<code>制作木剑</code>需要先<code>收集木材</code>和<code>放置工作台</code>）。</li>
+<li><strong>OR边</strong>：表示一个子目标有多个可选的前置路径，满足其一即可（例如，<code>击败僵尸</code>可以通过<code>制作木剑</code>或<code>制作石剑</code>实现）。</li>
+</ul></li>
+<li><strong>成功率权重</strong>：每个子目标节点 \$ v<em>i \$ 关联一个权重 \$ \omega(v</em>i) \$，代表其历史成功率。这个权重在在线阶段会动态更新，用于指导规划器选择更可靠的路径。</li>
+</ul></li>
+<li><p><strong>实体知识库 (Entity Knowledge Base)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：为了提供更精细的实体级信息，框架还构建了一个实体知识库。该知识库使用LLMs提取环境中所有可交互实体的信息（如名称、类型、描述、相关子目标），并以实体名称为索引进行结构化存储。</li>
+<li><strong>优势</strong>：与传统的检索增强生成（RAG）使用非结构化文本块不同，这种结构化的知识库能够捕捉实体与子目标之间的明确联系，为规划提供更精确的上下文。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第二阶段：在线多LLM规划与执行</strong></h4>
+
+<p>在在线阶段，当RL代理需要一个新计划时，SGA-ACR框架启动其核心的<strong>演员-评论家-精炼器（Actor-Critic-Refiner）</strong>规划管道。这是一个由多个专门角色的LLM（如Qwen系列）协作完成的流程，旨在生成高质量、可行且与环境对齐的计划。</p>
+
+<ol>
+<li><p><strong>演员 (Actor LLM)：生成候选计划</strong></p>
+
+<ul>
+<li><strong>任务</strong>：演员负责生成多个初步的候选计划。</li>
+<li><strong>流程</strong>：
+<ol>
+<li>接收代理的当前状态观察、未完成的成就和可用的子目标列表。</li>
+<li>通过图到文本技术，将子目标依赖图的相关部分转化为LLM可理解的文本描述。</li>
+<li>结合从实体知识库中检索到的信息，生成多个候选计划（通常每个计划包含3个子目标），并附上生成该计划的理由。</li>
+</ol></li>
+<li><p><strong>输出示例</strong>：
+```
+PlanA: <collect<em>wood, place</em>table, make<em>wood</em>sword>
+ReasonA: 收集木材和放置桌子是制作木剑的前提，可以帮助击败僵尸，解锁多个成就。</p>
+
+<p>PlanB: <collect<em>stone, place</em>furnace, make<em>stone</em>sword>
+ReasonB: 收集石材和放置熔炉是制作石剑的前提，这对于击败敌人至关重要。
+```</p></li>
+</ul></li>
+<li><p><strong>评论家 (Critic LLM)：评估与批判</strong></p>
+
+<ul>
+<li><strong>任务</strong>：评论家负责严格评估演员生成的所有候选计划，提供反馈并进行排名。</li>
+<li><strong>评估标准</strong>：
+<ol>
+<li><strong>可行性检查</strong>：验证计划中的每个子目标是否来自“可用子目标集合”，且其前提条件在当前状态下是否满足。</li>
+<li><strong>依赖关系检查</strong>：确保子目标的顺序符合子目标依赖图中的约束。</li>
+<li><strong>目标对齐</strong>：评估计划是否有助于解锁更多未完成的成就。</li>
+</ol></li>
+<li><strong>输出</strong>：为每个候选计划生成详细的反馈、一个综合排名，以及一个“是否需要精炼”的标志。</li>
+</ul></li>
+<li><p><strong>精炼者 (Refiner LLM)：整合与优化</strong></p>
+
+<ul>
+<li><strong>任务</strong>：精炼者根据评论家的反馈，生成最终的执行计划。</li>
+<li><strong>流程</strong>：
+<ul>
+<li>如果评论家认为排名最高的计划无需修改（精炼标志为“否”），则直接采纳该计划。</li>
+<li>如果需要修改（精炼标志为“是”），精炼者会综合所有候选计划的优点和评论家的反馈，生成一个经过优化的最终计划。例如，如果评论家指出某个计划缺少了关键的中间步骤（如<code>放置熔炉</code>），精炼者会将其补充进去。</li>
+</ul></li>
+<li><strong>优势</strong>：这个多LLM协作流程避免了单一LLM规划的局限性，通过分离生成与评估，显著提高了最终计划的质量和可靠性，且无需对LLM进行微调。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>核心机制：子目标跟踪器 (Subgoal Tracker)</strong></h4>
+
+<p>为了解决高层规划与低层执行之间的“错位”问题，SGA-ACR设计了一个关键的<strong>子目标跟踪器</strong>，在LLM规划器和RL代理之间建立了一个双向反馈循环。</p>
+
+<ol>
+<li><p><strong>子目标完成检测</strong>：在每个环境步骤，跟踪器通过比较前后状态的变化，判断当前计划中的子目标是否已完成（基于其后置条件）。</p></li>
+<li><p><strong>额外奖励机制 (Reward Shaping)</strong></p>
+
+<ul>
+<li><strong>目的</strong>：为了激励RL代理遵循生成的计划，当代理<strong>首次</strong>完成计划中的某个子目标时，跟踪器会提供一个额外的正向奖励。</li>
+<li><strong>公式</strong>：奖励计算为 \$ r'<em>{t} = \sum</em>{i=1}^{n} \alpha \cdot (\text{1 if } sg_i \text{ is achieved for the first time, 0 otherwise}) \$，其中 \$ \alpha \$ 是超参数。</li>
+<li><strong>设计思想</strong>：仅在首次完成时给予奖励，可以有效防止代理陷入重复执行简单子目标的局部最优陷阱。</li>
+</ul></li>
+<li><p><strong>动态图权重更新</strong></p>
+
+<ul>
+<li><strong>目的</strong>：让RL代理的执行经验反过来指导未来的规划。</li>
+<li><strong>流程</strong>：跟踪器维护每个子目标的“计划计数” \$ N<em>p \$ 和“完成计数” \$ N</em>a \$。当一个子目标被规划时，\$ N<em>p \$ 增加；当它被完成时，\$ N</em>a \$ 增加。</li>
+<li><strong>公式</strong>：子目标的成功率权重被动态更新为 \$ \omega(v<em>{i}) = \frac{N</em>{a,i}}{N_{p,i}} \$。</li>
+<li><strong>作用</strong>：这个权重反馈给规划模块，使得演员在生成新计划时，会倾向于选择历史成功率更高的路径，从而形成一个从简单到复杂的自适应学习课程。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>训练与执行</strong></h4>
+
+<p>最终生成的计划被传递给一个标准的RL代理（如使用PPO算法训练），代理将计划中的子目标作为高层指令来指导其在环境中的探索和行动。为了平衡计算成本，规划模块并非在每一步都调用，而是在固定时间间隔或当前计划完成后再进行查询。</p>
+
+<h4><strong>总结与贡献</strong></h4>
+
+<p>SGA-ACR框架通过以下关键贡献，成功提升了LLM在开放世界RL中的规划能力：
+1.  <strong>结构化知识整合</strong>：用环境特定的子目标图和实体知识库代替了模糊的文本检索，为LLM提供了清晰的推理路径。
+2.  <strong>多LLM协作规划</strong>：通过演员-评论家-精炼器范式，显著提升了规划的质量和鲁棒性，且无需微调LLM。
+3.  <strong>双向反馈闭环</strong>：子目标跟踪器通过奖励塑造和动态权重更新，实现了规划与执行之间的紧密对齐和相互促进。</p>
+
+<p>在开放世界游戏“Crafter”上的实验结果表明，SGA-ACR框架能够有效指导RL代理完成复杂任务，其性能显著优于基线方法，证明了该解决方案在解决复杂规划问题上的巨大潜力和应用价值。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>实验环境</strong>: 在开放世界沙盒游戏 <strong>Crafter</strong> 中进行，该环境包含22个具有复杂依赖关系的多样化任务。</li>
+<li><strong>评估模型</strong>: 采用部分可观测马尔可夫决策过程（POMDP）模型。</li>
+<li><strong>对比基线</strong>: 将SGA-ACR与多种基线方法进行比较，包括LLM引导的RL方法（AdaRefiner, Causal-aware）、LLM作为决策代理的方法（SPRING, Reflexion, ReAct）以及传统RL方法（PPO, DreamerV3）。</li>
+<li><strong>消融实验</strong>: 对SGA-ACR的各个关键模块（知识模块、多LLM规划模块、子目标跟踪器）进行消融研究，以验证其各自的贡献。</li>
+<li><strong>鲁棒性测试</strong>: 在不同参数规模的LLM（如Qwen3-8B）上进行测试，以验证方法的稳健性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li>论文的补充材料中提供了名为 <strong>SGA-ACR.zip</strong> 的文件，其中包含代码。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>: SGA-ACR在Crafter环境的得分和奖励指标上均显著优于所有基线方法，尤其是在解锁高难度成就方面表现突出。</li>
+<li><strong>高质量规划</strong>: 实验证明，SGA-ACR生成的计划质量更高，能够有效指导RL代理完成需要长远规划的复杂任务（如制作石制工具）。</li>
+<li><strong>鲁棒性强</strong>: 该框架在不同参数规模的LLM上均表现出稳健的性能。</li>
+<li><strong>模块有效性</strong>: 消融实验证实，知识模块、多LLM协作规划和子目标跟踪器都对最终性能有显著的积极影响。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出SGA-ACR框架</strong>: 创新性地整合了环境特定的结构化知识、多LLM协作规划和双向反馈机制，有效解决了LLM在RL中的规划-执行不对齐问题。</li>
+<li><strong>构建结构化知识表示</strong>: 提出了构建环境特定的子目标图和实体知识库的方法，为LLM提供了进行结构化推理所需的环境知识。</li>
+<li><strong>设计多LLM规划管道</strong>: 提出了一个无需微调的“演员-评论家-修正者”多LLM协作框架，显著提升了在线规划的质量。</li>
+<li><strong>实现规划与执行的对齐</strong>: 设计了带有双向反馈的子目标跟踪器，通过奖励机制和动态图权重更新，增强了规划与执行的协调性。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 15:41:59</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

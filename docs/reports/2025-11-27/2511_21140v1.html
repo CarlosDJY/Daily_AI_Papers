@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Correctly Report LLM-as-a-Judge Evaluations</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.21140v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">How to Correctly Report LLM-as-a-Judge Evaluations</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">评估偏差</span>
+                
+                <span class="tag">校准数据集</span>
+                
+                <span class="tag">自适应算法</span>
+                
+                <span class="tag">不确定性量化</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Yonsei University, University of Wisconsin–Madison, KRAFTON</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.466</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.21140v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-27/33db49ce4474240de21a2132c520e92b4cfe462a8dbf9ed06239b7a20cfcc554.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种插件式框架，旨在校正大型语言模型（LLM）评估中的偏差并量化不确定性。通过利用校准数据集估计模型的特异性和灵敏性，构建偏差调整的估计量和置信区间，同时引入自适应算法优化样本分配，从而提高评估的准确性和效率。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决使用大型语言模型（LLM）作为评估者（Judge）时产生的<strong>判断偏差和不确定性</strong>问题。这是一个日益重要的问题，因为：
+- LLM在评估任务中越来越普遍，但其判断并非完美，会引入噪声和偏差。
+- 传统的评估方法通常只提供一个点估计值（如准确率），这会误导对模型性能的理解，因为它忽略了LLM判断错误所带来的偏差。
+- 缺乏对评估结果不确定性的量化，使得我们无法了解评估结果的可靠性。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，通过使用一个小的、经过人工验证的<strong>校准数据集</strong>来估计LLM评估者的错误率（即特异性和灵敏性），可以：
+1.  创建一个<strong>偏差调整后的估计量</strong>，它能比原始的、未经校正的评估结果更准确地反映真实性能。
+2.  构建出统计上有效的<strong>置信区间</strong>，以量化评估结果的不确定性。
+3.  通过<strong>自适应地分配校准样本</strong>（即智能地决定校准哪些类型的样本），可以在固定的校准预算下，获得更短（即更精确）的置信区间，从而提高评估效率。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>LLM评估方法</strong>：包括近期关于LLM评估偏差校正和不确定性评估的研究。</li>
+<li><strong>统计偏差校正理论</strong>：借鉴了经典的统计学方法，如Rogan和Gladen（1978）提出的偏差校正方法。</li>
+<li><strong>置信区间估计与优化设计</strong>：涉及统计推断中关于置信区间构建、自适应采样和样本分配策略的文献。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>论文核心解决方案的详细阐述</strong></h3>
+
+<p>本论文针对使用大型语言模型（LLM）作为评估者时普遍存在的<strong>偏差（Bias）</strong>和<strong>不确定性（Uncertainty）</strong>问题，提出了一个实用且统计上合理的插件式框架。该框架的核心目标是修正评估结果的偏差，并构建能够反映真实不确定性的置信区间，从而实现更可靠、更透明的LLM性能评估。</p>
+
+<p>该解决方案主要包含三个相互关联的部分：<strong>偏差校正的点估计</strong>、<strong>不确定性量化的置信区间构建</strong>，以及<strong>优化校准效率的自适应分配算法</strong>。</p>
+
+<hr />
+
+<h4><strong>1. 偏差校正的点估计器 (Bias-Adjusted Point Estimator)</strong></h4>
+
+<p>LLM在进行判断时并非完美，其固有的敏感性（Sensitivity）和特异性（Specificity）缺陷会导致初步的准确率估计（记为 <code>p̂</code>）与真实准确率（记为 <code>θ</code>）之间存在系统性偏差。为解决此问题，论文提出了一个偏差调整的点估计器。</p>
+
+<ul>
+<li><p><strong>核心思想</strong>:
+利用一个独立的、带有真实标签的<strong>校准数据集（Calibration Dataset）</strong>来估算LLM评估者的判断准确性。具体来说，定义两个关键参数：</p>
+
+<ul>
+<li><strong><code>q₁</code> (敏感性)</strong>: LLM将一个“正确”的响应判断为“正确”的概率。</li>
+<li><strong><code>q₀</code> (特异性)</strong>: LLM将一个“错误”的响应判断为“错误”的概率。</li>
+</ul></li>
+<li><p><strong>偏差调整公式</strong>:
+通过校准数据集，我们可以得到 <code>q₀</code> 和 <code>q₁</code> 的经验估计值 <code>q̂₀</code> 和 <code>q̂₁</code>。结合测试集上观察到的初步准确率 <code>p̂</code>，可以计算出偏差调整后的准确率估计 <code>θ̂</code>：</p>
+
+<p>[ \hat{\theta} = \frac{\hat{p} + \hat{q}<em>0 - 1}{\hat{q}</em>0 + \hat{q}_1 - 1} ]</p>
+
+<p>这个公式能够有效修正由LLM不完美的判断能力所引入的系统性偏差，使得 <code>θ̂</code> 比 <code>p̂</code> 更接近真实的准确率 <code>θ</code>。</p></li>
+</ul>
+
+<hr />
+
+<h4><strong>2. 不确定性量化与置信区间构建 (Confidence Interval Construction)</strong></h4>
+
+<p>为了评估 <code>θ̂</code> 的可靠性，必须量化其不确定性。论文指出，这种不确定性来源于两个方面：
+1.  <strong>测试数据集的随机性</strong>：用于计算 <code>p̂</code> 的测试样本是随机抽取的。
+2.  <strong>校准数据集的随机性</strong>：用于估计 <code>q̂₀</code> 和 <code>q̂₁</code> 的校准样本也是随机抽取的。</p>
+
+<ul>
+<li><p><strong>置信区间计算</strong>:
+论文采用<strong>delta方法</strong>推导了 <code>θ̂</code> 的渐近方差，并结合了两种不确定性来源，给出了构建置信区间的公式。一个 (1-α) 置信区间的计算方式如下：</p>
+
+<p>[ \hat{\theta} \pm z_{\alpha/2} \sqrt{ \text{Var}(\hat{\theta}) } ]</p>
+
+<p>其中，<code>z</code> 是标准正态分布的分位数，而方差 <code>Var(θ̂)</code> 的一个近似形式为：</p>
+
+<p>[ \text{Var}(\hat{\theta}) \approx \frac{1}{(\hat{q}<em>0 + \hat{q}</em>1 - 1)^2} \left[ \frac{\hat{p}(1 - \hat{p})}{n} + (1 - \hat{\theta})^2 \frac{\hat{q}<em>0(1 - \hat{q}</em>0)}{m<em>0} + \hat{\theta}^2 \frac{\hat{q}</em>1(1 - \hat{q}<em>1)}{m</em>1} \right] ]</p>
+
+<ul>
+<li><code>n</code> 是测试集的大小。</li>
+<li><code>m₀</code> 和 <code>m₁</code> 分别是校准数据集中真实标签为“错误”和“正确”的样本数量。</li>
+</ul>
+
+<p>为了在小样本情况下提高覆盖准确性，论文还建议使用“增加两个成功和两个失败”的调整方法（Adjusted Wald Interval）来计算 <code>p̂</code>, <code>q̂₀</code>, <code>q̂₁</code>。</p></li>
+</ul>
+
+<hr />
+
+
+<h4><strong>3. 自适应校准样本分配算法 (Adaptive Calibration Sample Allocation)</strong></h4>
+
+为了在有限的校准预算（`m = m₀ + m₁`）下尽可能地缩小置信区间的长度（即减少不确定性），论文提出了一种自适应分配算法，而不是简单地将校准样本平均分配（如 `m₀ = m₁`）。
+
+<ul>
+<li><p><strong>核心目标</strong>:
+最小化置信区间的长度，提高校准资源的利用效率。</p></li>
+<li><p><strong>算法流程</strong>:</p>
+
+<ol>
+<li><strong>初步校准 (Pilot Stage)</strong>: 首先，收集一小部分初步校准样本（例如，<code>m_pilot = 20</code>），并均匀分配给两类标签。</li>
+<li><strong>估算误差比率</strong>: 利用初步样本，计算出 <code>q̂₀</code> 和 <code>q̂₁</code> 的初始估计，并计算出两类标签的<strong>经验误差比率 <code>κ̂</code></strong>:
+[ \hat{\kappa} = \frac{1 - \hat{q}<em>0}{1 - \hat{q}</em>1} ]
+这个比率反映了LLM在识别“错误”响应和“正确”响应时犯错的相对难度。</li>
+<li><strong>优化分配</strong>: 根据 <code>κ̂</code> 和测试集上的 <code>p̂</code>，算法计算出剩余校准预算的最佳分配方案，将更多的校准样本分配给误差率更高（即LLM更难判断）的标签类型。</li>
+<li><strong>最终校准</strong>: 按照优化后的分配方案收集剩余的校准样本，并最终计算出 <code>θ̂</code> 及其置信区间。</li>
+</ol></li>
+<li><p><strong>优势</strong>:
+这种数据驱动的自适应方法，相比于固定的均匀分配策略，能够<strong>持续地提供更短的置信区间</strong>，从而在相同的成本下获得更精确、更可靠的评估结果。</p></li>
+</ul>
+
+<hr />
+
+
+<h3><strong>实现与验证</strong></h3>
+
+<ul>
+<li><strong>插件实现</strong>: 作者提供了一个易于使用的Python实现，将上述偏差校正、置信区间构建和自适应分配算法封装成一个插件，方便研究人员和开发者在自己的评估流程中集成和使用。</li>
+<li><strong>经验验证</strong>: 通过蒙特卡洛模拟实验，论文验证了该框架的有效性：
+<ul>
+<li><strong>偏差减少</strong>: 偏差调整后的估计器 <code>θ̂</code> 显著比原始估计 <code>p̂</code> 更接近真实值 <code>θ</code>。</li>
+<li><strong>覆盖准确</strong>: 构建的置信区间在各种参数设置下都能保持接近预设的置信水平（如95%）。</li>
+<li><strong>效率提升</strong>: 自适应分配策略在相同校准预算下，一致性地产生了比均匀分配更短的置信区间。</li>
+</ul></li>
+</ul>
+
+<h3><strong>结论</strong></h3>
+
+综上所述，该论文提供了一个端到端的系统化解决方案，通过**偏差校正**、**置信区间构建**和**自适应校准**，有效解决了LLM作为评估者时存在的准确性和可靠性问题。它强调了**优化校准设计**比单纯增加评估数量更为重要，为进行更稳健、透明和高效的LLM评估提供了强有力的理论基础和实用工具。
+
+<h3>实验设计</h3>
+
+本文主要通过**蒙特卡洛模拟**来验证其方法的有效性。实验设计包括：
+- 在多种参数设置下（如不同的真实准确率、LLM评估者可靠性、测试集和校准集大小）生成模拟数据。
+- 对比**偏差调整后估计量**与**原始估计量**的准确性。
+- 验证所构建的**置信区间**是否能达到标称的覆盖率（例如，95%的置信区间能否在95%的模拟中包含真实值）。
+- 比较**自适应分配策略**与**均匀（对称）分配策略**在相同校准预算下所产生的置信区间的平均长度。
+
+<h3>数据集和代码</h3>
+
+论文相关的代码和实现已公开，可在以下GitHub仓库中找到：
+- **代码链接**: https://github.com/UW-Madison-Lee-Lab/LLM-judge-reporting
+
+<h3>实验结果</h3>
+
+实验结果有力地支持了论文的假设：
+- **偏差校正有效**：偏差调整后的估计量在各种条件下都显著减少了偏差，更接近真实的准确率。
+- **置信区间可靠**：所构建的置信区间在模拟中达到了标称的覆盖率，证明了其统计有效性。
+- **自适应分配更优**：与均匀分配相比，自适应分配策略能够在相同的校准成本下产生显著更短的置信区间，从而提高了评估的统计效率。
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了一个完整的框架</strong>：该框架能够系统性地解决使用LLM作为评估者时产生的偏差问题，并能有效量化评估结果的不确定性。</li>
+<li><strong>开发了高效的校准策略</strong>：提出了自适应样本分配算法，优化了校准过程，用更少的成本获得了更精确的评估结果。</li>
+<li><strong>推动了更可靠的评估实践</strong>：为如何在LLM评估中进行准确、透明的报告提供了方法论基础，强调了从简单的点估计转向包含置信区间的区间估计的重要性。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 15:41:59</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

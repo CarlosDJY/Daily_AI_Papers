@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课题挖掘报告 - 2025-11-27</title>
+    <style>
+        :root {
+            /* 配色：Slate (基调) + Violet (挖掘主题色) */
+            --primary-color: #4f46e5;
+            --mining-color: #8b5cf6;    /* Violet 500 */
+            --mining-light: #f5f3ff;    /* Violet 50 */
+            --mining-border: #ddd6fe;   /* Violet 200 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--mining-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            background-color: #f1f5f9;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        /* 报告列表 */
+        .reports-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .report-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        
+        .report-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 折叠头 */
+        .report-header {
+            padding: 20px 24px;
+            background-color: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .report-header:hover {
+            background-color: #f8fafc;
+        }
+        
+        .report-header.active {
+            background-color: var(--mining-light);
+            border-bottom: 1px solid var(--mining-border);
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        
+        .report-header.active .report-title {
+            color: var(--mining-color);
+        }
+
+        .toggle-icon {
+            color: var(--text-light);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        .report-header.active .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--mining-color);
+        }
+
+        /* 内容区域 */
+        .report-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #ffffff;
+        }
+        
+        .report-body-content {
+            padding: 30px 40px;
+        }
+
+        .section-block {
+            margin-bottom: 30px;
+        }
+        
+        .section-block:last-child { margin-bottom: 0; }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--mining-color);
+            padding-left: 10px;
+        }
+
+        .section-text {
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        /* 特殊样式：Seed Paper */
+        .seed-paper-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* 特殊样式：Divergent Ideas */
+        .ideas-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .idea-item {
+            position: relative;
+            padding: 12px 16px 12px 36px;
+            margin-bottom: 12px;
+            background-color: #fdfbff; /* 极淡的紫 */
+            border: 1px solid #f3e8ff;
+            border-radius: 8px;
+            color: var(--text-main);
+        }
+        
+        .idea-item:last-child { margin-bottom: 0; }
+
+        .idea-icon {
+            position: absolute;
+            left: 10px;
+            top: 14px;
+            width: 16px;
+            height: 16px;
+            color: var(--mining-color);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .report-header { padding: 15px; }
+            .report-title { font-size: 16px; }
+            .report-body-content { padding: 20px; }
+            .section-text { font-size: 14px; }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const headers = document.querySelectorAll('.report-header');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    // 切换当前卡片状态
+                    this.classList.toggle('active');
+                    
+                    const body = this.nextElementSibling;
+                    if (this.classList.contains('active')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path><path d="M9 21h6"></path></svg>
+                课题挖掘报告
+            </h1>
+            <div class="date">2025-11-27</div>
+        </div>
+
+        <div class="reports-container">
+            
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越静态评估：探索大型语言模型面向任务难度的实时自适应机制</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】核心贡献在于提出了基于项目反应理论（IRT）的客观方法来量化任务难度，并揭示了现有LLM在跨难度泛化上的普遍弱点。【分析理由】选择该论文是因为它为“模型能力评估”提供了一个全新的、可量化的视角，其发现的“泛化鸿沟”直接催生了我们对于“模型如何动态适应难度”这一核心问题的探索。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: 现有LLM缺乏在学习过程中实时评估并动态适应任务难度的机制，需要一种新的框架来实现这种能力。
+* 初步检索(第1轮): 发现了多种模型自适应技术，如用于课程学习的自适应提示（GHPO）、用于实时任务的专家向量调整（Transformer-Squared）和用于效率的动态精度分配（DP-LLM），但这些技术多基于启发式或内部状态，而非客观的外部难度评估。
+* 深度假设(第2轮): 进一步聚焦于如何将“实时难度评估”与“模型动态调整”相结合，以提升模型在复杂任务中的泛化性能。
+* 深度检索(第2轮): 再次确认了现有研究集中在自适应优化算法、多模态中的动态秩适应（DRA）或多目标偏好优化（AMoPO）等领域。这些工作虽实现了“动态”，但其适应的信号源并非来自对任务本身难度的客观、实时量化。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合检索结果，学术界在LLM的“动态自适应”方面已取得显著进展。研究工作覆盖了从训练时通过自适应课程学习（如GHPO）和优化算法来管理难度，到推理时通过动态调整模型架构（如Transformer-Squared）、计算精度（如DP-LLM）或特征重要性（如DRA）来适应不同任务和资源限制。现有研究边界在于，模型已经具备了多种“如何适应”的机制。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟在于：尽管学术界已分别在【客观量化任务难度】（如种子论文的IRT方法）和【模型动态自适应机制】上取得进展，但鲜有研究将二者有效结合。现有自适应方法的触发和控制信号多源于模型内部状态、启发式规则或预设目标，缺乏一个能实时、客观地评估外部任务难度，并以此为核心信号来动态指导模型选择推理策略、分配计算资源或调整内部模块的闭环控制框架。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个基于项目反应理论（IRT）的实时难度评估器，并将其作为控制信号，动态调整LLM的推理路径或资源分配（如DP-LLM中的层精度）。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一种“IRT引导的课程学习”框架（IRT-Guided Curriculum Learning），利用IRT实时评估生成样本的难度，动态调整训练数据流，以优化模型的跨难度泛化能力。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        设计一种难度感知的MoE（Mixture-of-Experts）路由机制，其中任务难度评估结果决定了激活哪些或多少专家，实现计算效率与性能的自适应平衡。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究一种人机协同框架，其中IRT难度评估系统在检测到高难度任务时，能主动向人类用户请求澄清或引导，或者自动切换到更鲁棒但成本更高的模型配置。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">从语言到视觉：利用项目反应理论（IRT）评估跨模态模型可靠性的新范式</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】核心贡献在于提出了一种基于项目反应理论（IRT）的客观方法，用于量化任务难度并评估大型语言模型（LLMs）的跨难度泛化能力，揭示了现有模型在该方面的普遍弱点。【分析理由】选择该论文是因为它提供了一个全新的、可量化的模型评估视角，其发现挑战了“课程学习”等传统训练假设，为探索更鲁棒的模型评估与训练方法（尤其是在其他领域）提供了坚实的理论基础。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: 探索将项目反应理论（IRT）框架从语言模型迁移到其他模态（如图像识别），以建立跨模型的通用难度评估标准。
+*初步检索(第1轮): 未发现IRT在图像领域的直接应用。检索结果主要集中于多模态模型的能力提升、架构设计和开放世界分类等方向，而非基于心理测量理论的难度评估。
+*深度假设(第2轮): 基于初步发现，将假设具体化为：如何将IRT的核心思想进行改造和适配，以专门用于评估图像识别任务的实例级难度，并实现跨模型性能的有效比较。
+*深度检索(第2轮): 发现IRT在语言模型领域的应用已深化至预测题目难度、模拟学生、AI作弊检测以及分析模型的“最近发展区”（ZPD）。这表明IRT在分析“响应模式”上非常成熟，但其应用仍局限于教育和语言推理场景。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，学术界已广泛且深入地将项目反应理论（IRT）应用于评估大型语言模型在教育和推理任务中的能力、缺陷和行为模式。同时，在计算机视觉领域，研究重点在于提升模型在各类任务（如开放世界分类、多模态融合）上的性能和泛化能力。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">然而，研究鸿沟在于：尽管IRT在语言领域被证明是评估模型能力的强大工具，但几乎无人尝试将其理论框架迁移并应用于评估计算机视觉模型的“感知能力”。具体而言，如何定义图像的“项目难度”（如视觉混淆度、遮挡、精细度）以及模型的“视觉能力”，并以此为基础建立一个客观、可量化的图像分类可靠性评估体系，是当前研究的空白地带。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        视觉项目反应理论（Visual-IRT）：一个用于量化图像分类难度与模型能力的统一框架
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        利用IRT响应模式分析进行图像模型的分布外（OOD）与对抗性攻击检测
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        IRT引导的课程学习：基于视觉“最近发展区”（ZPD）理论的图像模型高效训练策略
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        跨模态难度对齐：使用IRT评估和提升多模态模型在不同模态输入难度不匹配时的鲁棒性
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越静态课程：探索基于实时难度评估的LLM动态训练与结构自适应新范式</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】核心贡献在于提出了基于项目反应理论（IRT）的客观方法，来量化任务难度并评估LLM的跨难度泛化能力，揭示了现有模型在该方面的普遍弱点。【分析理由】选择该论文是因为它提供了一个全新的、量化的视角来审视模型训练和评估，挑战了传统的课程学习假设，为探索更智能、更自适应的训练策略开辟了道路。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: 期望找到能根据LLM实时表现动态优化课程内容和顺序的算法，以提升泛化能力。
+*初步检索(第1轮): 检索结果较为宽泛，主要集中在通用的自适应优化器、模型量化和偏好学习等方向，并未直接命中动态课程学习的核心问题。
+*深度假设(第2轮): 基于初步结果，将假设聚焦为：如何设计算法，能依据模型实时性能反馈，动态调整课程中的任务选择与组织，从而有效提升泛化能力？
+*深度检索(第2轮): 发现了关键性进展，如“课程引导的层扩展”（Curriculum-Guided Layer Scaling），该研究将数据难度课程与模型结构（层数）的增长同步起来，为动态训练提供了具体思路。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合检索结果，现有研究边界如下：学术界已广泛探索LLM的训练优化方法，并开始关注课程学习。具体而言，已出现将预设的数据难度阶梯与模型结构（如逐层增加）进行同步的训练框架（如CGLS），初步实现了数据与模型的协同进化。然而，这些方法中的“课程”通常是预先定义好的，而非实时动态生成。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟在于：尽管我们有了客观评估任务难度的方法（如IRT）和初步的课程-结构协同训练框架（如CGLS），但尚未将两者结合，实现一个真正的闭环自适应系统。目前，无人研究如何利用对模型实时能力的精准、量化评估（如通过IRT）来动态地、实时地调整训练课程（数据选择与排序）乃至模型自身的结构（如动态增减层或模块），以最高效地提升其泛化能力。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个基于项目反应理论（IRT）的实时反馈系统，用于动态调整课程学习中的数据难度和模型层数（Layer Scaling）的协同训练策略。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究一种“自适应模型结构”的训练范式，其中LLM能根据实时任务难度评估，自主决定激活/冻结特定模块或调整网络宽度，而不仅仅是深度。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        利用IRT量化现有数据集中样本的“教学价值”，并探索一种基于此价值的主动学习策略，为LLM课程学习动态生成或筛选最高效的训练样本。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        反向应用IRT框架：分析一个已训练好的LLM在哪些难度区间的任务上表现不佳，从而自动生成针对性的“补习”数据集以进行高效的微调和能力补强。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">研究鸿沟分析：将项目反应理论(IRT)应用于大型语言模型创意任务评估的空白与机遇</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】提出了一种基于项目反应理论（IRT）的框架，用于客观量化任务难度并评估LLM的跨难度泛化能力，揭示了当前模型在该方面的普遍弱点。【分析理由】我们选择它是因为其创新的评估范式为理解和提升LLM真实能力提供了新视角，特别是其对“课程学习”假设的挑战，为探索模型训练与评估的新方法奠定了基础。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: 探索基于IRT的方法是否已被用于量化创意性任务的难度。
+*初步检索(第1轮): 发现IRT主要应用于教育评估和作弊检测等结构化领域；而现有的LLM创造力研究（如2502.03253, 2504.12320）则依赖其他评估方法，未使用IRT。
+*深度假设(第2轮): 基于初步发现，问题深化为：如何利用IRT来精确量化LLM在创意性任务中的表现和难度？
+*深度检索(第2轮): 再次确认，所有找到的将IRT应用于LLM的先进工作（如2503.08551, 2503.13335）都集中在数学选择题、基准测试效率和上下文学习等非创意领域，创意任务的IRT应用仍是空白。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，将项目反应理论（IRT）应用于大型语言模型（LLMs）能力评估的研究已经相当成熟，但其应用场景高度集中在具有明确答案的结构化任务上，例如教育领域的选择题（MCQs）、数学推理和标准化基准测试效率优化。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟清晰地体现在【领域空白】上：尽管IRT在客观量化难度方面表现出色，但几乎没有研究尝试将其系统性地应用于评估LLM在开放式、主观性更强的【创意性任务】（如替代用途任务AUT）中的表现。当前对LLM创造力的评估仍依赖于传统的人工评分或语义相似度分析，缺乏一个能够客观衡量“创意难度”并评估模型“创意能力”的IRT框架。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        将种子论文的IRT框架直接应用于经典的创造力评估任务（如AUT），量化创意提示的难度和LLM的创意能力。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个适用于创意评估的多维IRT模型，将创意的不同方面（如流畅性、原创性、灵活性）作为独立的潜在特质进行建模。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        利用IRT校准的创意任务数据集，重新审视“课程学习”对提升LLM创造力是否有效。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个模拟创意智能体（类似SMART模型），用于在无真人数据的情况下，预测新创意任务的难度等级。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        探索IRT如何用于识别和缓解LLM在创意生成中的模式崩溃（mode collapse）或刻板印象问题。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越静态评估：量化并缓解LLM评估框架中的假设偏差</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】提出了一种基于项目反应理论（IRT）的框架，用于客观量化任务难度并评估LLMs的跨难度泛化能力，揭示了当前模型在该方面的普遍弱点。
+【分析理由】我们选择它，因为它为LLM评估提供了一个新颖的、可量化的视角，其发现挑战了“课程学习”等传统假设，为探索更稳健的评估方法论提供了坚实的基础。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: [探究IRT框架中可能存在的假设偏差如何影响对LLMs能力评估的准确性。]
+*初步检索(第1轮): [发现了大量关于LLM评估框架脆弱性的研究，例如基准被利用（2412.03597）、心智理论（ToM）基准的局限性（2412.19726），以及将LLM决策与展望理论（PT）对比的失败尝试（2508.08992）。这些工作普遍批判现有评估方法的表面性和不稳定性。]
+*深度假设(第2轮): [基于初步发现，问题深化为：如何量化并评估大型语言模型在不同评估假设（如提示词敏感性、数据子集选择、偏差定义）下的能力表现差异？]
+*深度检索(第2轮): [发现了针对评估方法论具体缺陷的研究，如提示词敏感性基准（2502.06065）、小样本基准预测的不可靠性（2506.07673）、以及提示词去偏方法的“虚假繁荣”（2503.09219）。这些研究证实了评估结果对评估方法本身的假设高度敏感。]</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，与“种子论文”相关的LLM评估研究，已广泛认识到现有基准和评估框架的脆弱性。现有工作集中于批判特定方法的缺陷，例如：揭示基准测试存在数据污染和设计漏洞、证明LLM对提示词微小变化高度敏感、以及指出基于小样本预测整体性能的方法在模型能力外推时会失效。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟在于：现有工作大多停留在“批判”和“揭示问题”的层面，却鲜有研究系统性地“量化”这些评估方法自身的假设偏差所带来的影响。具体而言，(鸿沟类型1：方法论空白) 缺乏一个统一的框架来衡量和比较不同评估方法（如IRT、ToM、提示词敏感性测试）之间的假设差异及其对最终评估结果的贡献度。(鸿沟类型2：工具缺失) 没有研究尝试将种子论文的IRT思想“元应用”于评估方法本身，即，将不同的“评估方法”或“提示词变体”视作“项目”，来评估其“难度”或“区分度”，从而量化评估框架的内在不稳定性。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个“元评估框架”，利用IRT思想量化不同评估方法（如不同基准、提示词范式）的内在偏差和敏感性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个“评估鲁棒性基准”，专门衡量LLM在面对不同评估假设（如数据抽样策略、度量标准变化）时性能的一致性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究一种“无假设”或“少假设”的LLM能力评估新范式，旨在减少评估过程对特定框架（如IRT, ToM）内在假设的依赖。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        将计量经济学中的因果推断和验证思想（如2412.07031）应用于LLM评估，建立一套包含验证集的标准化流程以校准评估偏差。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越教育评估：探索项目反应理论(IRT)在通用及多模态LLM泛化能力研究中的应用鸿沟</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】核心贡献在于提出了一种基于项目反应理论（IRT）的客观方法，用于量化任务难度并评估大型语言模型（LLMs）的跨难度泛化能力，挑战了传统的课程学习假设。【分析理由】选择该论文是因为其创新的评估框架揭示了现有模型的泛化弱点，为从根本上提升模型训练和评估方法提供了新的视角。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: 探索项目反应理论（IRT）评分在多模态任务中的应用及其有效性。
+*初步检索(第1轮): 发现相关工作，如SMART (2507.05129)，但其应用场景局限于通过模拟学生来预测教育领域的试题难度，并未涉及多模态任务。
+*深度假设(第2轮): 将问题深化为：IRT如何被用来直接提升LLM在多模态任务中的泛化能力，而不仅仅是用于评估。
+*深度检索(第2轮): 发现的研究（如2507.08232, 2508.08314, 2502.06990）高度集中于教育和心理测量领域，例如模拟学生、评估AI生成的考题、分析模型的“最近发展区”以及自适应心理健康筛查。这些工作均未将IRT应用于通用或多模态任务的泛化能力提升上。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合检索结果，现有研究已将项目反应理论（IRT）与大型语言模型（LLM）紧密结合，但其应用边界清晰地局限在教育和心理测量领域。研究工作主要集中于利用IRT来评估AI生成的教育内容、模拟学生行为、进行自适应测试或分析模型的学习过程，本质上是将LLM作为教育或评估场景中的一个“主体”进行分析。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟显而易见：(1) 领域空白：几乎没有研究尝试将IRT框架用于量化和提升LLM在通用领域（如代码生成、科学推理）或多模态任务中的跨难度泛化能力。现有工作都停留在“类人评估”的舒适区。(2) 方法论缺陷：当前研究主要将IRT用作一种“分析工具”或“评估手段”，而缺乏将其作为一种“训练信号”来直接指导模型优化，例如开发基于IRT难度的动态课程学习或数据增强策略，以主动提升模型的泛化性能。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        将IRT框架扩展到多模态领域，用于量化图文混合任务的难度，并据此评估和提升模型的跨模态泛化能力。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一种基于IRT的动态课程学习（Curriculum Learning）新范式，利用IRT实时评估样本难度，为模型提供最优学习路径以增强其在通用任务上的鲁棒性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        利用IRT分析大模型在代码生成任务中的能力，通过对不同难度代码问题的建模，精准定位模型的能力边界并指导其进行针对性微调。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个基于IRT的自适应评估系统，用于持续诊断和修复大型语言模型在特定能力维度上的“知识盲区”或“能力短板”。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+            
+            
+        </div>
+
+        <div class="footer">
+            <p>生成时间: 2025-11-28 15:41:59</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>
