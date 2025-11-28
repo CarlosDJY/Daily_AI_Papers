@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluating Large Language Models on the 2026 Korean CSAT Mathematics Exam: Measuring Mathematical Ability in a Zero-Data-Leakage Setting</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.18649v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Evaluating Large Language Models on the 2026 Korean CSAT Mathematics Exam: Measuring Mathematical Ability in a Zero-Data-Leakage Setting</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">数学能力评估</span>
+                
+                <span class="tag">无数据泄漏</span>
+                
+                <span class="tag">推理能力</span>
+                
+                <span class="tag">考试题目分析</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Department of Computer Science & Engineering, Chungnam National University</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.457</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.18649v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-24/87f77142745d622f805e7aad3fc935afb8d052e19a1907eeed92f0ba182ce6cb.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本研究提出了一种全新的无数据泄漏的评估框架，系统评估大型语言模型（LLMs）在2026年韩国大学入学考试数学部分的推理能力。通过实时数字化考试题目，确保模型未接触数据，并分析输入模态、推理设置等因素对模型表现的影响。研究发现，GPT-5 Codex在文本输入下获得满分，揭示了几何领域的普遍弱点及模型效率的复杂权衡。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决现有大型语言模型（LLM）在数学推理能力评估中普遍存在的数据泄漏（data leakage）问题。传统的评估基准（如GSM8K）可能已被包含在LLM的训练数据中，导致评估结果无法真实反映模型的真实推理能力。此外，大多数基准集中于英语和西方考试，缺乏对非英语环境（如韩国）标准化考试的系统性评估。因此，创建一个完全无数据泄漏的、多维度的评估环境至关重要。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，通过在一个完全无数据泄漏的环境（使用刚发布的2026年韩国CSAT数学试题）中进行评估，可以准确地测量和比较LLM的真实数学推理能力。研究进一步假设，模型的表现会受到多种因素的显著影响，包括：
+- <strong>输入模态</strong>：文本、图像、或图文结合的输入方式会影响模型的性能。
+- <strong>推理设置</strong>：调整推理努力（Reasoning Effort）和文本详细程度（Text Verbosity）会改变模型的准确性和效率。
+- <strong>模型特性</strong>：模型的规模、架构和训练数据会影响其在特定问题类型（如几何）上的表现。
+- <strong>效率权衡</strong>：模型的性能、成本和响应时间之间存在复杂的权衡关系，并非规模越大的模型效率越高。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>现有数学评估基准</strong>：如GSM8K, MATH, CHAMP等，这些基准已被广泛用于评估LLM的数学能力，但存在数据泄漏的风险。</li>
+<li><strong>LLM评估研究</strong>：先前的研究探讨了数据泄漏对评估结果的影响，并强调了使用非暴露（unseen）数据集的重要性。</li>
+<li><strong>多模态能力研究</strong>：已有研究关注LLM处理包含文本和图像的复杂输入的能力。</li>
+</ul>
+
+<h3><strong>面向大型语言模型（LLM）数学推理能力的零数据泄露评估解决方案</strong></h3>
+
+<h4><strong>1. 背景与问题</strong></h4>
+
+<p>在评估大型语言模型（LLM）的数学能力时，<strong>数据泄露</strong>是一个核心挑战。现有的主流数学评估基准（如GSM8K、MATH等）中的问题很可能已经包含在模型的训练数据中。这会导致评估结果虚高，模型可能仅仅是“记住”了答案而非真正具备推理能力，从而无法真实反映其在解决全新问题时的逻辑推理水平。</p>
+
+<p>为了解决这一根本问题，本研究提出了一个创新的评估框架，其核心是构建一个<strong>完全无数据泄露（Zero Data Leakage）</strong>的评估环境。</p>
+
+<h4><strong>2. 核心解决方案：零数据泄露评估框架</strong></h4>
+
+<p>本研究的解决方案是设计并实施一个系统性的评估框架，利用<strong>2026学年度的韩国大学入学考试（CSAT）数学科目</strong>作为评估基准。该框架通过严格的流程设计，确保了评估的公正性、全面性和可靠性。</p>
+
+<h5><strong>第一步：构建零数据泄露的数据集</strong></h5>
+
+<p>为从根本上杜绝数据泄露，研究团队采取了快速响应策略：</p>
+
+<ul>
+<li><strong>即时数据采集与数字化</strong>：在2026年CSAT数学考试试题向公众发布的<strong>2小时内</strong>，研究团队迅速完成了对全部46道题目的数字化处理。这一时间窗口确保了任何现有或正在训练的LLM都不可能接触到这些题目。</li>
+<li><strong>标准化数据构建</strong>：
+<ul>
+<li><strong>文本与公式</strong>：使用 <strong>Markdown</strong> 来保留问题的结构（如引文、表格），并使用 <strong>LaTeX</strong> 语法（<code>$...$</code> 和 <code>$$...$$</code>）来精确表示所有数学公式，确保LLM能够准确解析。</li>
+<li><strong>图像数据</strong>：提取问题中包含的所有视觉元素（如图形、图表），因为这些信息对于理解和解决问题至关重要。</li>
+<li><strong>元数据</strong>：为每个问题添加结构化元数据，如唯一标识符（<code>prob_id</code>）、题型（<code>prob_type</code>）、所属科目（<code>prob_area</code>）、分值（<code>prob_point</code>）以及正确答案，为后续的自动化评估和深入分析提供便利。</li>
+</ul></li>
+<li><strong>数据校验</strong>：由多名研究人员进行双重检验，确保数字化后的数据与原始试卷在内容和格式上完全一致，保证了数据的高质量。</li>
+</ul>
+
+<h5><strong>第二步：设计多维度的实验</strong></h5>
+
+<p>为了全面评估LLM的能力，实验设计涵盖了多个变量，旨在模拟真实世界的复杂场景。</p>
+
+<ul>
+<li><strong>模型选择</strong>：选取了24个在权威基准测试（如AIME 2025）中表现优异的最新LLM，涵盖了商业模型（GPT、Claude、Gemini系列）和开源模型（Qwen、Llama系列），确保了模型的多样性和代表性。所有模型均通过统一的OpenRouter API调用，保证了实验的可复现性。</li>
+<li><strong>输入条件（Input Conditions）</strong>：
+<ul>
+<li><strong>输入模态（Input Modality）</strong>：设计了三种不同的输入方式来测试模型的多模态理解能力。
+<ol>
+<li><strong>纯文本（Text only）</strong>：仅提供问题的文本描述和LaTeX公式。</li>
+<li><strong>纯图像（Image only）</strong>：将整个问题区域（包括题干、选项和图形）截图作为单张图片输入。</li>
+<li><strong>文本+图形（Text+Figure）</strong>：将问题的文本部分与视觉图形部分分开，作为多模态输入提供给模型。</li>
+</ol></li>
+<li><strong>提示语言（Prompt Language）</strong>：使用<strong>韩语</strong>和<strong>英语</strong>两种语言提供解题指示，以评估模型在不同语言环境下的表现差异。</li>
+</ul></li>
+<li><strong>推理参数调整</strong>：针对GPT-5系列模型，研究还深入探讨了内部推理策略的影响。
+<ul>
+<li><strong>推理强度（Reasoning Effort）</strong>：设置了四个级别（minimal, low, medium, high），用于控制模型在生成答案前内部思考或逐步推理的深度。</li>
+<li><strong>文本详尽度（Text Verbosity）</strong>：设置了三个级别（low, medium, high），用于控制最终解释输出的详细程度。</li>
+</ul></li>
+</ul>
+
+<h5><strong>第三步：定义全面的评估指标</strong></h5>
+
+<p>评估不仅仅关注最终答案的正确率，还引入了效率和成本的考量，以提供更具实用价值的分析。</p>
+
+<ul>
+<li><strong>基础性能指标</strong>：
+<ul>
+<li><strong>分数（Score）</strong>：根据答对题目的分值计算总分。</li>
+<li><strong>规范化分数（Normalized Score）</strong>：将总分转换为100分制，便于跨模型比较。</li>
+</ul></li>
+<li><strong>效率与成本指标</strong>：
+<ul>
+<li><strong>延迟（Latency）</strong>：记录模型从接收请求到生成完整答案所需的总时间。</li>
+<li><strong>成本（Cost）</strong>：根据API调用产生的令牌（Token）使用量和供应商定价计算解题成本。</li>
+<li><strong>效率评分（Efficiency Score）</strong>：为综合评估性能、时间和成本，定义了三个效率指标：
+<ul>
+<li><strong>时间效率 (Efft)</strong> = 分数 / 延迟时间</li>
+<li><strong>成本效率 (Effc)</strong> = 分数 / 成本</li>
+<li><strong>综合效率 (Efft,c)</strong> = 分数 / (延迟时间 + 成本)</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<h4><strong>3. 关键发现与分析</strong></h4>
+
+<p>通过上述框架进行实验，研究得出了一系列深刻的结论：</p>
+
+<ol>
+<li><strong>顶尖模型性能优异</strong>：在文本输入和韩语提示下，<strong>GPT-5 Codex</strong>取得了100分的满分成绩。Grok 4、Deepseek R1等其他顶尖模型也表现出色，得分均在90分以上。</li>
+<li><strong>成本效益的权衡</strong>：尽管参数规模较小，<strong>gpt-oss-20B</strong>模型在成本效率上表现突出，以较低的成本获得了95.7分的高分，展示了在性能和资源消耗之间的出色平衡。</li>
+<li><strong>输入条件影响显著</strong>：
+<ul>
+<li><strong>模态</strong>：总体而言，<strong>文本输入</strong>的表现优于图像输入。但Gemini系列模型是个例外，其在纯图像输入下表现更佳，显示出其强大的视觉理解能力。而Claude和Grok系列在纯图像输入下性能下降明显。</li>
+<li><strong>语言</strong>：大型模型（如GPT-5）在韩语提示下表现更优，而一些较小的模型则对英语提示更敏感。</li>
+</ul></li>
+<li><strong>特定数学领域的挑战</strong>：所有模型在<strong>几何（Geometry）</strong>领域的平均表现最差，尤其是在高难度的4分题目上，这揭示了当前LLM在空间推理和视觉几何理解方面的普遍弱点。</li>
+<li><strong>推理强度的双刃剑效应</strong>：增加GPT-5的<strong>推理强度</strong>能显著提升性能（从82.6分提高到100分），但代价是<strong>令牌使用量增加4-5倍</strong>，导致成本和时间效率急剧下降。这表明，在实际应用中，需要在性能和效率之间做出权衡，中等或较低的推理强度可能更具实用性。</li>
+</ol>
+
+<h4><strong>4. 应用场景与结论</strong></h4>
+
+<p>本研究提出的评估框架不仅为准确衡量LLM的数学推理能力提供了一套可靠、公正的方法论，其设计理念也具有广泛的应用价值。</p>
+
+<ul>
+<li><strong>教育领域</strong>：可用于评估和改进用于智能辅导、自动解题等教育场景的AI模型。</li>
+<li><strong>其他高风险领域</strong>：该框架的零数据泄露原则可借鉴到金融、法律、医疗等需要高度保密和公正性评估的专业领域。</li>
+</ul>
+
+<p><strong>结论</strong>：通过构建一个严格的零数据泄露评估环境，本研究系统地揭示了最新LLM在解决复杂数学问题时的真实能力、优势与局限。研究结果表明，模型的性能是一个受模型架构、输入条件、问题特性和推理策略共同影响的复杂系统，未来的评估应超越单一的准确率指标，转向对性能、效率和成本的综合考量。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型</strong>：选取了24个最新的LLM进行评估，包括GPT-5 Codex, Grok 4, Deepseek R1, Claude, Gemini系列等。</li>
+<li><strong>评估任务</strong>：使用2026年韩国CSAT的全部46道数学题，涵盖微积分、概率统计、几何等多个领域。</li>
+<li><strong>实验变量</strong>：
+<ul>
+<li><strong>输入模态</strong>：文本（Text-only）、图像（Image-only）、文本+图形（Text+Image）。</li>
+<li><strong>提示语言</strong>：韩语、英语。</li>
+<li><strong>推理设置</strong>：对不同模型的推理努力和文本详细程度进行组合测试。</li>
+<li><strong>时间限制</strong>：在有时间限制（100分钟）和无时间限制的条件下进行比较。</li>
+</ul></li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：2026年韩国大学入学考试（CSAT）的原始数学问题。</li>
+<li><strong>代码与结果</strong>：详细的实验结果和模型性能排行榜公开在一个专门的网站上：https://isoft.cnu.ac.kr/csat2026/</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>顶级性能</strong>：GPT-5 Codex在文本输入和韩语提示的条件下获得了100分的满分。其他先进模型如Grok 4和Deepseek R1也表现优异，得分在70到95分之间。</li>
+<li><strong>推理努力的影响</strong>：增加推理努力（Reasoning Effort）能显著提升模型性能（例如，GPT-5从82.6分提升至100分），但同时也会导致响应时间和成本大幅增加。</li>
+<li><strong>多模态表现</strong>：图文结合的输入通常效果最好。不同模型对图像输入的处理能力差异巨大，例如Claude和Grok系列在仅图像输入时性能显著下降，而Gemini系列则表现稳健。</li>
+<li><strong>普遍弱点</strong>：大多数LLM在几何领域的平均表现低于其他数学领域。</li>
+<li><strong>效率分析</strong>：模型的响应时间与得分之间没有强相关性。一些中小型模型（如gpt-oss-20B）展现出极高的成本效益。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出了首个无数据泄漏的评估框架</strong>：通过利用高风险的实时考试，为准确评估LLM的真实数学能力设定了新标准。</li>
+<li><strong>创建了标准化的数据转换方法</strong>：系统地将人类考试题目（PDF）转化为适用于LLM评估的结构化数据（Markdown+LaTeX）。</li>
+<li><strong>进行了全面的多维度评估</strong>：系统地分析了输入模态、语言、推理设置、时间、成本等多种因素对24个前沿LLM性能的影响。</li>
+<li><strong>提供了实用的见解和资源</strong>：通过公开的排行榜和效率分析，为学术界和工业界在不同场景下选择和优化LLM提供了有价值的参考。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 12:59:15</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

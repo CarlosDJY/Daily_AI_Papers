@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findings of the BlackboxNLP 2025 Shared Task: Localizing Circuits and Causal Variables in Language Models</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.18409v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Findings of the BlackboxNLP 2025 Shared Task: Localizing Circuits and Causal Variables in Language Models</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">可解释性基准</span>
+                
+                <span class="tag">电路定位</span>
+                
+                <span class="tag">因果变量</span>
+                
+                <span class="tag">集成策略</span>
+                
+                <span class="tag">非线性特征化器</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Technion – IIT, Rice University, Boston University, Tilburg University, University of Groningen, University of Zagreb, Harvard University</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.425</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.18409v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-24/1f9a1bc8f51cb2c6353ab629fa1838fa1a477734f38e0557f68df08e2eaacff2.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一个标准化的机制可解释性基准（MIB），通过共享任务促进电路和因果变量定位技术的比较与评估。研究展示了集成策略和非线性特征化器在提升模型可解释性方面的有效性，推动了该领域的研究进展。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决在语言模型的机制可解释性（MI）领域中，缺乏一个标准化框架来有效比较和评估不同技术的问题。具体来说，核心挑战分为两个方面：
+1.  <strong>电路定位（Circuit Localization）</strong>：如何准确识别出模型内部负责特定行为的因果路径或“电路”，现有方法在评估归因和处理不同电路大小时存在局限性。
+2.  <strong>因果变量定位（Causal Variable Localization）</strong>：如何在模型的激活空间中发现并评估影响模型决策的关键因果变量，传统方法在这方面能力不足。
+随着模型日益复杂，对透明度和可解释性的需求不断增加，解决这些问题对于推动MI研究的进步至关重要。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>核心假设</strong>：通过一个标准化的评估框架（MIB），可以系统地比较不同的MI技术，从而推动该领域的发展。</li>
+<li><strong>电路定位假设</strong>：集成多种电路定位技术（如EAP）并采用正则化策略，能够比单一方法更准确地评估模型归因。</li>
+<li><strong>因果变量定位假设</strong>：通过优化电路发现流程（如边选择和路径评分）以及使用更具表达能力的特征提取器（如非线性和正交特征化器），可以更有效地定位因果变量，其性能将优于传统的线性方法（如DAS基线）。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>框架与基准</strong>：机制可解释性基准（MIB）作为核心评估框架。</li>
+<li><strong>电路定位方法</strong>：电路归因补丁（EAP）、Isolating Path Effects (IPE) 等。</li>
+<li><strong>因果变量定位方法</strong>：分布式对齐搜索（DAS）作为基线方法，以及改进的边选择和路径评分策略。</li>
+<li><strong>相关任务</strong>：间接对象识别（IOI）、数学运算、多项选择问答（MCQA）和AI2推理挑战（ARC）等。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>这篇论文提出的核心解决方案是一个用于评估语言模型（LMs）<strong>机制可解释性（Mechanistic Interpretability, MI）</strong>的综合框架。该框架通过 <strong>BlackboxNLP 2025 共享任务</strong>对<strong>机制可解释性基准（Mechanistic Interpretability Benchmark, MIB）</strong>进行了扩展，旨在系统性地揭示和评估神经网络在执行特定任务时的内部工作机制。</p>
+
+<p>该解决方案主要分为两个评估轨道：<strong>电路定位（Circuit Localization）</strong>和<strong>因果变量定位（Causal Variable Localization）</strong>。</p>
+
+<hr />
+
+<h4><strong>轨道一：电路定位 (Circuit Localization)</strong></h4>
+
+<p>电路定位的核心目标是评估各种方法在识别模型行为所需的最小因果组件集（即“电路”）方面的能力。一个电路（Circuit）被定义为一个由节点（如注意力头或MLP层）和边（信息流）组成的计算子图，它对模型在特定任务上的表现起着关键的因果作用。</p>
+
+<h5><strong>1. 目的与过程</strong></h5>
+
+<ul>
+<li><strong>目的</strong>：识别并分离出对模型在特定任务上的性能有积极影响的因果组件，从而理解模型的内部工作机制。</li>
+<li><strong>过程</strong>：该过程分为两个阶段。首先是<strong>评分阶段</strong>，参与者的方法需要对模型的所有组件（如节点、边）进行重要性评分。其次是<strong>选择阶段</strong>，根据评分结果，选择一组得分最高的组件构成不同大小的电路。参与者需要将这些电路或组件的重要性评分上传至评估平台。</li>
+</ul>
+
+<h5><strong>2. 评估指标</strong></h5>
+
+<p>为了量化电路的有效性，MIB 定义了两个关键指标：
+*   <strong>集成电路性能比率 (Integrated Circuit Performance Ratio, CPR)</strong>：衡量一系列不同大小的电路中是否包含了对模型性能有正面影响的组件。该值越高，说明电路发现方法越有效。
+*   <strong>集成电路-模型距离 (Integrated Circuit-Model Distance, CMD)</strong>：衡量电路在任务上对正确答案的偏好强度与完整模型的偏好强度之间的差异。CMD 值为 0 是最理想的，表示电路的行为与完整模型高度一致。</p>
+
+<h5><strong>3. 参与者提出的改进方法：集成评分策略</strong></h5>
+
+<p>在共享任务中，参与者通过<strong>集成评分策略</strong>显著提升了电路定位的性能，其核心是结合多种定位方法的优势来提高属性分数的准确性。主要策略包括：
+*   <strong>并行集成 (Parallel Ensemble)</strong>：将多种方法（如边属性补丁 EAP、结合集成梯度的 EAP-IG）的评分进行合并（例如取均值），以生成更鲁棒的单一评分。
+*   <strong>序列集成 (Sequential Ensemble)</strong>：使用一种快速但可能不太精确的方法（如 EAP-IG）生成初始评分，作为更慢但更精确方法（如边修剪）的“暖启动”，从而加速收敛并优化结果。
+*   <strong>混合集成 (Hybrid Ensemble)</strong>：结合上述两种策略的优点，以获得更全面的评分结果。</p>
+
+<p>这些集成策略，特别是通过正则化技术过滤掉贡献不稳定的组件，被证明是未来电路发现研究中一个非常有前途的方向。</p>
+
+<hr />
+
+<h4><strong>轨道二：因果变量定位 (Causal Variable Localization)</strong></h4>
+
+<p>该轨道专注于将模型内部高维的激活向量映射到人类可理解、可干预的因果变量或概念上，并评估这种映射的准确性。</p>
+
+<h5><strong>1. 目的与过程</strong></h5>
+
+<ul>
+<li><strong>目的</strong>：将模型的激活特征化为可解释的概念，并通过精确干预这些概念来验证其与模型行为之间的因果关系。</li>
+<li><strong>过程</strong>：参与者需要上传一个训练好的<strong>特征提取器 (Featureizer)</strong>，该提取器能将激活向量分解为不同的特征维度。评估过程采用<strong>激活修补 (Activation Patching)</strong>或<strong>交换干预 (Interchange Intervention)</strong>技术。具体来说，给定一个基础输入和一个反事实输入，评估系统会干预特征空间中的某个特定概念（变量），并测量模型的输出是否发生预期的变化。</li>
+</ul>
+
+<h5><strong>2. 评估指标</strong></h5>
+
+<p>该轨道的主要评估指标是<strong>忠实度 (Faithfulness)</strong>。
+*   <strong>忠实度</strong>：衡量所提取的特征在反事实干预下捕获真实因果变量的程度。高忠实度意味着对特征化空间中某个变量的干预，与直接对模型内部相应组件进行干预所产生的效果相同，证明了特征提取的准确性。</p>
+
+<h5><strong>3. 参与者提出的改进方法：非线性特征提取</strong></h5>
+
+<p>参与者在基线方法（如分布式对齐搜索 DAS）的基础上进行了扩展，提出了更强大的特征提取方法：
+*   <strong>非线性特征提取器</strong>：通过引入多层感知机（MLP）和非线性激活函数（如 tanh）来混合特征，使模型能够捕捉到更复杂、非线性的特征交互，从而更准确地定位因果变量。
+*   <strong>正交非线性投影</strong>：作为一种简化的变体，该方法仅使用非线性函数而不包含完整的前馈层，在保持较强性能的同时简化了模型。</p>
+
+<p>实验结果表明，这些非线性方法在多个任务和模型上，其忠实度得分均显著优于线性基线方法。</p>
+
+<hr />
+
+<h3><strong>应用与持续研究</strong></h3>
+
+<p>该解决方案为理解和改进深度学习模型提供了标准化的评估框架和方法论。其应用价值在于：
+*   <strong>提升模型可解释性</strong>：为用户提供更清晰的决策依据。
+*   <strong>优化模型性能</strong>：通过识别关键组件来指导模型结构优化。
+*   <strong>增强模型可靠性</strong>：识别和修复潜在的模型偏差或安全漏洞。</p>
+
+<p>MIB 的排行榜将持续开放，鼓励研究社区在这一标准化框架内继续提交和评估新的机制可解释性技术，从而系统性地推动整个领域的发展。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>任务结构</strong>：实验围绕电路定位和因果变量定位两个轨道展开。</li>
+<li><strong>评估任务</strong>：在多个任务上进行评估，包括间接对象识别（IOI）、数学运算、MCQA和ARC，并使用固定的对比输入以保证评估的一致性。</li>
+<li><strong>评估方式</strong>：参与者在私有测试集上提交其“电路”或“特征化器”进行评估。</li>
+<li><strong>评估指标</strong>：对于电路定位，评估归因分数；对于因果变量定位，使用反事实消融评估，并采用CMD、CPR分数和干预精度等指标。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<p>数据集和代码托管在HuggingFace上，包含了多个任务的训练、验证和公共测试集，允许社区访问和参与。</p>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>整体表现</strong>：各参与团队在两个轨道上均取得了显著的性能提升，验证了所提出方法的有效性。</li>
+<li><strong>电路定位</strong>：集成策略在多项评估指标上显著优于单一方法，证明了集成方法的优越性。</li>
+<li><strong>因果变量定位</strong>：
+<ul>
+<li>非线性和正交特征化器在多个任务和模型上的准确性显著优于DAS基线。</li>
+<li>改进的边选择和路径评分方法在CMD和CPR分数上表现突出。</li>
+<li>尽管非线性方法表达能力更强，但在多个任务中，正交方法的表现与之相当。</li>
+</ul></li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>提出了一个标准化的评估框架（MIB）</strong>：通过共享任务的形式，促进了MI技术的系统性比较和可重复研究。</li>
+<li><strong>验证了新的MI技术</strong>：实验证明，集成策略、非线性特征化器以及优化的电路发现流程能够显著提升电路和因果变量的定位效果。</li>
+<li><strong>推动了社区发展</strong>：为MI领域提供了新的思路、方法和基准，鼓励研究人员继续探索模型可解释性的前沿。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 12:59:15</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

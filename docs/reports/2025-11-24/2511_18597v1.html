@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toward Trustworthy Difficulty Assessments: Large Language Models as Judges in Programming and Synthetic Tasks</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.18597v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Toward Trustworthy Difficulty Assessments: Large Language Models as Judges in Programming and Synthetic Tasks</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">编程问题难度评估</span>
+                
+                <span class="tag">LightGBM</span>
+                
+                <span class="tag">约束感知提示</span>
+                
+                <span class="tag">混合模型</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Department of Computer Science, Bangladesh University of Engineering and Technology</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.507</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.18597v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-24/738313ece795575c058a52b496d05b15cd30b92a5b943a5e7af71efd0622b510.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文系统比较了大型语言模型GPT-4o与基于特征的LightGBM在编程问题难度评估中的表现，发现GPT-4o准确率仅为37.75%，远低于LightGBM的86%。研究揭示了GPT-4o在评估中忽视数值约束的偏差，强调了这些特征在难度判断中的重要性，并提出了约束感知提示和混合模型作为未来改进方向。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM），特别是GPT-4o，在评估编程问题（如LeetCode）难度时的可靠性和有效性问题。尽管LLM在代码生成方面表现出色，但其在评估问题难度这类结构化任务上的表现尚未得到充分验证。这个问题至关重要，因为LLM在教育和自动化评估平台中的应用日益增多，不准确的难度评估会误导学习者，影响其学习体验和进度。核心问题在于，LLM在处理影响难度的关键因素（如数值约束和算法结构）时存在偏差，并倾向于系统性地低估“困难”级别问题的真实难度。</p>
+
+<h3>Hypothesis</h3>
+
+<ul>
+<li><strong>关键发现</strong>: 在编程问题难度评估任务上，GPT-4o的表现远不如基于特征的传统模型（LightGBM），并存在将难题错误分类为简单或中等级别的明显偏见。</li>
+<li><strong>初步结论</strong>: 对于需要深度算法推理和理解数值约束的编程问题，LLM的评估结果不够可靠。相比之下，LightGBM等可解释模型能提供更可信的难度判断。</li>
+<li><strong>实验验证</strong>: 通过在1,825个LeetCode问题上进行对比实验，验证了GPT-4o和LightGBM在难度分类准确性上的显著差异。</li>
+<li><strong>核心假设</strong>: LLM在评估问题难度时未能有效利用题目中的数值约束信息（如输入大小、接受率等），这是导致其评估结果与人类专家标注存在显著偏差的核心原因。</li>
+</ul>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>LLM作为评估者</strong>: 探讨LLM在各种任务中作为评估工具的校准和稳健性问题。</li>
+<li><strong>自动难度估计</strong>: 先前关于自动预测编程问题难度的研究，这些研究通常利用内容特征、代码结构和行为统计（如通过率）来构建模型。</li>
+</ul>
+
+<h3><strong>完整的详细解决方案：结合可解释模型与大型语言模型进行编程问题难度评估</strong></h3>
+
+<p>本文提出了一套系统的研究方法与解决方案，旨在深入分析大型语言模型（LLM）在评估编程问题难度方面的能力与局限，并最终提出一种结合了LLM与传统可解释模型的混合策略，以实现更准确、更可靠的难度评估。</p>
+
+<h4><strong>1. 研究设计与核心方法论</strong></h4>
+
+<p>为了系统性地评估LLM的能力，研究设计了以下关键步骤，核心在于将先进的LLM（GPT-4o）与一个可解释的传统机器学习模型（LightGBM）进行直接比较。</p>
+
+<ul>
+<li><p><strong>数据集构建与特征工程：</strong></p>
+
+<ul>
+<li><strong>数据集</strong>：研究使用了包含1,825个LeetCode编程问题的数据集，这些问题均被官方标记为“简单”、“中等”或“困难”。</li>
+<li><strong>特征提取</strong>：为LightGBM模型准备了两种类型的特征：
+<ul>
+<li><strong>文本特征</strong>：使用TF-IDF（词频-逆文档频率）对问题描述中的单词和双词组进行向量化，以捕捉文本的语义信息。</li>
+<li><strong>数值特征</strong>：提取了问题的关键元数据，如最大输入规模、预期的时空复杂度、社区接受率等。这些数值特征被证明与问题的实际难度高度相关。</li>
+</ul></li>
+</ul></li>
+<li><p><strong>模型对比实验：</strong></p>
+
+<ul>
+<li><strong>GPT-4o（LLM代表）</strong>：该模型仅接收问题的纯文本描述，旨在测试其仅从自然语言中推断难度的能力。研究人员通过精心设计的提示（Prompt）来引导模型输出“简单”、“中等”或“困难”的标签。</li>
+<li><strong>LightGBM（可解释模型代表）</strong>：该模型同时使用文本特征和数值特征进行训练，代表了一种综合利用所有可用信息的传统方法。</li>
+</ul></li>
+<li><p><strong>性能评估结果：</strong>
+实验结果显示出显著差异：<strong>LightGBM模型的准确率达到了86%</strong>，而<strong>GPT-4o的准确率仅为37.75%</strong>。这初步表明，在没有明确数值约束的情况下，LLM在难度评估任务上表现不佳。</p></li>
+</ul>
+
+<h4><strong>2. 核心发现：LLM的局限性与内在不一致性</strong></h4>
+
+<p>为了探究GPT-4o表现不佳的深层原因，研究进行了两项关键分析。</p>
+
+<ul>
+<li><p><strong>可解释性分析（SHAP）：</strong>
+通过对表现优异的LightGBM模型进行SHAP（SHapley Additive exPlanations）分析，研究揭示了<strong>数值特征（尤其是输入大小限制和接受率）在模型决策中起着主导作用</strong>。高约束的数值往往是模型将问题判断为“困难”的关键。相比之下，GPT-4o由于仅处理文本，未能有效利用这些关键的数值信息，导致其频繁地将真实的“困难”问题错误地降级为“简单”或“中等”。</p></li>
+<li><p><strong>合成难题生成实验：</strong>
+为了进一步探究GPT-4o对“困难”概念的内部理解，研究设计了一个创新实验：</p>
+
+<ol>
+<li><strong>生成</strong>：选取21个真实的“困难”问题作为种子，要求GPT-4o生成385个算法核心相同但约束更严格的新的“困难”问题。</li>
+<li><strong>自我评估</strong>：随后，要求GPT-4o对这些它自己生成的、本应是“困难”的问题进行难度分类。</li>
+<li><strong>惊人结果</strong>：在385个合成的“困难”问题中，GPT-4o将<strong>384个（99.74%）标记为“中等”</strong>，仅有1个标记为“困难”。
+这一结果有力地证明了GPT-4o内部对“困难”概念的认知存在严重的不一致性。它不仅与人类专家的标记标准不符，甚至在处理真实问题和自己生成的问题时也表现出不同的偏见。</li>
+</ol></li>
+</ul>
+
+<h4><strong>3. 最终解决方案：构建混合模型策略</strong></h4>
+
+<p>基于以上发现，论文最终提出了一种混合模型策略，旨在结合LLM和可解释模型的优点，以克服LLM在难度评估中的缺陷。</p>
+
+<ul>
+<li><p><strong>核心思想：</strong>
+利用LLM强大的自然语言理解能力来处理和生成文本特征（如文本表示或嵌入），同时利用可解释的数值模型（如LightGBM）来整合关键的数值约束，并做出最终的、透明的评估决策。</p></li>
+<li><p><strong>实现路径：</strong></p>
+
+<ol>
+<li><strong>约束意识提示（Constraint-Aware Prompting）</strong>：在向LLM提问时，将数值约束（如输入大小、时间限制）以结构化的形式明确包含在提示中，引导LLM在评估时关注这些关键信息。</li>
+<li><strong>特征融合</strong>：将LLM生成的文本嵌入特征与手动的数值特征相结合，共同输入到LightGBM等下游模型中进行训练和预测。</li>
+<li><strong>建立评估基准</strong>：设计专门用于难度评估的基准测试套件和协议，以系统地评估和优化混合模型的表现，确保其评估结果与人类专家的判断保持一致。</li>
+</ol></li>
+</ul>
+
+<h4><strong>总结与应用</strong></h4>
+
+<p>本研究通过系统的对比实验和深入分析，清晰地揭示了当前大型语言模型在编程问题难度评估任务中的显著不足，特别是其对关键数值约束的忽视和内部概念的不一致性。</p>
+
+<p>最终提出的<strong>混合模型策略</strong>，通过结合LLM的文本处理能力和传统模型对数值特征的稳健分析能力，为构建更准确、可靠且可信赖的自动评估系统指明了方向。这一解决方案在<strong>教育平台、编程竞赛和自动化辅导系统</strong>等领域具有重要的应用价值，有助于为学习者提供更精准的学习路径和反馈。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>主要实验</strong>: 使用一个包含1,825个LeetCode问题的数据集（已标注为Easy, Medium, Hard），比较GPT-4o和LightGBM的分类性能。LightGBM模型使用了文本特征（TF-IDF）和数值特征（如输入大小、接受率等）。</li>
+<li><strong>一致性实验</strong>: 选取21个代表性的“Hard”问题，让GPT-4o生成385个类似的合成问题，并要求其对这些生成的问题进行难度分类，以检验其内部判断的一致性。</li>
+<li><strong>评估指标</strong>: 使用准确率、宏观精度、宏观召回率和宏观F1分数来评估模型性能。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>: 实验使用了包含1,825个LeetCode问题的专有数据集，以及一个由GPT-4o生成的包含385个合成问题的数据集。</li>
+<li><strong>代码</strong>: 论文片段中未提及代码是否公开或其获取方式。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能差距</strong>: LightGBM模型的分类准确率达到了86%，而GPT-4o的准确率仅为37.75%，表现出巨大差距。</li>
+<li><strong>系统性偏差</strong>: GPT-4o在评估中存在严重偏差，例如将83.38%的“Hard”问题错误地标记为“Easy”。</li>
+<li><strong>内部不一致性</strong>: 在对自身生成的合成问题进行评估时，GPT-4o几乎将所有问题都标记为“Medium”，进一步证实了其难度判断标准的不一致和不可靠性。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>揭示LLM的局限性</strong>: 首次系统性地量化并揭示了GPT-4o在编程问题难度评估任务上的严重缺陷和系统性偏见。</li>
+<li><strong>强调数值约束的重要性</strong>: 通过与LightGBM模型的对比和SHAP分析，明确了数值和结构约束在难度评估中的关键作用，并指出了LLM在这方面的不足。</li>
+<li><strong>提供未来研究方向</strong>: 提出了约束感知提示和混合模型等具体的改进方向，为开发更可靠的自动化编程问题评估工具提供了思路。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 12:59:15</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

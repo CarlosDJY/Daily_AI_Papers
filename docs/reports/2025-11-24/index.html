@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日论文简报 - 2025-11-24</title>
+    <style>
+        :root {
+            /* 核心配色：Slate (中性) + Indigo (主色) */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            /* 功能色：用于区分不同模块 */
+            --color-meso: #f59e0b;      /* Amber: 聚类 */
+            --color-meso-bg: #fffbeb;
+            
+            --color-micro: #0ea5e9;     /* Sky: 深度 */
+            --color-micro-bg: #f0f9ff;
+            
+            --color-direction: #f97316; /* Orange: 技术方向 (新增) */
+            --color-direction-bg: #fff7ed;
+            
+            --color-mining: #8b5cf6;    /* Violet: 挖掘 */
+            --color-mining-bg: #f5f3ff;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标通用样式 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        .nav-actions a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 20px;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-actions a:hover { color: var(--primary-color); }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--primary-color); width: 36px; height: 36px; }
+
+        .header .date {
+            color: var(--primary-color);
+            font-size: 15px;
+            font-weight: 600;
+            background-color: #e0e7ff;
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 99px;
+        }
+
+        /* 宏观统计面板 (Dashboard) */
+        .macro-dashboard {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            padding: 30px;
+            margin-bottom: 50px;
+            display: flex;
+            gap: 40px;
+            align-items: stretch;
+            border: 1px solid var(--border-color);
+        }
+
+        .macro-wordcloud {
+            flex: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            min-height: 240px;
+            position: relative;
+        }
+        
+        .macro-wordcloud-label {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-size: 12px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .macro-wordcloud img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+            padding: 20px;
+        }
+        
+        .macro-no-data {
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .macro-stats {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .stat-item {
+            padding: 15px 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-item:first-child { padding-top: 0; }
+        .stat-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .stat-icon {
+            color: #cbd5e1;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* 内容导航 Grid */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .section-line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--border-color);
+            margin-left: 12px;
+        }
+
+        /* --- 核心布局调整：改为 2 列以适应 4 个卡片 --- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2x2 布局，更平衡 */
+            gap: 24px;
+        }
+
+        .nav-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 顶部彩色装饰条 */
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: var(--text-light);
+            transition: height 0.2s;
+        }
+
+        /* 颜色定义 */
+        .nav-card.meso::before { background-color: var(--color-meso); }
+        .nav-card.micro::before { background-color: var(--color-micro); }
+        .nav-card.directions::before { background-color: var(--color-direction); } /* 新增 */
+        .nav-card.mining::before { background-color: var(--color-mining); }
+
+        .nav-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .nav-card:hover::before { height: 8px; }
+
+        .card-content {
+            padding: 32px 24px 24px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 图标容器 */
+        .card-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .nav-card:hover .card-icon-wrapper { transform: scale(1.1) rotate(-5deg); }
+
+        /* 图标背景色 */
+        .nav-card.meso .card-icon-wrapper { background-color: var(--color-meso-bg); color: var(--color-meso); }
+        .nav-card.micro .card-icon-wrapper { background-color: var(--color-micro-bg); color: var(--color-micro); }
+        .nav-card.directions .card-icon-wrapper { background-color: var(--color-direction-bg); color: var(--color-direction); } /* 新增 */
+        .nav-card.mining .card-icon-wrapper { background-color: var(--color-mining-bg); color: var(--color-mining); }
+        
+        .card-icon-wrapper .icon { width: 24px; height: 24px; }
+
+        .card-text {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            flex-grow: 1; /* 确保描述填满空间，让 Footer 对齐 */
+        }
+
+        .card-footer {
+            margin-top: auto;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            color: var(--text-light);
+            transition: color 0.2s;
+        }
+
+        /* Footer 颜色 */
+        .nav-card.meso .card-footer { color: var(--color-meso); }
+        .nav-card.micro .card-footer { color: var(--color-micro); }
+        .nav-card.directions .card-footer { color: var(--color-direction); } /* 新增 */
+        .nav-card.mining .card-footer { color: var(--color-mining); }
+
+        .card-footer .icon {
+            margin-left: 6px;
+            transition: transform 0.2s;
+            width: 16px;
+            height: 16px;
+        }
+
+        .nav-card:hover .card-footer .icon {
+            transform: translateX(4px);
+        }
+
+        /* 禁用状态 */
+        .nav-card.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            background-color: #f9fafb;
+        }
+        .nav-card.disabled::before { background-color: #cbd5e1; }
+        .nav-card.disabled .card-icon-wrapper { background-color: #f1f5f9; color: #94a3b8; }
+        .nav-card.disabled .card-footer { color: #94a3b8; }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        
+        .footer a { color: var(--text-secondary); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* 移动端适配 */
+        @media (max-width: 850px) {
+            .macro-dashboard {
+                flex-direction: column;
+                padding: 0;
+            }
+            
+            .macro-wordcloud {
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+                border-radius: 0;
+                min-height: 200px;
+            }
+            
+            .macro-stats {
+                padding: 20px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            
+            .stat-item {
+                border: none;
+                padding: 0;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stat-icon { display: none; }
+
+            .cards-grid {
+                grid-template-columns: 1fr; /* 移动端单列 */
+                gap: 20px;
+            }
+            
+            .card-content {
+                flex-direction: row;
+                align-items: center;
+                padding: 20px;
+            }
+            
+            .card-icon-wrapper {
+                margin-bottom: 0;
+                margin-right: 20px;
+                width: 40px;
+                height: 40px;
+                flex-shrink: 0;
+            }
+            
+            .card-text { flex-grow: 1; }
+            
+            .card-desc { display: none; } /* 移动端列表模式下隐藏描述，保持紧凑 */
+            .card-footer { margin-top: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <a href="../../index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回汇总页
+            </a>
+            <div class="nav-actions">
+                <a href="../../search.html">
+                    <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    搜索归档
+                </a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                每日论文简报
+            </h1>
+            <div class="date">2025-11-24</div>
+        </div>
+        
+        
+        <div class="macro-dashboard">
+            <div class="macro-wordcloud">
+                <div class="macro-wordcloud-label">核心关键词云</div>
+                
+                    <img src="https://jycarlos1019.pp.ua/images/wordclouds/2025-11-24.png" alt="词云概览" />
+                
+            </div>
+            
+            <div class="macro-stats">
+                <div class="stat-item">
+                    <div class="stat-info">
+                        <div class="stat-label">精选论文</div>
+                        <div class="stat-value">6</div>
+                    </div>
+                    <svg class="icon stat-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                
+                
+                <div class="stat-item">
+                    <div class="stat-info">
+                        <div class="stat-label">cs.AI</div>
+                        <div class="stat-value">71</div>
+                    </div>
+                    <svg class="icon stat-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-info">
+                        <div class="stat-label">cs.CL</div>
+                        <div class="stat-value">25</div>
+                    </div>
+                    <svg class="icon stat-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-info">
+                        <div class="stat-label">cs.LG</div>
+                        <div class="stat-value">80</div>
+                    </div>
+                    <svg class="icon stat-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="section-header">
+            <div class="section-title">深度报告</div>
+            <div class="section-line"></div>
+        </div>
+        
+        <!-- 4个卡片的 2x2 网格 -->
+        <div class="cards-grid">
+            <!-- 1. 聚类分析 (Meso - Amber) -->
+            <a href="https://jycarlos1019.pp.ua/reports/2025-11-24/meso_clusters.html" 
+               class="nav-card meso ">
+                <div class="card-content">
+                    <div class="card-icon-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    </div>
+                    <div class="card-text">
+                        <div class="card-title">主题聚类分析</div>
+                        <div class="card-desc">梳理研究脉络与热点分布，发现潜在联系。</div>
+                        <div class="card-footer">
+                            查看分析
+                            
+                            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            
+                        </div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- 2. 微观解读 (Micro - Sky) -->
+            <a href="https://jycarlos1019.pp.ua/reports/2025-11-24/micro_papers.html" 
+               class="nav-card micro">
+                <div class="card-content">
+                    <div class="card-icon-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div class="card-text">
+                        <div class="card-title">微观深度解读</div>
+                        <div class="card-desc">对 Top 6 篇精选论文进行逐一拆解，包含核心创新点。</div>
+                        <div class="card-footer">
+                            开始阅读
+                            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 3. 主流技术方向 (Directions - Orange) -->
+            <a href="https://jycarlos1019.pp.ua/reports/2025-11-24/tech_directions.html" 
+               class="nav-card directions ">
+                <div class="card-content">
+                    <div class="card-icon-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2l7 7-7 7-7-7z"></path><path d="M2 12l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="card-text">
+                        <div class="card-title">几大技术方向</div>
+                        <div class="card-desc">
+                            
+                                按 RAG / LLM / Agent / RL 等核心赛道聚合，快速定位兴趣点。
+                            
+                        </div>
+                        <div class="card-footer">
+                            查看方向
+                            
+                            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            
+                        </div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- 4. 课题挖掘 (Mining - Violet) -->
+            <a href="https://jycarlos1019.pp.ua/reports/2025-11-24/topic_mining.html" 
+               class="nav-card mining ">
+                <div class="card-content">
+                    <div class="card-icon-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path><path d="M9 21h6"></path></svg>
+                    </div>
+                    <div class="card-text">
+                        <div class="card-title">课题挖掘报告</div>
+                        <div class="card-desc">发散性研究思路与潜在课题方向探索。</div>
+                        <div class="card-footer">
+                            查看课题挖掘报告
+                            
+                            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>生成时间: 2025-11-28 12:59:15</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

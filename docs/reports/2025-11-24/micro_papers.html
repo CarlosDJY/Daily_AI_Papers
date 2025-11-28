@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微观深度解读 - 2025-11-24</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --micro-color: #0ea5e9;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --tag-bg: #f0f9ff;
+            --tag-text: #0369a1;
+            
+            --warn-bg: #fff7ed;
+            --warn-text: #c2410c;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--micro-color); width: 32px; height: 32px; }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* 论文卡片列表 */
+        .paper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .paper-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .paper-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        .paper-index {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: 900;
+            color: #f1f5f9;
+            line-height: 1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card-header {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+            padding-right: 40px;
+        }
+
+        .paper-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .paper-title a {
+            color: var(--text-main);
+            text-decoration: none;
+            background-image: linear-gradient(transparent 90%, var(--micro-color) 0);
+            background-size: 0 10px;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            transition: background-size 0.3s;
+        }
+
+        .paper-card:hover .paper-title a {
+            background-size: 100% 10px;
+            color: var(--primary-color);
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .keywords-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .keyword-tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 内容布局 */
+        .card-body-flex {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .summary-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-column {
+            flex: 0 0 280px;
+            max-width: 40%;
+        }
+
+        .summary-content {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.7;
+            text-align: justify;
+        }
+        
+        .summary-label {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 4px;
+        }
+
+        /* --- 图片预览容器 (带放大提示) --- */
+        .image-wrapper {
+            width: 100%;
+            height: 180px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in; /* 鼠标变为放大镜 */
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .image-wrapper:hover {
+            border-color: var(--micro-color);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        /* 悬停时显示的放大图标遮罩 */
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.05); /* 极淡的遮罩 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-wrapper:hover .zoom-overlay {
+            opacity: 1;
+        }
+
+        .zoom-icon {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- 灯箱 Modal 样式 --- */
+        .modal {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 现代感毛玻璃背景 */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f5f9;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 1001;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            border-left: 3px solid #fdba74;
+        }
+        
+        .warning-box .icon { flex-shrink: 0; margin-top: 3px; }
+
+        .card-footer {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-read {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-read:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .page-footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            .paper-card { padding: 20px; }
+            .paper-index { font-size: 30px; top: 15px; right: 15px; }
+            .paper-title { font-size: 18px; padding-right: 30px; }
+            
+            .card-body-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .image-column {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .image-wrapper {
+                height: 200px;
+            }
+            
+            .card-footer { justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                微观深度解读
+            </h1>
+            <div class="subtitle">为您精选了 6 篇高质量 AI 论文的深度解析</div>
+        </div>
+
+        <div class="paper-list">
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#1</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18597v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18597v1.html">Toward Trustworthy Difficulty Assessments: Large Language Models as Judges in Programming and Synthetic Tasks</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.507 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Department of Computer Science, Bangladesh University of Engineering and Technology
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型语言模型</span>
+                        
+                        <span class="keyword-tag">编程问题难度评估</span>
+                        
+                        <span class="keyword-tag">LightGBM</span>
+                        
+                        <span class="keyword-tag">约束感知提示</span>
+                        
+                        <span class="keyword-tag">混合模型</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文系统比较了大型语言模型GPT-4o与基于特征的LightGBM在编程问题难度评估中的表现，发现GPT-4o准确率仅为37.75%，远低于LightGBM的86%。研究揭示了GPT-4o在评估中忽视数值约束的偏差，强调了这些特征在难度判断中的重要性，并提出了约束感知提示和混合模型作为未来改进方向。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/738313ece795575c058a52b496d05b15cd30b92a5b943a5e7af71efd0622b510.jpg')">
+                            <img src="../../images/2025-11-24/738313ece795575c058a52b496d05b15cd30b92a5b943a5e7af71efd0622b510.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18597v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18597v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#2</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18649v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18649v1.html">Evaluating Large Language Models on the 2026 Korean CSAT Mathematics Exam: Measuring Mathematical Ability in a Zero-Data-Leakage Setting</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.457 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Department of Computer Science & Engineering, Chungnam National University
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">大型语言模型</span>
+                        
+                        <span class="keyword-tag">数学能力评估</span>
+                        
+                        <span class="keyword-tag">无数据泄漏</span>
+                        
+                        <span class="keyword-tag">推理能力</span>
+                        
+                        <span class="keyword-tag">考试题目分析</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本研究提出了一种全新的无数据泄漏的评估框架，系统评估大型语言模型（LLMs）在2026年韩国大学入学考试数学部分的推理能力。通过实时数字化考试题目，确保模型未接触数据，并分析输入模态、推理设置等因素对模型表现的影响。研究发现，GPT-5 Codex在文本输入下获得满分，揭示了几何领域的普遍弱点及模型效率的复杂权衡。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/87f77142745d622f805e7aad3fc935afb8d052e19a1907eeed92f0ba182ce6cb.jpg')">
+                            <img src="../../images/2025-11-24/87f77142745d622f805e7aad3fc935afb8d052e19a1907eeed92f0ba182ce6cb.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18649v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18649v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#3</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.19504v1&redirect_url=%2Freports%2F2025-11-24%2F2511_19504v1.html">Position: The Complexity of Perfect AI Alignment -- Formalizing the RLHF Trilemma</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.427 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Berkeley AI Safety Initiative (BASIS), University of California, Berkeley, AWS Generative AI Innovation Center, Amazon Web Services, Meta AI, Stanford University, Northeastern University, Seattle, WA, USA
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">对齐三难问题</span>
+                        
+                        <span class="keyword-tag">复杂性理论</span>
+                        
+                        <span class="keyword-tag">RLHF方法</span>
+                        
+                        <span class="keyword-tag">计算可行性</span>
+                        
+                        <span class="keyword-tag">鲁棒性</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了“对齐三难问题”，即在大型AI系统中，无法同时实现代表性、计算可行性和鲁棒性。通过复杂性理论分析，证明了在全球范围内实现代表性和鲁棒性所需的超多项式计算资源，揭示了当前RLHF方法牺牲代表性以换取可行性和鲁棒性的根本原因。文章为理解和管理这一权衡提供了框架，并建议战略性放宽对齐要求。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/04da5f9c2a598bb3a0e5bb6bb3388054b8d792f121e3f44a39af51fe9d75a98d.jpg')">
+                            <img src="../../images/2025-11-24/04da5f9c2a598bb3a0e5bb6bb3388054b8d792f121e3f44a39af51fe9d75a98d.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.19504v1&redirect_url=%2Freports%2F2025-11-24%2F2511_19504v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#4</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.19498v1&redirect_url=%2Freports%2F2025-11-24%2F2511_19498v1.html">Hierarchical Dual-Strategy Unlearning for Biomedical and Healthcare Intelligence Using Imperfect and Privacy-Sensitive Medical Data</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.426 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            The Affiliated Hospital of Qingdao University, Peking Union Medical College Hospital, Peking University, Dalian Maritime University, Qilu Hospital of Shandong University, Zhengzhou University, The University of Hong Kong, Georgia Institute of Technology
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">分层双策略框架</span>
+                        
+                        <span class="keyword-tag">选择性知识遗忘</span>
+                        
+                        <span class="keyword-tag">医疗领域</span>
+                        
+                        <span class="keyword-tag">隐私保护</span>
+                        
+                        <span class="keyword-tag">知识保留率</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种分层双策略框架，解决了大型语言模型在医疗领域中选择性知识遗忘的问题。该方法通过几何约束梯度更新和概念感知的标记级干预，精确移除特定知识，同时保持其他医疗知识的完整性。实验结果显示，该框架实现了82.7%的遗忘率和88.5%的知识保留率，仅需修改0.1%的参数，确保了隐私保护与合规性。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/76280259dd78162eec98b50b66f21e6987c14182f2a6c1f88b9eda7224960b44.jpg')">
+                            <img src="../../images/2025-11-24/76280259dd78162eec98b50b66f21e6987c14182f2a6c1f88b9eda7224960b44.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.19498v1&redirect_url=%2Freports%2F2025-11-24%2F2511_19498v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#5</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18409v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18409v1.html">Findings of the BlackboxNLP 2025 Shared Task: Localizing Circuits and Causal Variables in Language Models</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.425 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            Technion – IIT, Rice University, Boston University, Tilburg University, University of Groningen, University of Zagreb, Harvard University
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">可解释性基准</span>
+                        
+                        <span class="keyword-tag">电路定位</span>
+                        
+                        <span class="keyword-tag">因果变量</span>
+                        
+                        <span class="keyword-tag">集成策略</span>
+                        
+                        <span class="keyword-tag">非线性特征化器</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一个标准化的机制可解释性基准（MIB），通过共享任务促进电路和因果变量定位技术的比较与评估。研究展示了集成策略和非线性特征化器在提升模型可解释性方面的有效性，推动了该领域的研究进展。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/1f9a1bc8f51cb2c6353ab629fa1838fa1a477734f38e0557f68df08e2eaacff2.jpg')">
+                            <img src="../../images/2025-11-24/1f9a1bc8f51cb2c6353ab629fa1838fa1a477734f38e0557f68df08e2eaacff2.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18409v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18409v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+            
+            
+            
+
+            <div class="paper-card">
+                <div class="paper-index">#6</div>
+                
+                <div class="card-header">
+                    <div class="paper-title">
+                        <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18354v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18354v1.html">Toward an AI-Native Internet: Rethinking the Web Architecture for Semantic Retrieval</a>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item"><span class="score-badge">0.357 分</span></div>
+                        
+                        <div class="meta-item">
+                            <svg class="icon" style="color: var(--text-light);" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8H7v8"/></svg>
+                            KAUST, LUMS
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="keywords-row">
+                        
+                        <span class="keyword-tag">AI原生互联网</span>
+                        
+                        <span class="keyword-tag">语义检索</span>
+                        
+                        <span class="keyword-tag">网络架构重构</span>
+                        
+                        <span class="keyword-tag">Web原生语义解析器</span>
+                        
+                        <span class="keyword-tag">信息检索效率</span>
+                        
+                    </div>
+                    
+                </div>
+
+                <div class="card-body-flex">
+                    <div class="summary-column">
+                        
+                        <div class="summary-content">
+                            <span class="summary-label">简介：</span>本文提出了一种“AI-Native Internet”架构，旨在解决传统文档中心互联网无法有效支持AI进行语义检索的问题。该方法通过重构网络源以暴露语义块，并引入Web原生语义解析器，显著提高了信息检索的效率和准确性，减少了74%-87%的数据传输需求，同时保持了高准确率。
+                        </div>
+                    </div>
+
+                    
+                    <div class="image-column">
+                        
+                        
+                        
+                        <div class="image-wrapper" onclick="openModal('../../images/2025-11-24/c5efba52da49cf6560a66fbcb280cd1a43ab3a2039eca5df65b12dad6740b2c7.jpg')">
+                            <img src="../../images/2025-11-24/c5efba52da49cf6560a66fbcb280cd1a43ab3a2039eca5df65b12dad6740b2c7.jpg" alt="核心思路示意图" loading="lazy" />
+                            <div class="zoom-overlay">
+                                <div class="zoom-icon">
+                                    <svg class="icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="card-footer">
+                    <a href="https://jycarlos1019.pp.ua/track?paper_id=2511.18354v1&redirect_url=%2Freports%2F2025-11-24%2F2511_18354v1.html" class="btn-read">
+                        阅读详细解读
+                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="page-footer">
+            <p>生成时间: 2025-11-28 12:59:15</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script>
+        // 打开模态框
+        function openModal(src) {
+            var modal = document.getElementById('imageModal');
+            var modalImg = document.getElementById('modalImg');
+            
+            modalImg.src = src;
+            
+            // 显示并添加动画类
+            modal.classList.add('show');
+            
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            var modal = document.getElementById('imageModal');
+            
+            // 移除动画类
+            modal.classList.remove('show');
+            
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 按 ESC 关闭
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
