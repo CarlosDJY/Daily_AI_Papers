@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Layered Protocol Architecture for the Internet of Agents</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.19699v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">A Layered Protocol Architecture for the Internet of Agents</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">多代理系统</span>
+                
+                <span class="tag">语义理解</span>
+                
+                <span class="tag">代理通信层</span>
+                
+                <span class="tag">语义协商层</span>
+                
+                <span class="tag">协作效率</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Cisco Research USA, Outshift by Cisco USA, Cisco France</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.506</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.19699v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="warning-box" style="border-color: #ef4444; color: #b91c1c; background-color: #fef2f2;">
+            <strong>图片提取失败</strong>：未找到图片
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一个双层协议架构，包括代理通信层（L8）和代理语义协商层（L9），旨在解决多代理系统中的语义理解和协调问题。L8标准化通信结构，确保消息的语法正确性；L9则通过“语义握手”机制建立共享上下文，消除歧义并增强安全性。这一创新方法提升了代理间的协作效率和系统可靠性。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决当前多代理系统（Multi-Agent Systems）通信协议中普遍存在的语义理解、协调和安全方面的不足。现有的协议（如OSI、TCP/IP以及FIPA-ACL等代理专用协议）主要关注消息的语法结构和数据传输，但缺乏建立共享语义上下文的有效机制。这导致了以下关键问题：
+- <strong>语义模糊与误解</strong>：代理之间无法保证对任务、术语和概念有共同的理解，导致沟通效率低下、频繁的澄清请求甚至任务失败。
+- <strong>低效与脆弱性</strong>：在复杂的协作任务中，缺乏共享上下文会使系统变得脆弱，代理可能因无法处理不明确的数据而做出错误假设或拒绝请求，增加了计算成本。
+- <strong>安全隐患</strong>：传统的网络安全措施无法防御语义层面的攻击。系统缺乏验证消息内容是否符合授权上下文的机制，这在金融、医疗等敏感领域构成了严重的安全风险。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是，通过在现有网络协议栈的应用层（L7）之上引入一个新的双层架构，可以有效解决多代理通信中的语义问题。
+- <strong>代理通信层（L8）</strong>：通过标准化消息结构、通信意图和交互模式，可以实现可靠的、独立于语义内容的结构化通信。
+- <strong>代理语义协商层（L9）</strong>：通过建立一个机制来协商和锁定共享的语义上下文（“语义握手”），可以消除歧义，确保代理之间对消息内容有共同的理解。
+- <strong>综合效应</strong>：结合L8和L9，可以显著提升多代理系统的协作效率、可靠性、可预测性和安全性。</p>
+
+<h3>相关研究</h3>
+
+<p>本文的研究建立在多个领域的基础之上，并旨在弥补它们的不足：
+- <strong>经典代理通信语言（ACLs）</strong>：如FIPA-ACL，它们规范了消息的语法和交互意图，但未能提供有效的动态语义协商机制。
+- <strong>现代代理通信协议</strong>：如Agent2Agent Protocol (A2A) 和 Model Context Protocol (MCP)，为消息结构提供了基础，但同样缺乏对语义上下文的管理。
+- <strong>相关理论与技术</strong>：包括语义网（Semantic Web）、分布式计算（如共享内存机制）以及网络安全协议（如TLS/MLS），这些为共享语义和安全通信提供了理论参考。</p>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：构建可扩展、可靠且安全的代理互联网通信架构</strong></h3>
+
+<p>本文提出了一种创新的分层协议架构，旨在解决当前多智能体系统（Multi-Agent Systems）在通信中存在的语法不一致和语义模糊问题。该方案通过引入两个新的协议层——<strong>代理通信层（L8）</strong>和<strong>代理语义协商层（L9）</strong>——来构建一个可扩展、高效且安全的“代理互联网”（Internet of Agents, IoA）。该架构的核心思想是将通信的<strong>结构（如何说）</strong>与<strong>内容（说什么）</strong>分离开来，从而实现真正意义上的智能协作。</p>
+
+<hr />
+
+<h4><strong>第一部分：代理通信层 (L8) - 规范化交互结构</strong></h4>
+
+<p>代理通信层（Agent Communication Layer, L8）是该架构的基础，其核心目标是标准化代理之间交互的<strong>语法和结构</strong>，确保消息可以被可靠地解析和处理，而不必关心其具体的语义内容。</p>
+
+<h5><strong>1. 核心目的</strong></h5>
+
+<ul>
+<li><strong>标准化通信格式</strong>：确保所有代理都遵循统一的消息格式，避免因语法差异导致的解析错误。</li>
+<li><strong>定义交互模式</strong>：规范化代理间的交互流程，使代理能够理解其在多步骤对话中的角色和预期行为。</li>
+<li><strong>确保消息的可解析性</strong>：使接收方能够轻松理解发送方的交流意图（如请求、通知），提高任务执行的确定性。</li>
+</ul>
+
+<h5><strong>2. 关键组成部分</strong></h5>
+
+<p>L8通过三个核心组件来规范化通信：</p>
+
+<ul>
+<li><strong>消息结构 (The Envelope)</strong>：定义了所有代理消息的标准“信封”，包含元数据如发送者、接收者、消息ID等，确保消息可被正确路由和解析。</li>
+<li><strong>言语行为 (The Speech Act)</strong>：标准化消息的交流意图，独立于其内容。这使得代理能够理解一个动作是“请求”、“通知”还是“提议”，而无需理解请求的具体内容。常见的言语行为包括：
+<ul>
+<li><strong>事务性</strong>: <code>REQUEST</code>, <code>AGREE</code>, <code>REFUSE</code>, <code>INFORM</code></li>
+<li><strong>谈判性</strong>: <code>PROPOSE</code>, <code>ACCEPT</code>, <code>REJECT</code>, <code>COUNTER_PROPOSE</code></li>
+<li><strong>信息性</strong>: <code>QUERY</code>, <code>SUBSCRIBE</code>, <code>PUBLISH</code></li>
+</ul></li>
+<li><strong>交互模式 (The Dance)</strong>：定义了消息的预期序列和协调流程，确保代理在复杂交互中能够协同工作。常见的模式包括：
+<ul>
+<li><strong>请求-回复 (1:1)</strong>：简单的客户端-服务器交互。</li>
+<li><strong>发布-订阅 (1:N)</strong>：代理订阅特定主题并接收相关通知。</li>
+<li><strong>数据聚合 (N:1)</strong>：一个主代理向多个子代理请求数据并进行汇总。</li>
+<li><strong>协作组 (N:N)</strong>：多个代理在安全组内进行分布式任务协调。</li>
+</ul></li>
+</ul>
+
+<p>通过L8，代理之间建立了一个可靠的通信基础，解决了“如何沟通”的问题，为更高层次的语义协商铺平了道路。</p>
+
+<hr />
+
+<h4><strong>第二部分：代理语义协商层 (L9) - 建立共享的语义理解</strong></h4>
+
+<p>代理语义协商层（Agent Semantic Negotiation Layer, L9），也称为SNL，是该架构的核心创新。它专注于解决通信的<strong>“内容”或“意义”</strong>问题，确保代理在交互前能够就关键概念达成可验证的共识。</p>
+
+<h5><strong>1. 核心目的</strong></h5>
+
+<ul>
+<li><strong>消除语义歧义</strong>：通过建立共享的理解，避免因对同一术语（如“纽约”）有不同解释而导致的错误。</li>
+<li><strong>建立共享上下文</strong>：允许代理发现、协商并锁定一个正式的、机器可读的“共享上下文”，该上下文定义了特定领域内的所有相关概念、任务和参数。</li>
+<li><strong>提高任务执行的确定性</strong>：在执行任务前验证消息内容的语义正确性，减少错误假设和不必要的澄清往返。</li>
+</ul>
+
+<h5><strong>2. 关键流程与机制</strong></h5>
+
+<p>L9通过一个三阶段的协议来实现语义协商：</p>
+
+<ol>
+<li><p><strong>上下文发现与协商（语义握手）</strong>：</p>
+
+<ul>
+<li>代理A通过发送<code>SNL-HELLO</code>消息，广播其支持的上下文列表（例如，<code>urn:contexts:travel:v2.1</code>）。</li>
+<li>代理B接收后，通过<code>SNL-SELECT</code>消息选择一个双方都支持的共同上下文。</li>
+<li>双方通过<code>SNL-LOCK</code>消息锁定该上下文，创建一个“语义会话”。这个共享上下文可以在整个会话期间复用，从而分摊初始协商的开销。</li>
+</ul></li>
+<li><p><strong>语义绑定</strong>：</p>
+
+<ul>
+<li>一旦上下文被锁定，代理需要将其内部的逻辑数据（如文本、数字）与共享上下文中的正式定义进行关联。这确保了当一个代理发送数据时，接收方能够准确理解该数据在共享框架下的确切含义。</li>
+</ul></li>
+<li><p><strong>上下文验证</strong>：</p>
+
+<ul>
+<li>在整个交互过程中，L9会使用锁定的共享上下文来验证所有传入和传出消息内容的语义正确性。如果消息包含了上下文中未定义的或不合规的概念，代理可以拒绝该消息或启动澄清流程。</li>
+</ul></li>
+</ol>
+
+<h5><strong>3. 应用实例</strong></h5>
+
+<ul>
+<li><strong>模糊参数澄清</strong>：当一个代理收到一个模糊请求（如预订去“纽约”的航班），L9可以利用共享上下文识别出“纽约”是一个模糊参数，并自动发起一个结构化的澄清请求（<code>{"concept": "ambiguous_parameter", "parameter": "dest_code", "value": "New York"}</code>），要求对方从明确的选项（JFK, LGA, EWR）中选择。</li>
+<li><strong>复杂协作（供应链）</strong>：在没有统一任务定义的情况下，多个代理可以通过发布符合共享上下文的状态信息（如<code>{"my_decision": {"item_id": "beer", "quantity": 120}}</code>）来进行灵活协调，从而实现涌现式的智能协作。</li>
+</ul>
+
+<hr />
+
+<h4><strong>第三部分：安全、信任与治理</strong></h4>
+
+<p>该架构认识到，语义层也带来了新的安全挑战。因此，方案中内置了多层安全机制，以确保通信的完整性和可信度。</p>
+
+<h5><strong>1. 新的攻击向量</strong></h5>
+
+<ul>
+<li><strong>语义注入</strong>：在有效载荷中嵌入恶意提示或指令。</li>
+<li><strong>上下文污染</strong>：发布恶意的或有毒的上下文定义来误导其他代理。</li>
+</ul>
+
+<h5><strong>2. 核心安全机制</strong></h5>
+
+<ul>
+<li><p><strong>认证上下文 (Authenticated Contexts)</strong>：</p>
+
+<ul>
+<li>所有共享上下文的定义都必须经过加密签名。在“语义握手”阶段，代理必须验证签名，确保上下文来自可信的来源（Schema Authority）。</li>
+<li>握手过程还包括版本协商，以防止降级攻击。</li>
+</ul></li>
+<li><p><strong>语义防火墙 (Semantic Firewalls)</strong>：</p>
+
+<ul>
+<li>这是一个位于L9和代理应用逻辑之间的组件，负责执行基于概念的授权策略。它检查的是经过验证的语义内容，而非原始字节流。</li>
+<li>例如，可以设定策略：“拒绝任何来自[Public-WebApp-3]代理使用‘决策应急’概念的请求”或“拒绝‘支付’上下文中金额超过$10,000的消息，除非发送者拥有特定凭证”。</li>
+</ul></li>
+<li><p><strong>能力的保密性 (Confidentiality of Capability)</strong>：</p>
+
+<ul>
+<li>代理在<code>SNL-HELLO</code>消息中广播的能力（即支持的上下文）可能包含商业机密。因此，L9的协商消息必须进行端到端加密，防止中间节点窥探。</li>
+</ul></li>
+<li><p><strong>信任模型与治理</strong>：</p>
+
+<ul>
+<li>提出了一个类似于TLS证书颁发机构（CA）的<strong>Schema Authority (SA)</strong>模型。公共上下文可由行业联盟等集中式SA管理；组织内部的私有上下文可由自签名SA管理；跨组织协作则需要建立联邦信任。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h3><strong>总结</strong></h3>
+
+<p>该解决方案通过引入<strong>代理通信层（L8）</strong>和<strong>代理语义协商层（L9）</strong>，成功地将通信的<strong>语法结构</strong>与<strong>语义内容</strong>解耦。L8提供了一个稳定可靠的通信基础，而L9则通过创新的语义协商机制确保了代理之间的深度理解和共识。结合强大的安全和信任模型，这一双层架构为构建下一代大规模、可扩展、智能且安全的“代理互联网”奠定了坚实的基础，推动了多智能体系统从简单的信息交换向真正的智能协作进化。</p>
+
+<h3>实验设计</h3>
+
+<p>本文主要是一个理论框架的提出，并未包含详细的、量化的实验设计。其有效性主要通过以下方式进行论证：
+- <strong>理论分析</strong>：详细阐述了新架构的必要性、设计原理及其相对于现有协议的优势。
+- <strong>概念验证</strong>：通过具体的应用场景示例（如供应链协调）来展示L8和L9层如何解决实际问题，例如处理模糊参数和确保决策的语义一致性。</p>
+
+<h3>数据集和代码</h3>
+
+<p>在提供的所有论文片段中，均未提及任何具体的数据集或公开的代码库。</p>
+
+<h3>实验结果</h3>
+
+<p>由于缺乏正式的实验，本文没有提供定量的实验结果。其结论是基于理论推导和概念示例得出的。理论分析和示例表明，实施L8/L9架构能够：
+- 以结构化的方式进行信息交换，有效减少语义歧义。
+- 提高多代理系统在复杂任务中的决策效率和协作可靠性。
+- 通过语义防火墙和上下文认证，增强系统的安全性。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献在于：
+1.  <strong>提出了一个创新的双层协议架构（L8和L9）</strong>，为解决多代理系统中的语义通信问题提供了新的理论基础和系统性解决方案。
+2.  <strong>明确区分了通信的结构（L8）与语义（L9）</strong>，使得代理通信框架更加模块化和可扩展。
+3.  <strong>引入了“语义协商”和“语义防火墙”等新概念</strong>，不仅解决了协作效率问题，还首次将语义层面的安全性和上下文验证纳入协议设计中，为构建更安全、更智能的代理系统开辟了新方向。</p>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 13:26:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

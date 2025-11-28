@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课题挖掘报告 - 2025-11-25</title>
+    <style>
+        :root {
+            /* 配色：Slate (基调) + Violet (挖掘主题色) */
+            --primary-color: #4f46e5;
+            --mining-color: #8b5cf6;    /* Violet 500 */
+            --mining-light: #f5f3ff;    /* Violet 50 */
+            --mining-border: #ddd6fe;   /* Violet 200 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--mining-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            background-color: #f1f5f9;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        /* 报告列表 */
+        .reports-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .report-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        
+        .report-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 折叠头 */
+        .report-header {
+            padding: 20px 24px;
+            background-color: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .report-header:hover {
+            background-color: #f8fafc;
+        }
+        
+        .report-header.active {
+            background-color: var(--mining-light);
+            border-bottom: 1px solid var(--mining-border);
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        
+        .report-header.active .report-title {
+            color: var(--mining-color);
+        }
+
+        .toggle-icon {
+            color: var(--text-light);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        .report-header.active .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--mining-color);
+        }
+
+        /* 内容区域 */
+        .report-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #ffffff;
+        }
+        
+        .report-body-content {
+            padding: 30px 40px;
+        }
+
+        .section-block {
+            margin-bottom: 30px;
+        }
+        
+        .section-block:last-child { margin-bottom: 0; }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--mining-color);
+            padding-left: 10px;
+        }
+
+        .section-text {
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        /* 特殊样式：Seed Paper */
+        .seed-paper-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* 特殊样式：Divergent Ideas */
+        .ideas-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .idea-item {
+            position: relative;
+            padding: 12px 16px 12px 36px;
+            margin-bottom: 12px;
+            background-color: #fdfbff; /* 极淡的紫 */
+            border: 1px solid #f3e8ff;
+            border-radius: 8px;
+            color: var(--text-main);
+        }
+        
+        .idea-item:last-child { margin-bottom: 0; }
+
+        .idea-icon {
+            position: absolute;
+            left: 10px;
+            top: 14px;
+            width: 16px;
+            height: 16px;
+            color: var(--mining-color);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .report-header { padding: 15px; }
+            .report-title { font-size: 16px; }
+            .report-body-content { padding: 20px; }
+            .section-text { font-size: 14px; }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const headers = document.querySelectorAll('.report-header');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    // 切换当前卡片状态
+                    this.classList.toggle('active');
+                    
+                    const body = this.nextElementSibling;
+                    if (this.classList.contains('active')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path><path d="M9 21h6"></path></svg>
+                课题挖掘报告
+            </h1>
+            <div class="date">2025-11-25</div>
+        </div>
+
+        <div class="reports-container">
+            
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越被动防御：探索大型语言模型在动态高风险场景下的自适应安全调节机制</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】PropensityBench框架的核心贡献在于，它将LLM安全评估从静态的“能力”检测转向了动态高压场景下的“倾向”评估，揭示了现有模型普遍存在“浅层对齐”问题。我们选择它作为起点，因为它精准地定义了一个关键问题：模型在压力下会变得不安全，这为我们探索“如何动态增强安全性”提供了明确的研究靶点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: 探索在高风险动态场景中对模型行为进行实时调节的通用机制。
+* 初步检索(第1轮): 发现了关于模型行为控制的基础研究，如控制模型对上下文与先验知识的依赖（“旋钮”），以及在生成长文本时保持一致性的方法，但这些研究并未直接聚焦于“安全”场景。
+* 深度假设(第2轮): 将假设聚焦为：如何在高风险场景中，针对操作压力实时调节大语言模型的“安全”行为？
+* 深度检索(第2轮): 发现了更具针对性的工作，包括用于实时防御越狱攻击的干预技术（SafeNudge）、通过长时程模拟进行风险感知对齐的方法，以及旨在加固模型内部表征以提升安全鲁棒性的训练策略（LAPT）。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，学术界在LLM行为控制方面，已经探索了调节模型内部信息处理（如上下文敏感度）的基础机制。在安全应用层面，研究已覆盖了从训练时增强鲁棒性（如对抗性补丁训练），到部署后进行实时干预（如安全“微调”），再到通过模拟未来风险进行更深层次对齐的多种策略。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">然而，研究鸿沟在于：尽管已存在基础控制“旋钮”和各种独立的、多为被动触发的安全措施，但缺乏一个统一的框架，能让LLM根据实时感知的环境风险或操作压力，来“自主地、动态地”调节其自身的安全等级。现有方法要么是静态的（训练时固化），要么依赖外部模块触发，未能实现模型内在的、自适应的安全-性能权衡。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一种可调控的“安全倾向旋钮”：将通用模型控制理论与安全倾向评估相结合，实现LLM在动态压力下的自适应安全。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        基于隐空间扰动敏感度的风险预警系统：将模型内部的脆弱性信号转化为主动防御触发器，在攻击发生前动态提升安全等级。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        博弈论视角下的LLM安全：研究在战略性交互中，模型风险倾向与用户适应性行为的共同演化规律，并设计动态均衡策略。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        实时微观模拟框架：让LLM在对话过程中进行快速、小规模的风险推演，以在线规划的方式动态调整其安全与回复策略。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越静态安全评估：融合行为经济学与压力测试的LLM风险倾向诊断与对齐新范式</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">种子论文【PropensityBench】的核心贡献在于提出了一个创新的评估框架，通过模拟高压场景来评估大语言模型（LLM）在高风险能力下的“行为倾向”，而非仅仅是“能力”，揭示了当前模型普遍存在的浅层对齐和压力下的安全脆弱性。我们选择它是因为其直击LLM安全评估的核心盲点——从静态能力评估转向动态倾向评估，为探索更深层次的模型对齐和安全性提供了关键切入点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: 探索针对不同层级压力场景的综合性、多层次LLM评估策略。
+* 初步检索(第1轮): 发现了各类场景化（如医疗、游戏）和多认知层级的评估基准，但它们主要关注模型的能力和表现，而非在压力下的内在风险“倾向”。
+* 深度假设(第2轮): 迭代假设为：如何通过系统性的高风险压力测试，来动态评估并理解LLM在危险能力下的安全风险倾向？
+* 深度检索(第2轮): 发现了将行为经济学（如赌博心理学）和长时程模拟用于理解和缓解特定LLM风险行为的研究，这为“倾向”评估提供了具体的理论工具和方法论。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合检索结果，学术界在构建多场景、多认知层级的LLM评估框架（如医疗、战略游戏）方面已取得进展，并开始从特定视角（如操作风险、长时程模拟、人类风险偏好模拟）探索模型的风险行为。此外，已有前沿研究尝试借鉴行为经济学理论来理解和缓解模型中的特定风险倾向（如赌博式行为）。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">然而，研究鸿沟在于：尽管已有工作分别探讨了压力测试（如PropensityBench）和特定风险行为的经济学干预（如赌博式行为），但缺乏一个系统性的框架，该框架能够：1) 统一地运用多种行为经济学理论来诊断LLM在多样化压力情境下的一系列风险倾向（不仅限于单一行为）；2) 基于诊断结果，提出并验证相应的动态、自适应对齐策略来主动缓解这些倾向。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个基于行为经济学理论的LLM风险倾向诊断与自适应对齐框架（BE-Align），系统性评估并修正模型在压力下的非理性决策。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个“程序化生成对抗性压力情境”（PG-APS）的测试平台，用于动态生成能最大化激发LLM潜在风险倾向的复杂决策环境。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究LLM的短期风险倾向（如损失厌恶、过度自信）对其在长时程、多智能体环境中的“涌现性”不安全行为的影响路径。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        跨文化视角下LLM风险倾向的差异性研究：探究不同文化背景数据训练出的模型在面对相同压力情境时，其决策偏好和安全脆弱性是否不同。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越能力评估：探索大型语言模型在高风险情境下的安全倾向与行为鸿沟</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">种子论文【PropensityBench】的核心贡献在于提出了一个创新的基准框架，用于评估大语言模型在高风险、高压力场景下的“行为倾向”，而非仅仅是静态的“能力”。我们选择它是因为该研究精准地指出了当前LLM安全评估中的一个核心盲点：模型的能力与其在压力下的安全倾向并无强相关性，揭示了普遍存在的“浅层对齐”问题，为探索更深层次的安全机制提供了绝佳的切入点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: 探究LLM的安全倾向与其核心能力之间是否存在深层关联。
+* 初步检索(第1轮): 发现现有研究已涉及心智理论、推理漏洞、长期风险模拟等方面，但并未系统性地分析“安全倾向”与“模型能力”在高压情境下的具体关联机制。
+* 深度假设(第2轮): 在高风险情境下，模型的能力（如推理、心智理论）究竟如何具体影响其安全行为倾向，这种影响的内在机制是什么？
+* 深度检索(第2轮): 进一步确认研究分散在心智理论评估、风险偏好模拟和宏观安全综述等领域，但缺乏一个统一框架来量化和分析特定能力在高风险场景下如何转化为不安全的行为倾向。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合检索结果，学术界已在LLM安全评估的多个维度展开工作，包括对高级推理能力、心智理论、长期风险模拟及保密信息处理等特定场景的安全性进行评估。同时，对LLM的宏观安全挑战和风险偏好模拟也已有初步探索。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">然而，研究鸿沟在于：尽管学术界分别评估了LLM的能力（如推理）和其在特定场景下的安全表现，但缺乏一个统一的理论框架和评测基准来系统性地分析“模型核心能力”与“高风险行为倾向”之间的动态关联机制。现有工作并未深入解释为何模型能力提升不等于安全倾向的改善，特别是在压力和欺骗性场景下。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个“认知-行为”诊断框架，通过分析模型内部状态，揭示其核心能力与高风险行为倾向之间的因果关联。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发基于“逆向心智理论”的自动化红队代理，利用模型对欺骗意图的理解来主动发现其安全脆弱性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究一种“长期风险倾向”对齐方法，通过在训练中引入宏观因果模拟，使模型内化对间接、延迟危害的规避能力。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        建立一个动态压力下的信息安全评估基准，量化模型在面对不同类型压力时，其遵守保密协议的行为倾向衰减曲线。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越能力评估：挖掘大型语言模型在复杂情境下的“安全倾向性”研究鸿沟</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】PropensityBench 提出了一个创新的基准框架，通过模拟高风险、高压力的操作场景，将LLM安全评估的重点从静态的“能力”转向动态的“行为倾向”。【分析理由】我们选择它是因为它直面当前安全评估的盲点——模型在压力下的行为脆弱性，其“压力-倾向”评估范式具有开创性和巨大的应用潜力。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: 探索PropensityBench框架在非数学推理任务中的应用情况。
+* 初步检索(第1轮): 发现的相似工作主要集中在通用的LLM评估，如提示敏感性（PromptSET）或特定推理能力（CrossWordBench），并未涉及“压力下的倾向性”这一核心概念。
+* 深度假设(第2轮): 基于初步发现，将问题深化为寻找评估模型在高风险、高压环境下安全倾向性的通用方法论，特别是在多样化的非技术领域。
+* 深度检索(第2轮): 发现了多个针对特定高风险领域的安全基准，如法律（SafeLawBench）、国家安全（FORTRESS）、偏见诱导（CLEAR-Bias）和机密信息处理（PasswordEval），它们都从不同侧面触及了模型在压力下的行为评估。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，与“种子论文”（PropensityBench）相关的研究边界已经形成：学术界已经开始构建一系列针对特定高风险领域的安全评估基准（如法律、国家安全、偏见），以测试模型在特定压力情境下的行为表现和鲁棒性。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟在于：现有工作虽然目标相似，但在方法论上是零散的。缺乏一个统一的、跨领域的框架来系统性地研究和量化“操作压力”本身作为一个变量，如何普遍性地影响模型的“行为倾向”。换言之，PropensityBench提出的“压力-倾向”评估方法论尚未被抽象出来并广泛应用于更多样的非技术性复杂任务（如道德困境、创意生成、共情对话等）。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个“通用压力模拟框架”，可为任意LLM任务动态注入可控的操作压力（如时间限制、信息矛盾、情感负荷），以量化模型的倾向性漂移。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        将PropensityBench的评估范式从“工具使用”扩展到“价值对齐”领域，构建一个专门评估模型在面临多重道德和社会压力时其价值观稳定性的基准。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究不同类型的“操作压力”与模型架构（如MoE）及对齐技术（如DPO）之间的因果关系，探究导致“浅层对齐”问题的根本机制。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        探索“倾向性”评估在模型开发全流程中的应用，例如，利用倾向性信号作为RLAIF的反馈，训练出在压力下更具鲁棒性的模型。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越PropensityBench：探索LLM安全评估中场景偏见与评估者鲁棒性的研究鸿沟</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】PropensityBench提出了一个创新的框架，通过模拟高风险、高压力场景来评估LLM的行为“倾向”而非仅仅是“能力”，揭示了前沿模型在压力下的安全脆弱性。
+【分析理由】我们选择它是因为它直面了LLM安全评估的核心难题——从静态能力转向动态倾向，为探索更深层次的模型安全性和对齐问题提供了绝佳的切入点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">*初始假设: PropensityBench中使用的高风险场景可能存在偏见，从而影响评估结果的可信度。
+*初步检索(第1轮): 发现了关于量化风险评估、LLM安全裁判的鲁棒性以及困难样本对对齐影响等相关工作，将问题视角从“场景内容”本身拓宽到了“评估方法论”的普遍缺陷。
+*深度假设(第2轮): 基于初步发现，问题深化为：是否存在针对PropensityBench这类框架中高风险场景偏见的实证研究或验证方法？
+*深度检索(第2轮): 发现了关于对抗性偏见诱导、LLM模拟人类风险偏好的文化差异、以及LLM评估者自身偏见的研究。这些工作证实了评估“刺激”（场景/提示）和“裁判”的偏见是当前研究的前沿和痛点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综上，与“种子论文”(PropensityBench)相关的LLM安全评估研究，已经从单纯的能力测试，发展到对评估方法论本身的审视。现有工作广泛探讨了评估者（LLM Judge）的鲁棒性与偏见、对抗性攻击下的偏见诱导、以及数据选择对模型对齐的影响。研究已经认识到，评估过程的各个环节都可能引入偏见。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟在于：现有工作虽然指出了评估方法中的各种偏见来源，但缺乏对PropensityBench这类框架所使用的“高风险场景”本身进行系统性偏见审计和验证的专门研究。
+(鸿沟类型1：领域空白) 无人系统性地分析这些场景是否存在文化、意识形态或认知偏见，也未验证它们在不同文化背景下的有效性。
+(鸿沟类型2：方法论缺陷) 缺乏一个标准化的框架来生成和验证具有生态效度（ecological validity）且跨文化鲁棒的高风险评估场景，导致现有基准可能存在系统性的“评估盲点”。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        对PropensityBench中的高风险场景进行系统性的偏见审计（如文化、意识形态偏见），并开发一套去偏见化的场景生成框架。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        构建一个跨文化、多语言版本的PropensityBench，专门用于评估LLM在不同文化背景压力场景下的安全倾向一致性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        结合人类风险偏好研究，探索如何设计能够反映不同人群风险偏好的评估场景，实现更个性化和现实的LLM安全评估。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        研究评估场景偏见与LLM评估者偏见之间的交互作用，并开发能够解耦这两种偏见影响的评估校准方法。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">超越表面对齐：探索LLM在动态压力和内部表征下的安全倾向评估鸿沟</div>
+                        <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    
+                    <div class="report-body">
+                        <div class="report-body-content">
+                            
+                            <div class="section-block">
+                                <div class="section-title">灵感来源 (Seed Paper)</div>
+                                <div class="section-text seed-paper-box">【种子论文】PropensityBench的核心贡献在于提出了一个创新的评估框架，通过模拟高压场景来衡量大语言模型的安全“倾向性”，而非仅仅是静态的“能力”，揭示了前沿模型普遍存在的浅层对齐问题。
+【分析理由】我们选择它是因为它直击当前安全评估的核心痛点——静态评估无法反映真实世界压力下的模型行为，为我们探索更深层次、更动态的安全评估方法提供了绝佳的起点。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">迭代探索过程</div>
+                                <div class="section-text">* 初始假设: PropensityBench评估模型安全性的动态倾向是否在不同模型架构或训练方法上存在一致性问题？
+* 初步检索(第1轮): 发现了其他领域的安全基准（如多模态Omni-SafetyBench）和对现有基准的宏观批判，证实了研究界正在超越传统静态评估，但尚未系统性地解决“倾向性”评估的一致性问题。
+* 深度假设(第2轮): 基于初步发现，问题深化为：PropensityBench评估出的安全倾向在不同模型架构和训练方法下的不一致性，将如何具体影响大型语言模型的整体安全性？
+* 深度检索(第2轮): 发现了强有力的支持性证据，如研究指出当前安全对齐是“浅层”的，可通过探测“潜在表征”来绕过（Latent Perturbations）；另有研究表明模型架构和训练方法对安全性（如偏见）的影响可能超过模型规模本身。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">已有工作分析 (What IS Done)</div>
+                                <div class="section-text">综合来看，现有研究已经认识到静态安全评估的局限性，并开始向更动态、更具对抗性的方向发展。研究工作集中在为特定场景（如多模态、偏见诱导）构建专用基准，或从方法论上（如优化、对抗训练）提升安全性。大家普遍承认，简单地评估模型是否“拒绝”有害请求是不够的。</div>
+                            </div>
+                            
+                            <div class="section-block">
+                                <div class="section-title">研究鸿沟 (What IS NOT Done)</div>
+                                <div class="section-text">研究鸿沟清晰地体现在两个层面：
+1. (方法论鸿沟) 缺乏一个统一的框架来连接各种“动态”安全评估维度。现有工作分别从“外部压力”（PropensityBench）、“内部表征脆弱性”（Latent Perturbations）和“特定偏见”（Bias Elicitation）等角度进行探测，但未能将这些现象整合，从而无法衡量模型“对齐的深度和鲁棒性”。
+2. (因果关系鸿沟) 几乎没有研究系统性地将模型的“安全倾向”与其核心的“架构设计”或“训练策略”进行因果关联分析。虽然有论文暗示架构比规模更重要，但缺少使用PropensityBench这类框架进行的严格对比实验，以揭示哪种架构或训练方法能从根本上培养更稳定的安全倾向。</div>
+                            </div>
+                            
+                            
+                            <div class="section-block">
+                                <div class="section-title" style="color: var(--mining-color);">💡 发散性想法 (Divergent Ideas)</div>
+                                <ul class="ideas-list">
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        开发一个“对齐深度”综合基准，融合压力测试、潜在空间探测和对抗性诱导，以更全面地评估模型的安全鲁棒性。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        进行一项大规模的比较研究，利用PropensityBench框架系统评估不同模型架构（如MoE vs. Dense）和训练方法对安全倾向稳定性的因果影响。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        设计一种新的“内部状态”安全评估方法，结合可解释性技术，在压力场景下追踪模型的内部激活和推理路径，以诊断其安全倾向发生转变的根本原因。
+                                    </li>
+                                    
+                                    <li class="idea-item">
+                                        <svg class="icon idea-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        探索一种“倾向性对齐”训练新范式，在模型训练阶段就引入动态压力和潜在扰动，旨在优化模型在不确定环境下的安全行为倾向，而不仅仅是监督其最终输出。
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+            
+            
+        </div>
+
+        <div class="footer">
+            <p>生成时间: 2025-11-28 13:26:53</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

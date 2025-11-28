@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreEval: Automatically Building Contamination-Resilient Datasets with Real-World Knowledge toward Reliable LLM Evaluation</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.18889v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">CoreEval: Automatically Building Contamination-Resilient Datasets with Real-World Knowledge toward Reliable LLM Evaluation</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">抗污染评估</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">数据污染</span>
+                
+                <span class="tag">实时知识</span>
+                
+                <span class="tag">评估框架</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Harbin Institute of Technology, Shenzhen, China, Peng Cheng Laboratory, Shenzhen, China, Guangdong Provincial Key Laboratory of Novel Security Intelligence Technologies, The Chinese University of Hong Kong, Hong Kong, China, The Hong Kong Polytechnic University, Hong Kong, China</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.494</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.18889v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-25/b0d4a354c8d208cc5feabdda30cff3f842fed7ec252e7ce1745bfc72240d46e9.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了CoreEval，一个抗污染的评估框架，旨在解决大型语言模型（LLM）评估中的数据污染问题。通过从GDELT数据库提取实时知识并将其整合到原始数据中，CoreEval确保了数据的语义连贯性和一致性。实验结果表明，该方法有效减轻了性能过高估计，提升了评估的公正性和可靠性。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）评估中的一个核心挑战：<strong>数据污染</strong>。当模型的训练数据意外地包含了测试数据时，会导致模型在评估中表现出虚高的性能，这使得我们无法准确评估其真实的理解和推理能力。这个问题日益重要，因为：
+- 数据污染扭曲了评估结果，影响了LLM评估的可靠性和公正性。
+- 模型可能依赖于对测试数据的“记忆”而非真正的泛化能力。
+- 现有的检测或缓解方法尚不完善。</p>
+
+<h3>Hypothesis</h3>
+
+<p>该研究的核心假设是：通过一个自动化的框架（名为<strong>CoreEval</strong>），系统性地将<strong>实时的、现实世界的知识</strong>整合到现有的评估数据集中，可以创建出“抗污染”的测试集。这能够有效减轻因数据污染导致的性能过高估计问题，从而提供一个更公平、更准确的LLM能力评估基准。</p>
+
+<h3>相关研究</h3>
+
+<p>相关研究主要集中在以下几个方面：
+- <strong>数据污染分析</strong>：研究数据污染对LLM基准测试的影响，包括字符串匹配等检测技术的局限性（如 Li et al., 2024c; Zhou et al., 2023; Yang et al., 2023）。
+- <strong>自动数据集构建</strong>：探索减少手动策划成本的数据集生成方法。
+- <strong>知识更新机制</strong>：研究如何为LLM注入新知识以提升其性能和时效性。
+- <strong>具体的先前工作</strong>：引用了包括 Aiyappa et al. (2023), Jiang et al. (2024a), Dekoninck et al. (2024a) 等在内的多项研究。</p>
+
+<h3><strong>完整解决方案：CoreEval——一个抗数据污染的自动化LLM评估框架</strong></h3>
+
+<p>本文提出的核心解决方案是一个名为 <strong>CoreEval</strong> 的自动化评估框架。该框架旨在解决大型语言模型（LLM）评估中普遍存在的数据污染（Data Contamination）问题。数据污染，即测试数据无意中泄露到训练集中，会导致模型性能被严重高估，从而无法真实反映其泛化能力。CoreEval通过整合动态、实时的真实世界知识来自动更新评估数据集，从而构建一个具有抗污染能力的评估基准。</p>
+
+<p>该框架的设计灵感来源于布鲁纳（Bruner）的认知理论，强调学习是一个主动构建认知结构的过程，而非被动吸收信息。基于此，CoreEval的工作流程被设计为三个核心阶段：<strong>实时知识获取、知识重构</strong>和<strong>数据反思</strong>。</p>
+
+<hr />
+
+<h4><strong>第一步：实时知识获取 (Real-World Knowledge Attainment)</strong></h4>
+
+<p>此阶段的目标是从外部世界获取最新、最相关的知识，为数据更新提供事实基础。</p>
+
+<ol>
+<li><strong>实体提取</strong>：给定一个原始数据集 \$D = \{(d<em>1, y</em>1), (d<em>2, y</em>2), \ldots, (d<em>n, y</em>n)\}\$，首先使用一个LLM来识别每个数据样本 \$d<em>i\$ 中的关键实体 \$E</em>i\$。</li>
+<li><strong>知识检索</strong>：利用提取出的实体作为查询关键词，通过访问全球事件、语言和语调数据库（GDELT）等外部知识源，检索与这些实体相关的最新事件和信息。</li>
+<li><strong>知识总结</strong>：LLM将检索到的大量原始知识 \$K_i\$ 进行总结和提炼，形成简洁、相关的知识摘要 \$K^i\$，确保了知识的时效性和可用性。</li>
+</ol>
+
+<hr />
+
+<h4><strong>第二步：知识重构与语义整合 (Knowledge Recontextualization)</strong></h4>
+
+<p>此阶段的核心是将新获取的知识与原始数据进行深度融合，生成语义丰富且与时俱进的新数据，同时保留其原有的语言复杂性。</p>
+
+<ol>
+<li><strong>关系三元组提取</strong>：从原始句子 \$d<em>i\$ 中提取出结构化的关系三元组 \$T</em>i = \{⟨e<em>{i,j}, r</em>{i,j}, e'_{i,j}⟩\}\$，其中 \$e\$ 代表实体，\$r\$ 代表它们之间的关系。</li>
+<li><strong>三元组更新与语义重写</strong>：
+<ul>
+<li>利用第一步获取的知识摘要 \$K^i\$，LLM会更新或替换原始三元组，生成新的三元组 \$T^<em>_i\$。</li>
+<li>随后，框架采用<strong>语义重写（Semantic Rewriting）</strong>技术，将新的三元组 \$T^<em>_i\$ 融入原始句子结构中，生成一个全新的文本 \$\hat{d}_i\$。这个过程可以表示为：
+$$ \hat{d}_i \leftarrow M(d_i, d_{u_i}, T^</em><em>i, d^</em></em>i) $$
+此操作确保了新生成的文本在保留原始语言特征和标签 \$y_i\$ 的同时，内容上已经更新，从而有效“解毒”了可能存在的污染。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>第三步：数据反思 (Data Reflection)</strong></h4>
+
+<p>为了确保更新后数据的质量和一致性，CoreEval引入了一个严格的自动化反思和验证机制。</p>
+
+<ol>
+<li><strong>质量评估代理</strong>：一个代理系统（通常是另一个LLM）会对新生成的文本 \$\hat{d}_i\$ 进行评估。评估标准主要包括：
+<ul>
+<li><strong>事实性与错误信息 (Factuality &amp; Misinformation)</strong>：检查生成的文本是否准确反映了所提供的外部知识，是否存在与事实不符的“幻觉”内容。</li>
+<li><strong>标签对齐 (Label Alignment)</strong>：验证更新后的文本 \$\hat{d}<em>i\$ 是否仍然与原始标签 \$y</em>i\$ 保持一致，确保更新过程没有改变其核心语义分类。</li>
+</ul></li>
+<li><strong>迭代修正</strong>：如果代理系统发现生成的数据在上述任一标准上存在问题，它会触发重新生成流程，直到产出符合质量要求的文本。这个迭代过程确保了最终数据集的可靠性和准确性。</li>
+</ol>
+
+<hr />
+
+<h4><strong>评估与验证</strong></h4>
+
+<p>为了证明CoreEval框架的有效性，论文不仅进行了广泛的实验，还提出了一套专门用于衡量数据污染影响的指标。</p>
+
+<h5><strong>数据污染抵抗指标</strong></h5>
+
+<ul>
+<li><strong>δ1 指标</strong>：衡量模型在仅使用<strong>测试集</strong>训练后的性能与其<strong>零样本（Zero-shot）</strong>性能之间的差异。该指标用于识别模型是否因见过测试数据而获得了虚高的分数。</li>
+<li><strong>δ2 指标</strong>：比较模型在<strong>训练集和测试集上共同训练</strong>与<strong>仅在训练集上训练</strong>的性能差异。该指标能更精确地分离出由测试数据记忆效应带来的性能提升，排除了任务本身理解能力提升的干扰。</li>
+</ul>
+
+<h5><strong>实验应用与人类评估</strong></h5>
+
+<ul>
+<li><strong>应用任务</strong>：该框架被成功应用于多个NLU任务，包括情感识别、讽刺检测、立场检测，以及来自GLUE基准的MRPC（释义判断）和RTE（文本蕴涵）任务。</li>
+<li><strong>人类验证</strong>：为了确保自动化生成数据的质量，研究团队邀请了多位计算语言学专家进行评估。评估标准包括<strong>流畅性、连贯性、事实性</strong>和<strong>准确性</strong>。结果显示，评估者之间的一致性很高（Fleiss' Kappa系数在0.70到0.85之间），证明CoreEval生成的数据质量可靠。</li>
+</ul>
+
+<hr />
+
+<h4><strong>核心优势与局限性</strong></h4>
+
+<h5><strong>优势</strong></h5>
+
+<ol>
+<li><strong>强大的抗污染能力</strong>：通过动态引入外部实时知识，从根本上改变了测试数据的特征，有效降低了数据污染导致的性能高估。</li>
+<li><strong>保持语义丰富性</strong>：与简单的同义词替换或文本生成不同，CoreEval保留了原始数据的复杂性和语言结构，使得评估更具现实意义。</li>
+<li><strong>高效与自动化</strong>：整个流程高度自动化，最大限度地减少了人工干预，提升了构建高质量评估基准的效率。</li>
+<li><strong>广泛适用性</strong>：框架设计具有通用性，可适用于多种NLP任务，并通过结构化的提示模板（如为讽刺和立场检测设计的JSON格式模板）来确保任务执行的准确性。</li>
+</ol>
+
+<h5><strong>局限性</strong></h5>
+
+<ul>
+<li><strong>任务范围</strong>：目前主要在分类任务上得到验证，未来需要扩展到问答、摘要等更复杂的生成任务。</li>
+<li><strong>潜在幻觉</strong>：尽管有数据反思机制，但在极少数情况下仍可能生成少量不准确的信息，但实验表明其对大多数任务影响可忽略不计。</li>
+</ul>
+
+<h3><strong>结论</strong></h3>
+
+<p>综上所述，<strong>CoreEval</strong> 提供了一个系统性、创新且高效的解决方案，用于应对LLM评估中的数据污染挑战。它通过一个结合<strong>实时知识获取、知识重构</strong>和<strong>数据反思</strong>的闭环工作流，不仅能够生成高质量、抗污染的评估数据集，还为如何量化和缓解数据污染问题提供了新的思路和工具，从而推动了LLM评估的公平性、可靠性和及时性。</p>
+
+<h3>实验设计</h3>
+
+<p>研究进行了广泛的实验来验证CoreEval框架的有效性：
+- <strong>模型范围</strong>：在多个开源LLM上进行了评估。
+- <strong>任务范围</strong>：涵盖了多个代表性的自然语言理解（NLU）任务，如情感识别、立场检测和讽刺检测。
+- <strong>对比分析</strong>：系统地比较了模型在原始数据集、仅经语义改写的数据集和经CoreEval更新的数据集上的性能表现。
+- <strong>稳定性测试</strong>：通过在不同训练集比例（如20%到100%）下进行实验，评估更新后数据集的评估稳定性。
+- <strong>质量评估</strong>：采用人类评估者对生成数据的流畅性、一致性、事实性和准确性进行打分。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据来源</strong>：框架利用了 <strong>GDELT 数据库</strong>作为实时知识源。原始基准数据集来源于 <strong>TweetEval</strong> 和 <strong>GLUE</strong> 等公开基准。</li>
+<li><strong>代码和生成的数据集</strong>：在提供的所有片段中，均<strong>未提供</strong>代码和更新后数据集的公开链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了该研究的假设：
+- <strong>有效性</strong>：CoreEval框架能够有效减轻数据污染导致的性能虚高问题。
+- <strong>稳定性</strong>：与原始数据集相比，使用更新后数据集的评估结果方差更低，表现出更高的稳定性。
+- <strong>数据质量</strong>：生成的数据在流畅性、一致性和事实性方面获得了人类评估者的高分，显著优于传统的重写或生成方法。
+- <strong>性能提升</strong>：在特定任务（如讽刺检测）中，结合优化的提示策略，模型表现出显著提升。</p>
+
+<h3>论文贡献</h3>
+
+<p>本文的主要贡献如下：
+1.  <strong>提出了CoreEval框架</strong>：一个新颖的、自动化的抗污染评估策略，通过整合实时知识来更新数据集，从而增强LLM评估的公正性、可靠性和及时性。
+2.  <strong>设计了结构化的工作流程</strong>：提出了一个受认知学习理论启发的，包含知识获取、再情境化和反思的系统性方法。
+3.  <strong>引入了新的评估指标</strong>：提出了如δ1和δ2等新指标，为量化数据污染的影响提供了新工具。
+4.  <strong>提供了广泛的实验验证</strong>：通过在多个模型、任务和条件下的实验，全面证明了该方法的有效性和优越性。</p>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 13:26:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

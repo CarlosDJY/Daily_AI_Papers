@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning to Reason: Training LLMs with GPT-OSS or DeepSeek R1 Reasoning Traces</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.19333v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Learning to Reason: Training LLMs with GPT-OSS or DeepSeek R1 Reasoning Traces</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">推理能力</span>
+                
+                <span class="tag">中型语言模型</span>
+                
+                <span class="tag">后训练</span>
+                
+                <span class="tag">推理效率</span>
+                
+                <span class="tag">模型优化</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">DICTA, NVIDIA</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.498</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.19333v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-25/7aefc430464ec4047e4526aa13c3e0ff12e17b2db7115a06f2879f598b2fa642.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种通过比较不同推理风格（DeepSeek-R1和gpt-oss）对中型语言模型（LLMs）进行后训练的方法，以提升其在复杂数学问题上的推理能力和效率。研究表明，gpt-oss风格在保持准确性的同时显著减少生成的token数量，强调了推理效率的重要性，为未来的模型优化提供了新思路。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决如何提高中型语言模型（LLMs）在处理复杂数学问题时的推理能力和效率。具体来说，研究探讨了由不同先进模型（如DeepSeek-R1和gpt-oss）生成的不同推理风格，对中型LLM的性能（准确性）和效率（生成token数量）产生的影响。这个问题很重要，因为推理效率直接关系到模型的部署成本和响应延迟，是实际应用中的关键考量。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，推理轨迹的风格（包括其复杂性和长度）会直接影响中型LLM的推理效果和效率。研究推测，更长的推理轨迹（如DeepSeek-R1生成的）不一定能带来更好的性能，模型可以通过学习更高效的推理风格（如gpt-oss生成的），在保持相当准确性的同时，显著减少生成的token数量，从而提高效率。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li>思维链提示（Chain-Of-Thought Prompting）。</li>
+<li>先进推理模型的开发，如ChatGPT-o1和Gemini-2.5。</li>
+<li>采用人工注释数据和推理导向的强化学习方法。</li>
+<li>使用标准数学问题求解基准进行评估，如GSM8k和MATH-500。</li>
+</ul>
+
+<h3>面向中型语言模型的推理能力提升：基于推理轨迹的后续训练方法</h3>
+
+<p>本文提出了一种创新的方法，旨在通过后续训练（post-training）显著提升中型大型语言模型（LLMs）在复杂数学问题上的推理能力。该方法的核心是利用前沿大型模型生成的“推理轨迹”（reasoning traces）作为高质量的训练数据，并结合“测试时间缩放”（test-time scaling）技术，在不增加模型参数的情况下，通过额外的计算来提高推理的准确性。</p>
+
+<hr />
+
+<h4><strong>第一步：推理轨迹的生成与选择</strong></h4>
+
+<p>解决方案的第一步是生成用于训练的推理数据。研究者没有采用昂贵且耗时的人工标注，而是利用了两个顶尖的开源大型语言模型来生成解决数学问题的详细步骤，即推理轨迹。</p>
+
+<ul>
+<li><p><strong>使用前沿模型生成数据</strong>:</p>
+
+<ul>
+<li><strong>DeepSeek-R1</strong>: 该模型以生成极其详尽和冗长的推理过程而闻名，其推理轨迹平均长度约为15,500个tokens。这种风格代表了一种深度、细致的“思考”过程。</li>
+<li><strong>gpt-oss</strong>: 相比之下，该模型生成的推理轨迹更为简洁，平均长度约为3,500个tokens，代表了一种更高效、更直接的推理风格。</li>
+</ul></li>
+<li><p><strong>推理风格的比较</strong>:
+这两种模型生成的轨迹在长度和风格上存在显著差异，为研究不同推理风格对后续训练效果的影响提供了绝佳的实验基础。</p></li>
+</ul>
+
+<hr />
+
+<h4><strong>第二步：后续训练（Post-Training）</strong></h4>
+
+<p>在获得推理轨迹后，研究者构建了专门的数据集，并对中型基础模型进行后续训练。</p>
+
+<ul>
+<li><p><strong>数据集构建</strong>:</p>
+
+<ul>
+<li>实验基于<code>Nemotron-Post-Training-Dataset-v1</code>数据集，其中包含了300,000个数学对话样本。</li>
+<li>经过筛选后，最终使用了242,000个高质量样本。每个样本均包含一个数学问题、标准答案，以及由DeepSeek-R1和gpt-oss分别生成的完整推理轨迹。</li>
+<li>这些数据集已在Hugging Face平台开放，方便其他研究者复现和扩展。</li>
+</ul></li>
+<li><p><strong>模型训练</strong>:</p>
+
+<ul>
+<li><strong>基础模型</strong>: 选用了两个120亿（12B）参数级别的中型模型进行训练：<code>NVIDIA-Nemotron-Nano-12B-v2-Base</code> 和 <code>Mistral-Nemo-Base-2407</code>。</li>
+<li><strong>训练过程</strong>: 采用AdamW优化器和余弦退火学习率调度策略，在全球批量大小为64的设置下进行了3,000步的训练。通过将多个样本打包成60,000个tokens的训练块，提高了训练效率。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>第三步：性能评估与结果分析</strong></h4>
+
+<p>训练完成后，研究者在多个数学基准测试上对模型的性能进行了全面评估，重点关注准确性和推理效率。</p>
+
+<ul>
+<li><p><strong>基准测试</strong>:</p>
+
+<ul>
+<li>在GSM8k、AIME 2025和MATH-500等标准数学问题数据集上进行评估。</li>
+<li>为保证公平比较，所有模型在评估时均采用相同的生成参数（如温度、top_p等）。</li>
+</ul></li>
+<li><p><strong>核心发现</strong>:</p>
+
+<ul>
+<li><strong>准确性相似</strong>: 经过后续训练后，无论是使用DeepSeek-R1（冗长风格）还是gpt-oss（简洁风格）推理轨迹训练的模型，在解决数学问题时的准确性都非常接近。</li>
+<li><strong>效率差异显著</strong>: gpt-oss风格训练的模型在生成答案时所需的tokens数量平均比DeepSeek-R1风格训练的模型少4倍。</li>
+<li><strong>结论</strong>: 这一结果有力地证明了<strong>“更多的推理tokens不一定带来更高的准确性”</strong>。选择更简洁的推理风格（如gpt-oss）可以在不牺牲性能的前提下，大幅提升推理效率。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>研究意义与应用前景</strong></h4>
+
+<p>本研究的发现不仅为提升中型LLM的性能提供了有效途径，也对实际应用和未来研究具有重要指导意义。</p>
+
+<ul>
+<li><p><strong>降低成本与延迟</strong>:</p>
+
+<ul>
+<li><strong>人力成本</strong>: 通过利用大模型自动生成推理轨迹，极大地降低了对人工数据标注的依赖，减少了数据准备的成本和周期。</li>
+<li><strong>计算成本</strong>: 在实际应用中，尤其是在需要实时响应的场景（如在线教育、智能客服）或大规模部署时，采用gpt-oss这样更高效的推理风格能够显著降低计算资源消耗、减少延迟，从而节约运营成本并改善用户体验。</li>
+</ul></li>
+<li><p><strong>对未来研究的启示</strong>:</p>
+
+<ul>
+<li><strong>推理风格的重要性</strong>: 本研究强调了推理风格本身是影响模型性能和效率的关键因素，为未来的模型开发提供了新的优化方向。</li>
+<li><strong>未来工作</strong>: 研究者计划将此方法扩展到更多领域（如代码生成、科学推理），并探索在更大规模模型上的效果。此外，混合不同推理风格进行训练，以应对不同难度的问题，也是一个值得探索的方向。</li>
+</ul></li>
+</ul>
+
+<p><strong>总结而言，该解决方案通过利用现有大模型生成不同风格的推理轨迹，并对中型模型进行后续训练，成功证明了可以选择一种更高效的推理风格（如gpt-oss），在保持高准确性的同时，大幅降低推理过程中的计算开销。这一发现为在资源受限的条件下部署高性能、低成本的语言模型提供了宝贵的实践指导。</strong></p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型训练</strong>：使用由DeepSeek-R1和gpt-oss生成的推理轨迹，对两种12B参数的基础模型进行后训练。</li>
+<li><strong>数据准备</strong>：从<code>Nemotron-Post-Training-Dataset-v1</code>中抽取300,000个数学问题，并使用<code>Qwen3-30B</code>模型进行自动筛选，以确保答案的正确性。</li>
+<li><strong>模型评估</strong>：在多个标准数学基准（如GSM8k、AIME 2025和MATH-500）上对训练后的模型进行评估，所有评估均在统一的条件下进行。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>训练数据</strong>：使用了<code>Nemotron-Post-Training-Dataset-v1</code>中的一个子集，包含约242,000个样本。</li>
+<li><strong>评估基准</strong>：GSM8k、AIME 2025和MATH-500。</li>
+<li><strong>代码</strong>：论文片段中提到提供了示例代码的链接（但未提供具体URL）。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果表明，采用gpt-oss推理风格训练的模型，在准确性上与采用DeepSeek-R1风格的模型相当，但生成的token数量显著减少。这证明了gpt-oss的推理风格效率更高，并揭示了更长的、更复杂的推理轨迹并不总能带来更高的准确性。</p>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li>提供了关于如何通过优化推理风格来增强中型LLM推理能力和效率的新见解。</li>
+<li>实验证明，可以在不牺牲准确性的前提下显著提高推理效率（减少token生成），强调了推理效率在模型优化中的重要性。</li>
+<li>为未来的研究指明了方向，例如将此方法扩展到其他领域或更大规模的模型上。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 13:26:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
