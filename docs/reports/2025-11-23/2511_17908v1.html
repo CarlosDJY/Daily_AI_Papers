@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principled Context Engineering for RAG: Statistical Guarantees via Conformal Prediction</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.17908v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Principled Context Engineering for RAG: Statistical Guarantees via Conformal Prediction</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">上下文过滤</span>
+                
+                <span class="tag">Retrieval-Augmented Generation</span>
+                
+                <span class="tag">分裂符合预测</span>
+                
+                <span class="tag">事实准确性</span>
+                
+                <span class="tag">模型无关优化</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Johns Hopkins University, Human Language Technology Center of Excellence</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.446</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.17908v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-23/65253c701c3ab2c1b56b9b093c7cb505140e748f8cd3d294bed454fc740efe25.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种基于分裂符合预测的上下文过滤方法，旨在解决Retrieval-Augmented Generation (RAG)系统在处理长或噪声上下文时的准确性下降问题。该方法通过有效去除无关内容，确保相关证据的覆盖，同时将上下文大小减少2-3倍，显著提高了下游生成任务的事实准确性。实验结果表明，该方法在NeuCLIR和RAGTIME数据集上表现优异，提供了一种模型无关的上下文优化方案。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>论文一总结</h3>
+
+<h4>现有问题</h4>
+
+<p>本文旨在解决Retrieval-Augmented Generation (RAG)系统在面对长或噪声上下文时，模型准确性下降的问题。现有的预生成过滤方法依赖于启发式或未校准的LLM置信度评分，缺乏对保留证据的统计控制。这是一个重要的问题，因为：
+- RAG系统在处理复杂信息时容易受到检索噪声和提示饱和的影响，导致可靠性下降。
+- 上下文的有效使用受到限制，因此需要高信号、紧凑的输入以确保可靠生成。
+- 现有方法未能有效过滤掉无关或冗余的内容，从而稀释有用证据并增加代币成本。</p>
+
+<h4>Hypothesis</h4>
+
+<ul>
+<li><strong>关键发现</strong>: 通过使用符合预测的方法，RAG系统能够实现可靠的、覆盖控制的上下文减少。</li>
+<li><strong>初步结论</strong>: Conformal filtering在保持事实准确性的同时，能够将上下文大小减少2-3倍。</li>
+<li><strong>实验验证</strong>: 在NeuCLIR和RAGTIME数据集上测试了该方法，结果表明符合预测能够实现目标覆盖，并在严格过滤下提高了下游答案质量。</li>
+<li><strong>核心假设</strong>: 通过在检索后应用符合预测，可以在不需要额外模型训练的情况下，有效地过滤掉不相关内容，保证相关证据的覆盖。</li>
+</ul>
+
+<h4>相关研究</h4>
+
+<ul>
+<li>现有的启发式过滤方法，如top-k检索和固定相似性阈值。</li>
+<li>基于LLM的过滤研究，包括利用LLM评估检索结果质量的方法。</li>
+<li>其他涉及符合预测的框架，如Conformal-RAG和C-RAG。</li>
+</ul>
+
+<h4>解决方案</h4>
+
+<h3>完整的详细解决方案：基于符合预测的RAG上下文工程</h3>
+
+<p>本文提出的核心解决方案是一个基于<strong>分裂符合预测（Split Conformal Prediction, CP）</strong>的统计框架，旨在对<strong>检索增强生成（Retrieval-Augmented Generation, RAG）</strong>系统中的上下文进行原则性工程。该方法通过在生成答案前对检索到的信息进行智能过滤，以实现两个核心目标：<strong>去除无关或冗余的噪声内容</strong>，并<strong>确保保留足够的支持性证据</strong>，从而显著提升大型语言模型（LLM）生成答案的准确性和可靠性。</p>
+
+<hr />
+
+<h4><strong>核心方法：基于分裂符合预测的上下文过滤</strong></h4>
+
+<p>该框架的核心是一种上下文过滤机制，它利用符合预测提供的有限样本覆盖保证，在不需对现有模型进行额外训练的情况下，为上下文的取舍提供统计学上的支持。</p>
+
+<p><strong>1. 目标与保证</strong>
+- <strong>确保覆盖率</strong>：该方法的核心承诺是提供一个边际覆盖保证。对于用户指定的误覆盖率 $\alpha \in (0, 1)$，该方法确保任何一个相关的片段 $s$（即 $r(q, s) = 1$）被保留在过滤后的上下文集合 $K<em>q$ 中的概率至少为 $1 - \alpha$。形式化表示为：$P(s \in K</em>q | r(q, s) = 1) \geq 1 - \alpha$。
+- <strong>上下文去噪</strong>：通过调整 $\alpha$ 值，用户可以灵活地控制过滤的严格程度。一个较小的 $\alpha$ 值意味着更强的覆盖保证（保留更多相关内容），而一个较大的 $\alpha$ 值则允许更激进的过滤（去除更多可能无关的内容）。</p>
+
+<p><strong>2. 详细实现流程</strong>
+该方法遵循一个清晰的、分阶段的流程：</p>
+
+<ol>
+<li><p><strong>检索与分段 (Retrieval and Segmentation)</strong>：</p>
+
+<ul>
+<li>给定一个用户查询 $q$，首先使用一个标准检索器返回一组可能相关的文档 $D_q$。</li>
+<li>为了便于处理，这些文档被分割成固定大小的重叠片段（例如，500个字符的窗口），同时注意保留句子边界的完整性。</li>
+</ul></li>
+<li><p><strong>校准集与评分 (Calibration Set and Scoring)</strong>：</p>
+
+<ul>
+<li>该方法需要一个独立的、带有标签的<strong>校准数据集</strong> $D_{cal}$，其中包含了查询、片段以及它们之间是否相关的标签。</li>
+<li>定义一个<strong>非一致性评分函数</strong> $A(q, s)$，用于评估片段 $s$ 对回答查询 $q$ 的不相关程度。分数越低，代表片段与查询的相关性越高。这个评分函数可以是基于嵌入向量的相似度（如 <strong>Conformal-Embedding</strong> 范式），也可以是基于LLM的判断（如 <strong>Conformal-LLM</strong> 范式）。</li>
+</ul></li>
+<li><p><strong>计算过滤阈值 (Calculating the Filtering Threshold)</strong>：</p>
+
+<ul>
+<li>利用校准集 $D_{cal}$，计算其中所有<strong>相关</strong>片段的非一致性分数。</li>
+<li>根据用户设定的误覆盖率 $\alpha$，计算这些分数的<strong>经验 $(1 - \alpha)$ 分位数</strong>。这个分位数即为过滤阈值 $\hat{\tau}_{\alpha}$。这个阈值在统计上代表了保留 $(1-\alpha)$ 比例相关片段所需的分数上限。</li>
+</ul></li>
+<li><p><strong>上下文过滤 (Context Filtering)</strong>：</p>
+
+<ul>
+<li>在实际应用（测试）中，对新查询检索到的每个片段 $s$ 计算其非一致性分数 $A(q, s)$。</li>
+<li>只有当分数满足 $A(q, s) \leq \hat{\tau}<em>{\alpha}$ 时，该片段才会被保留，最终形成过滤后的上下文集合 $K</em>q$。所有分数高于阈值的片段都被视为噪声并被丢弃。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>该框架在 <strong>NeuCLIR</strong> 和 <strong>RAGTIME</strong> 数据集上进行了验证，结果表明：</p>
+
+<ul>
+<li><strong>覆盖保证有效</strong>：实验证明，无论是在 Conformal-Embedding 还是 Conformal-LLM 范式下，该方法在不同的 $\alpha$ 值下均能满足或略微超过理论上的覆盖保证，验证了其在有限样本下的统计可靠性。</li>
+<li><strong>显著减少上下文</strong>：通过过滤，保留的上下文大小比原始检索结果减少了<strong>2到3倍</strong>，极大地提高了后续LLM处理的效率。</li>
+<li><strong>提升下游任务质量</strong>：在下游任务的事实准确性评估（如ARGUE F1得分）中，经过严格过滤的上下文生成的答案质量反而有所<strong>提升</strong>。这表明被移除的大部分内容确实是冗余或无关的噪声，它们的剔除有助于LLM更专注于关键信息。</li>
+</ul>
+
+<hr />
+
+<h4><strong>解决方案优势</strong></h4>
+
+<ol>
+<li><strong>统计保证与可靠性</strong>：将上下文过滤从传统的启发式方法（如top-k检索）转变为一个有统计学基础的、可预测的过程，提供了可靠的覆盖控制。</li>
+<li><strong>高效去噪与性能提升</strong>：通过有效去除噪声，不仅降低了计算负担，还通过提高信噪比来提升生成模型的准确性和事实一致性。</li>
+<li><strong>模型无关性与易集成</strong>：该框架是一个轻量级的、与具体模型无关的解决方案，可以轻松集成到现有的RAG系统中，无需对模型进行微调。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整 $\alpha$ 参数，根据具体应用场景的需求，在覆盖率和上下文大小之间进行平滑、可预测的权衡。</li>
+</ol>
+
+<hr />
+
+<h4><strong>结论与未来展望</strong></h4>
+
+<p>总而言之，本文通过引入分裂符合预测，提供了一种强大且原则化的上下文工程解决方案。它不仅通过可靠的覆盖控制优化了RAG系统的性能，还为未来的研究提供了一个可扩展的框架。</p>
+
+<p>未来的研究方向将集中于实现<strong>主题和领域的自适应再校准</strong>，以放宽对数据分布不变的假设（交换性假设），从而在面对分布变化的复杂场景时，依然能够保持其统计保证和高效性能。</p>
+
+<h4>实验设计</h4>
+
+<ul>
+<li>在NeuCLIR和RAGTIME数据集上评估符合过滤框架的有效性。</li>
+<li>通过对比实验测试该方法在保持目标覆盖的同时，如何有效减少上下文大小。</li>
+</ul>
+
+<h4>数据集和代码</h4>
+
+<ul>
+<li>数据集包括NeuCLIR和RAGTIME。</li>
+<li>代码和数据集的具体位置未在提供的文本中提到。</li>
+</ul>
+
+<h4>实验结果</h4>
+
+<p>实验结果表明，符合过滤在各种情况下都能实现目标覆盖，并且在严格过滤下，事实准确性得到了提高，表明大部分被丢弃的内容对下游生成贡献不大。</p>
+
+<h4>论文贡献</h4>
+
+<ul>
+<li>引入了一种用于RAG的上下文工程框架，通过在检索后应用符合预测来保证相关证据的覆盖。</li>
+<li>通过实验证明符合过滤在保持事实准确性的同时，实现了上下文大小的减少。</li>
+<li>展示了该方法的模型无关性和高效性，为RAG系统的上下文处理提供了新的思路。</li>
+</ul>
+
+<hr />
+
+<h3>论文二总结</h3>
+
+<h4>现有问题</h4>
+
+<p>本文旨在解决如何在信息检索和生成任务中有效过滤上下文片段的问题。特别是在需要保持高覆盖率的情况下，现有的过滤方法往往缺乏理论保证或有效控制。这个问题仍然重要，因为：
+- 在许多自然语言处理任务中，确保相关信息的保留而又避免冗余信息是提高模型性能的关键。
+- 过滤策略的有效性直接影响到下游任务的结果，特别是在生成任务中。</p>
+
+<h4>Hypothesis</h4>
+
+<ul>
+<li><strong>关键发现</strong>: 使用分割符合预测方法进行上下文过滤，可以在保持高覆盖率的同时有效减少冗余片段。</li>
+<li><strong>初步结论</strong>: Conformal-Embedding和Conformal-LLM均能够满足理论覆盖保证，并有效提高了生成质量。</li>
+<li><strong>实验验证</strong>: 在NeuCLIR和RAGTIME数据集的实验中，两种方法都超过了理论覆盖保证，且在事实生成质量方面表现良好。</li>
+<li><strong>核心假设</strong>: 通过分割符合预测，可以实现有效的上下文过滤，在保留相关信息的同时去除冗余内容。</li>
+</ul>
+
+<h4>相关研究</h4>
+
+<ul>
+<li>分割符合预测（Split Conformal Prediction）: 用于获取有限样本的边际覆盖保证。</li>
+<li>相关性评分方法: 包括Conformal-Embedding和Conformal-LLM。</li>
+</ul>
+
+<h4>解决方案</h4>
+
+<h3>完整的详细解决方案：基于符合预测的RAG上下文工程</h3>
+
+<p>本文提出的核心解决方案是一个基于<strong>分裂符合预测（Split Conformal Prediction, CP）</strong>的统计框架，旨在对<strong>检索增强生成（Retrieval-Augmented Generation, RAG）</strong>系统中的上下文进行原则性工程。该方法通过在生成答案前对检索到的信息进行智能过滤，以实现两个核心目标：<strong>去除无关或冗余的噪声内容</strong>，并<strong>确保保留足够的支持性证据</strong>，从而显著提升大型语言模型（LLM）生成答案的准确性和可靠性。</p>
+
+<hr />
+
+<h4><strong>核心方法：基于分裂符合预测的上下文过滤</strong></h4>
+
+<p>该框架的核心是一种上下文过滤机制，它利用符合预测提供的有限样本覆盖保证，在不需对现有模型进行额外训练的情况下，为上下文的取舍提供统计学上的支持。</p>
+
+<p><strong>1. 目标与保证</strong>
+- <strong>确保覆盖率</strong>：该方法的核心承诺是提供一个边际覆盖保证。对于用户指定的误覆盖率 $\alpha \in (0, 1)$，该方法确保任何一个相关的片段 $s$（即 $r(q, s) = 1$）被保留在过滤后的上下文集合 $K<em>q$ 中的概率至少为 $1 - \alpha$。形式化表示为：$P(s \in K</em>q | r(q, s) = 1) \geq 1 - \alpha$。
+- <strong>上下文去噪</strong>：通过调整 $\alpha$ 值，用户可以灵活地控制过滤的严格程度。一个较小的 $\alpha$ 值意味着更强的覆盖保证（保留更多相关内容），而一个较大的 $\alpha$ 值则允许更激进的过滤（去除更多可能无关的内容）。</p>
+
+<p><strong>2. 详细实现流程</strong>
+该方法遵循一个清晰的、分阶段的流程：</p>
+
+<ol>
+<li><p><strong>检索与分段 (Retrieval and Segmentation)</strong>：</p>
+
+<ul>
+<li>给定一个用户查询 $q$，首先使用一个标准检索器返回一组可能相关的文档 $D_q$。</li>
+<li>为了便于处理，这些文档被分割成固定大小的重叠片段（例如，500个字符的窗口），同时注意保留句子边界的完整性。</li>
+</ul></li>
+<li><p><strong>校准集与评分 (Calibration Set and Scoring)</strong>：</p>
+
+<ul>
+<li>该方法需要一个独立的、带有标签的<strong>校准数据集</strong> $D_{cal}$，其中包含了查询、片段以及它们之间是否相关的标签。</li>
+<li>定义一个<strong>非一致性评分函数</strong> $A(q, s)$，用于评估片段 $s$ 对回答查询 $q$ 的不相关程度。分数越低，代表片段与查询的相关性越高。这个评分函数可以是基于嵌入向量的相似度（如 <strong>Conformal-Embedding</strong> 范式），也可以是基于LLM的判断（如 <strong>Conformal-LLM</strong> 范式）。</li>
+</ul></li>
+<li><p><strong>计算过滤阈值 (Calculating the Filtering Threshold)</strong>：</p>
+
+<ul>
+<li>利用校准集 $D_{cal}$，计算其中所有<strong>相关</strong>片段的非一致性分数。</li>
+<li>根据用户设定的误覆盖率 $\alpha$，计算这些分数的<strong>经验 $(1 - \alpha)$ 分位数</strong>。这个分位数即为过滤阈值 $\hat{\tau}_{\alpha}$。这个阈值在统计上代表了保留 $(1-\alpha)$ 比例相关片段所需的分数上限。</li>
+</ul></li>
+<li><p><strong>上下文过滤 (Context Filtering)</strong>：</p>
+
+<ul>
+<li>在实际应用（测试）中，对新查询检索到的每个片段 $s$ 计算其非一致性分数 $A(q, s)$。</li>
+<li>只有当分数满足 $A(q, s) \leq \hat{\tau}<em>{\alpha}$ 时，该片段才会被保留，最终形成过滤后的上下文集合 $K</em>q$。所有分数高于阈值的片段都被视为噪声并被丢弃。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>该框架在 <strong>NeuCLIR</strong> 和 <strong>RAGTIME</strong> 数据集上进行了验证，结果表明：</p>
+
+<ul>
+<li><strong>覆盖保证有效</strong>：实验证明，无论是在 Conformal-Embedding 还是 Conformal-LLM 范式下，该方法在不同的 $\alpha$ 值下均能满足或略微超过理论上的覆盖保证，验证了其在有限样本下的统计可靠性。</li>
+<li><strong>显著减少上下文</strong>：通过过滤，保留的上下文大小比原始检索结果减少了<strong>2到3倍</strong>，极大地提高了后续LLM处理的效率。</li>
+<li><strong>提升下游任务质量</strong>：在下游任务的事实准确性评估（如ARGUE F1得分）中，经过严格过滤的上下文生成的答案质量反而有所<strong>提升</strong>。这表明被移除的大部分内容确实是冗余或无关的噪声，它们的剔除有助于LLM更专注于关键信息。</li>
+</ul>
+
+<hr />
+
+<h4><strong>解决方案优势</strong></h4>
+
+<ol>
+<li><strong>统计保证与可靠性</strong>：将上下文过滤从传统的启发式方法（如top-k检索）转变为一个有统计学基础的、可预测的过程，提供了可靠的覆盖控制。</li>
+<li><strong>高效去噪与性能提升</strong>：通过有效去除噪声，不仅降低了计算负担，还通过提高信噪比来提升生成模型的准确性和事实一致性。</li>
+<li><strong>模型无关性与易集成</strong>：该框架是一个轻量级的、与具体模型无关的解决方案，可以轻松集成到现有的RAG系统中，无需对模型进行微调。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整 $\alpha$ 参数，根据具体应用场景的需求，在覆盖率和上下文大小之间进行平滑、可预测的权衡。</li>
+</ol>
+
+<hr />
+
+<h4><strong>结论与未来展望</strong></h4>
+
+<p>总而言之，本文通过引入分裂符合预测，提供了一种强大且原则化的上下文工程解决方案。它不仅通过可靠的覆盖控制优化了RAG系统的性能，还为未来的研究提供了一个可扩展的框架。</p>
+
+<p>未来的研究方向将集中于实现<strong>主题和领域的自适应再校准</strong>，以放宽对数据分布不变的假设（交换性假设），从而在面对分布变化的复杂场景时，依然能够保持其统计保证和高效性能。</p>
+
+<h4>实验设计</h4>
+
+<ul>
+<li>实验使用了NeuCLIR和RAGTIME数据集，分别为校准集和测试集分配不同的查询主题，以保持可交换性。</li>
+<li>采用两种方法进行评估: Conformal-Embedding和Conformal-LLM，并使用Llama模型生成相关性标签。</li>
+</ul>
+
+<h4>数据集和代码</h4>
+
+<ul>
+<li>NeuCLIR数据集: 1,440/740片段。</li>
+<li>RAGTIME数据集: 1,710/560片段。</li>
+<li>具体的代码和数据集信息未提供。</li>
+</ul>
+
+<h4>实验结果</h4>
+
+<p>实验结果表明，Conformal-Embedding和Conformal-LLM均满足理论覆盖保证，并在事实生成质量上有所提高，尤其在严格的覆盖条件下（α=0.05和0.10）的表现优于未过滤基线。</p>
+
+<h4>论文贡献</h4>
+
+<ul>
+<li>提出了基于分割符合预测的上下文过滤框架，为信息检索和生成任务提供了新的处理思路。</li>
+<li>实证验证了该方法在不同数据集上的有效性，展示了其在提高生成质量和减少冗余信息方面的潜力。</li>
+</ul>
+
+<hr />
+
+<h3>论文三总结</h3>
+
+<h4>现有问题</h4>
+
+<p>本文旨在解决在检索增强生成(RAG)中的上下文工程问题，特别是如何通过使用分裂符合预测来优化上下文的质量与大小。这是一个重要但长期存在的问题，因为：
+- 当前的生成模型在上下文噪声较高时，生成质量可能受到影响。
+- 有效的上下文过滤可以提升生成内容的准确性，减少冗余信息。</p>
+
+<h4>Hypothesis</h4>
+
+<ul>
+<li><strong>关键发现</strong>: 使用分裂符合预测的统计框架能够有效减少上下文大小，同时保持生成内容的准确性。</li>
+<li><strong>初步结论</strong>: 在严格过滤下，事实质量显著提高，且在适度覆盖下保持稳定。</li>
+<li><strong>实验验证</strong>: 在NeuCLIR和RAGTIME的实验中，嵌入和LLM基础的符合过滤器实现了保证的覆盖率，并将上下文大小减少了三倍。</li>
+<li><strong>核心假设</strong>: 通过降低检索噪声，生成器可以在接近其有效注意力限制的情况下工作，从而提高生成质量。</li>
+</ul>
+
+<h4>相关研究</h4>
+
+<ul>
+<li>之前的研究涉及符合预测和不确定性量化的相关框架。</li>
+<li>研究者们探讨了领域无关的文本处理和自动评估框架。</li>
+</ul>
+
+<h4>解决方案</h4>
+
+<h3>完整的详细解决方案：基于符合预测的RAG上下文工程</h3>
+
+<p>本文提出的核心解决方案是一个基于<strong>分裂符合预测（Split Conformal Prediction, CP）</strong>的统计框架，旨在对<strong>检索增强生成（Retrieval-Augmented Generation, RAG）</strong>系统中的上下文进行原则性工程。该方法通过在生成答案前对检索到的信息进行智能过滤，以实现两个核心目标：<strong>去除无关或冗余的噪声内容</strong>，并<strong>确保保留足够的支持性证据</strong>，从而显著提升大型语言模型（LLM）生成答案的准确性和可靠性。</p>
+
+<hr />
+
+<h4><strong>核心方法：基于分裂符合预测的上下文过滤</strong></h4>
+
+<p>该框架的核心是一种上下文过滤机制，它利用符合预测提供的有限样本覆盖保证，在不需对现有模型进行额外训练的情况下，为上下文的取舍提供统计学上的支持。</p>
+
+<p><strong>1. 目标与保证</strong>
+- <strong>确保覆盖率</strong>：该方法的核心承诺是提供一个边际覆盖保证。对于用户指定的误覆盖率 $\alpha \in (0, 1)$，该方法确保任何一个相关的片段 $s$（即 $r(q, s) = 1$）被保留在过滤后的上下文集合 $K<em>q$ 中的概率至少为 $1 - \alpha$。形式化表示为：$P(s \in K</em>q | r(q, s) = 1) \geq 1 - \alpha$。
+- <strong>上下文去噪</strong>：通过调整 $\alpha$ 值，用户可以灵活地控制过滤的严格程度。一个较小的 $\alpha$ 值意味着更强的覆盖保证（保留更多相关内容），而一个较大的 $\alpha$ 值则允许更激进的过滤（去除更多可能无关的内容）。</p>
+
+<p><strong>2. 详细实现流程</strong>
+该方法遵循一个清晰的、分阶段的流程：</p>
+
+<ol>
+<li><p><strong>检索与分段 (Retrieval and Segmentation)</strong>：</p>
+
+<ul>
+<li>给定一个用户查询 $q$，首先使用一个标准检索器返回一组可能相关的文档 $D_q$。</li>
+<li>为了便于处理，这些文档被分割成固定大小的重叠片段（例如，500个字符的窗口），同时注意保留句子边界的完整性。</li>
+</ul></li>
+<li><p><strong>校准集与评分 (Calibration Set and Scoring)</strong>：</p>
+
+<ul>
+<li>该方法需要一个独立的、带有标签的<strong>校准数据集</strong> $D_{cal}$，其中包含了查询、片段以及它们之间是否相关的标签。</li>
+<li>定义一个<strong>非一致性评分函数</strong> $A(q, s)$，用于评估片段 $s$ 对回答查询 $q$ 的不相关程度。分数越低，代表片段与查询的相关性越高。这个评分函数可以是基于嵌入向量的相似度（如 <strong>Conformal-Embedding</strong> 范式），也可以是基于LLM的判断（如 <strong>Conformal-LLM</strong> 范式）。</li>
+</ul></li>
+<li><p><strong>计算过滤阈值 (Calculating the Filtering Threshold)</strong>：</p>
+
+<ul>
+<li>利用校准集 $D_{cal}$，计算其中所有<strong>相关</strong>片段的非一致性分数。</li>
+<li>根据用户设定的误覆盖率 $\alpha$，计算这些分数的<strong>经验 $(1 - \alpha)$ 分位数</strong>。这个分位数即为过滤阈值 $\hat{\tau}_{\alpha}$。这个阈值在统计上代表了保留 $(1-\alpha)$ 比例相关片段所需的分数上限。</li>
+</ul></li>
+<li><p><strong>上下文过滤 (Context Filtering)</strong>：</p>
+
+<ul>
+<li>在实际应用（测试）中，对新查询检索到的每个片段 $s$ 计算其非一致性分数 $A(q, s)$。</li>
+<li>只有当分数满足 $A(q, s) \leq \hat{\tau}<em>{\alpha}$ 时，该片段才会被保留，最终形成过滤后的上下文集合 $K</em>q$。所有分数高于阈值的片段都被视为噪声并被丢弃。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>该框架在 <strong>NeuCLIR</strong> 和 <strong>RAGTIME</strong> 数据集上进行了验证，结果表明：</p>
+
+<ul>
+<li><strong>覆盖保证有效</strong>：实验证明，无论是在 Conformal-Embedding 还是 Conformal-LLM 范式下，该方法在不同的 $\alpha$ 值下均能满足或略微超过理论上的覆盖保证，验证了其在有限样本下的统计可靠性。</li>
+<li><strong>显著减少上下文</strong>：通过过滤，保留的上下文大小比原始检索结果减少了<strong>2到3倍</strong>，极大地提高了后续LLM处理的效率。</li>
+<li><strong>提升下游任务质量</strong>：在下游任务的事实准确性评估（如ARGUE F1得分）中，经过严格过滤的上下文生成的答案质量反而有所<strong>提升</strong>。这表明被移除的大部分内容确实是冗余或无关的噪声，它们的剔除有助于LLM更专注于关键信息。</li>
+</ul>
+
+<hr />
+
+<h4><strong>解决方案优势</strong></h4>
+
+<ol>
+<li><strong>统计保证与可靠性</strong>：将上下文过滤从传统的启发式方法（如top-k检索）转变为一个有统计学基础的、可预测的过程，提供了可靠的覆盖控制。</li>
+<li><strong>高效去噪与性能提升</strong>：通过有效去除噪声，不仅降低了计算负担，还通过提高信噪比来提升生成模型的准确性和事实一致性。</li>
+<li><strong>模型无关性与易集成</strong>：该框架是一个轻量级的、与具体模型无关的解决方案，可以轻松集成到现有的RAG系统中，无需对模型进行微调。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整 $\alpha$ 参数，根据具体应用场景的需求，在覆盖率和上下文大小之间进行平滑、可预测的权衡。</li>
+</ol>
+
+<hr />
+
+<h4><strong>结论与未来展望</strong></h4>
+
+<p>总而言之，本文通过引入分裂符合预测，提供了一种强大且原则化的上下文工程解决方案。它不仅通过可靠的覆盖控制优化了RAG系统的性能，还为未来的研究提供了一个可扩展的框架。</p>
+
+<p>未来的研究方向将集中于实现<strong>主题和领域的自适应再校准</strong>，以放宽对数据分布不变的假设（交换性假设），从而在面对分布变化的复杂场景时，依然能够保持其统计保证和高效性能。</p>
+
+<h4>实验设计</h4>
+
+<p>实验是通过在NeuCLIR和RAGTIME两个任务上评估符合过滤器的有效性，比较过滤后的上下文对生成内容的影响。</p>
+
+<h4>数据集和代码</h4>
+
+<ul>
+<li>数据集的具体信息未在片段中提供。</li>
+<li>代码位置未在片段中提及。</li>
+</ul>
+
+<h4>实验结果</h4>
+
+<p>实验结果表明，严格过滤下的事实质量得到了提升，且在中等覆盖率下的稳定性表明可以安全地修剪冗余内容而不损失准确性。</p>
+
+<h4>论文贡献</h4>
+
+<ul>
+<li>提出了一个基于分裂符合预测的统计框架，优化了RAG中的上下文工程。</li>
+<li>实现了上下文的可靠、覆盖控制的减少，并提供了可扩展的模型无关基础。</li>
+<li>为未来在不同主题和领域中的自适应重新校准提供了理论基础。</li>
+</ul>
+
+<hr />
+
+<h3>论文四总结</h3>
+
+<h4>现有问题</h4>
+
+<p>本文旨在解决长上下文语言模型在处理大规模文本时的性能与质量评估问题。随着语言模型在多种应用场景中的广泛使用，如何确保其在处理长文本时的响应质量变得愈发重要。这是一个持续存在的问题，原因包括：
+- 当前的语言模型在面对长上下文时，可能会出现信息丢失或理解错误，导致生成内容的准确性下降。
+- 评估和改进这些模型的能力以满足实际应用的需求至关重要。</p>
+
+<h4>Hypothesis</h4>
+
+<ul>
+<li><strong>关键发现</strong>: 研究提出了一种新的响应质量评估方法，能够有效衡量长上下文语言模型的生成质量。</li>
+<li><strong>初步结论</strong>: 通过条件符合性的方法，模型在长文本生成中的表现得到了显著改善。</li>
+<li><strong>实验验证</strong>: 实验结果表明，该方法在多个基准数据集上均有效提升了模型的表现。</li>
+<li><strong>核心假设</strong>: 采用条件符合性来评估和改进长上下文生成的质量，可以显著提高生成的可靠性。</li>
+</ul>
+
+<h4>相关研究</h4>
+
+<ul>
+<li>相关研究包括长上下文语言模型的性能评估和质量控制方法。</li>
+<li>近年来在响应质量评估、模型校准、以及长文本处理方面的研究均与本研究主题相关。</li>
+</ul>
+
+<h4>解决方案</h4>
+
+<h3>完整的详细解决方案：基于符合预测的RAG上下文工程</h3>
+
+<p>本文提出的核心解决方案是一个基于<strong>分裂符合预测（Split Conformal Prediction, CP）</strong>的统计框架，旨在对<strong>检索增强生成（Retrieval-Augmented Generation, RAG）</strong>系统中的上下文进行原则性工程。该方法通过在生成答案前对检索到的信息进行智能过滤，以实现两个核心目标：<strong>去除无关或冗余的噪声内容</strong>，并<strong>确保保留足够的支持性证据</strong>，从而显著提升大型语言模型（LLM）生成答案的准确性和可靠性。</p>
+
+<hr />
+
+<h4><strong>核心方法：基于分裂符合预测的上下文过滤</strong></h4>
+
+<p>该框架的核心是一种上下文过滤机制，它利用符合预测提供的有限样本覆盖保证，在不需对现有模型进行额外训练的情况下，为上下文的取舍提供统计学上的支持。</p>
+
+<p><strong>1. 目标与保证</strong>
+- <strong>确保覆盖率</strong>：该方法的核心承诺是提供一个边际覆盖保证。对于用户指定的误覆盖率 $\alpha \in (0, 1)$，该方法确保任何一个相关的片段 $s$（即 $r(q, s) = 1$）被保留在过滤后的上下文集合 $K<em>q$ 中的概率至少为 $1 - \alpha$。形式化表示为：$P(s \in K</em>q | r(q, s) = 1) \geq 1 - \alpha$。
+- <strong>上下文去噪</strong>：通过调整 $\alpha$ 值，用户可以灵活地控制过滤的严格程度。一个较小的 $\alpha$ 值意味着更强的覆盖保证（保留更多相关内容），而一个较大的 $\alpha$ 值则允许更激进的过滤（去除更多可能无关的内容）。</p>
+
+<p><strong>2. 详细实现流程</strong>
+该方法遵循一个清晰的、分阶段的流程：</p>
+
+<ol>
+<li><p><strong>检索与分段 (Retrieval and Segmentation)</strong>：</p>
+
+<ul>
+<li>给定一个用户查询 $q$，首先使用一个标准检索器返回一组可能相关的文档 $D_q$。</li>
+<li>为了便于处理，这些文档被分割成固定大小的重叠片段（例如，500个字符的窗口），同时注意保留句子边界的完整性。</li>
+</ul></li>
+<li><p><strong>校准集与评分 (Calibration Set and Scoring)</strong>：</p>
+
+<ul>
+<li>该方法需要一个独立的、带有标签的<strong>校准数据集</strong> $D_{cal}$，其中包含了查询、片段以及它们之间是否相关的标签。</li>
+<li>定义一个<strong>非一致性评分函数</strong> $A(q, s)$，用于评估片段 $s$ 对回答查询 $q$ 的不相关程度。分数越低，代表片段与查询的相关性越高。这个评分函数可以是基于嵌入向量的相似度（如 <strong>Conformal-Embedding</strong> 范式），也可以是基于LLM的判断（如 <strong>Conformal-LLM</strong> 范式）。</li>
+</ul></li>
+<li><p><strong>计算过滤阈值 (Calculating the Filtering Threshold)</strong>：</p>
+
+<ul>
+<li>利用校准集 $D_{cal}$，计算其中所有<strong>相关</strong>片段的非一致性分数。</li>
+<li>根据用户设定的误覆盖率 $\alpha$，计算这些分数的<strong>经验 $(1 - \alpha)$ 分位数</strong>。这个分位数即为过滤阈值 $\hat{\tau}_{\alpha}$。这个阈值在统计上代表了保留 $(1-\alpha)$ 比例相关片段所需的分数上限。</li>
+</ul></li>
+<li><p><strong>上下文过滤 (Context Filtering)</strong>：</p>
+
+<ul>
+<li>在实际应用（测试）中，对新查询检索到的每个片段 $s$ 计算其非一致性分数 $A(q, s)$。</li>
+<li>只有当分数满足 $A(q, s) \leq \hat{\tau}<em>{\alpha}$ 时，该片段才会被保留，最终形成过滤后的上下文集合 $K</em>q$。所有分数高于阈值的片段都被视为噪声并被丢弃。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>该框架在 <strong>NeuCLIR</strong> 和 <strong>RAGTIME</strong> 数据集上进行了验证，结果表明：</p>
+
+<ul>
+<li><strong>覆盖保证有效</strong>：实验证明，无论是在 Conformal-Embedding 还是 Conformal-LLM 范式下，该方法在不同的 $\alpha$ 值下均能满足或略微超过理论上的覆盖保证，验证了其在有限样本下的统计可靠性。</li>
+<li><strong>显著减少上下文</strong>：通过过滤，保留的上下文大小比原始检索结果减少了<strong>2到3倍</strong>，极大地提高了后续LLM处理的效率。</li>
+<li><strong>提升下游任务质量</strong>：在下游任务的事实准确性评估（如ARGUE F1得分）中，经过严格过滤的上下文生成的答案质量反而有所<strong>提升</strong>。这表明被移除的大部分内容确实是冗余或无关的噪声，它们的剔除有助于LLM更专注于关键信息。</li>
+</ul>
+
+<hr />
+
+<h4><strong>解决方案优势</strong></h4>
+
+<ol>
+<li><strong>统计保证与可靠性</strong>：将上下文过滤从传统的启发式方法（如top-k检索）转变为一个有统计学基础的、可预测的过程，提供了可靠的覆盖控制。</li>
+<li><strong>高效去噪与性能提升</strong>：通过有效去除噪声，不仅降低了计算负担，还通过提高信噪比来提升生成模型的准确性和事实一致性。</li>
+<li><strong>模型无关性与易集成</strong>：该框架是一个轻量级的、与具体模型无关的解决方案，可以轻松集成到现有的RAG系统中，无需对模型进行微调。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整 $\alpha$ 参数，根据具体应用场景的需求，在覆盖率和上下文大小之间进行平滑、可预测的权衡。</li>
+</ol>
+
+<hr />
+
+<h4><strong>结论与未来展望</strong></h4>
+
+<p>总而言之，本文通过引入分裂符合预测，提供了一种强大且原则化的上下文工程解决方案。它不仅通过可靠的覆盖控制优化了RAG系统的性能，还为未来的研究提供了一个可扩展的框架。</p>
+
+<p>未来的研究方向将集中于实现<strong>主题和领域的自适应再校准</strong>，以放宽对数据分布不变的假设（交换性假设），从而在面对分布变化的复杂场景时，依然能够保持其统计保证和高效性能。</p>
+
+<h4>实验设计</h4>
+
+<ul>
+<li>实验设计包括使用多个长文本数据集，通过对比不同模型在条件符合性评估下的表现，来验证提出方法的有效性。</li>
+</ul>
+
+<h4>数据集和代码</h4>
+
+<ul>
+<li>当前研究中使用的数据集和代码的具体位置尚未提供。</li>
+</ul>
+
+<h4>实验结果</h4>
+
+<p>实验结果表明，提出的评估方法在多个基准上优于传统方法，支持了核心假设，即条件符合性能够有效提升长文本生成的质量。</p>
+
+<h4>论文贡献</h4>
+
+<ul>
+<li>本论文提出了一种新的响应质量评估方法，为长上下文语言模型的性能提升提供了理论和实证支持。</li>
+<li>研究为后续针对长文本处理的语言模型改进提供了新的思路和方法。</li>
+</ul>
+
+<hr />
+
+<h3>论文五总结</h3>
+
+<h4>现有问题</h4>
+
+<p>本文探讨了大语言模型在知识密集型自然语言处理任务中的局限性，尤其是在生成和检索增强生成(RAG)过程中可能产生的风险。这是一个持续存在且越发重要的问题，因为：
+- 随着大语言模型的广泛应用，需要确保其在生成信息时的可靠性和可信度。
+- 生成的内容可能会出现虚假信息或不准确的风险，影响用户的决策和信任。
+- 在法律和医疗等敏感领域，这种风险可能导致严重后果。</p>
+
+<h4>Hypothesis</h4>
+
+<ul>
+<li><strong>关键发现</strong>: 提出了C-RAG框架，旨在为检索增强生成的语言模型提供认证生成风险评估。</li>
+<li><strong>初步结论</strong>: C-RAG框架能有效识别和降低生成过程中可能出现的风险。</li>
+<li><strong>实验验证</strong>: 通过实验证实了C-RAG在减少生成风险和提高内容可信度方面的有效性。</li>
+<li><strong>核心假设</strong>: 通过引入认证机制，能够显著提高RAG系统的生成质量和可靠性。</li>
+</ul>
+
+<h4>相关研究</h4>
+
+<ul>
+<li>检索增强生成 (RAG) 方法的相关研究。</li>
+<li>语言模型的风险评估和可信度研究。</li>
+<li>AI在法律和医疗领域的应用及其面临的挑战。</li>
+</ul>
+
+<h4>解决方案</h4>
+
+<h3>完整的详细解决方案：基于符合预测的RAG上下文工程</h3>
+
+<p>本文提出的核心解决方案是一个基于<strong>分裂符合预测（Split Conformal Prediction, CP）</strong>的统计框架，旨在对<strong>检索增强生成（Retrieval-Augmented Generation, RAG）</strong>系统中的上下文进行原则性工程。该方法通过在生成答案前对检索到的信息进行智能过滤，以实现两个核心目标：<strong>去除无关或冗余的噪声内容</strong>，并<strong>确保保留足够的支持性证据</strong>，从而显著提升大型语言模型（LLM）生成答案的准确性和可靠性。</p>
+
+<hr />
+
+<h4><strong>核心方法：基于分裂符合预测的上下文过滤</strong></h4>
+
+<p>该框架的核心是一种上下文过滤机制，它利用符合预测提供的有限样本覆盖保证，在不需对现有模型进行额外训练的情况下，为上下文的取舍提供统计学上的支持。</p>
+
+<p><strong>1. 目标与保证</strong>
+- <strong>确保覆盖率</strong>：该方法的核心承诺是提供一个边际覆盖保证。对于用户指定的误覆盖率 $\alpha \in (0, 1)$，该方法确保任何一个相关的片段 $s$（即 $r(q, s) = 1$）被保留在过滤后的上下文集合 $K<em>q$ 中的概率至少为 $1 - \alpha$。形式化表示为：$P(s \in K</em>q | r(q, s) = 1) \geq 1 - \alpha$。
+- <strong>上下文去噪</strong>：通过调整 $\alpha$ 值，用户可以灵活地控制过滤的严格程度。一个较小的 $\alpha$ 值意味着更强的覆盖保证（保留更多相关内容），而一个较大的 $\alpha$ 值则允许更激进的过滤（去除更多可能无关的内容）。</p>
+
+<p><strong>2. 详细实现流程</strong>
+该方法遵循一个清晰的、分阶段的流程：</p>
+
+<ol>
+<li><p><strong>检索与分段 (Retrieval and Segmentation)</strong>：</p>
+
+<ul>
+<li>给定一个用户查询 $q$，首先使用一个标准检索器返回一组可能相关的文档 $D_q$。</li>
+<li>为了便于处理，这些文档被分割成固定大小的重叠片段（例如，500个字符的窗口），同时注意保留句子边界的完整性。</li>
+</ul></li>
+<li><p><strong>校准集与评分 (Calibration Set and Scoring)</strong>：</p>
+
+<ul>
+<li>该方法需要一个独立的、带有标签的<strong>校准数据集</strong> $D_{cal}$，其中包含了查询、片段以及它们之间是否相关的标签。</li>
+<li>定义一个<strong>非一致性评分函数</strong> $A(q, s)$，用于评估片段 $s$ 对回答查询 $q$ 的不相关程度。分数越低，代表片段与查询的相关性越高。这个评分函数可以是基于嵌入向量的相似度（如 <strong>Conformal-Embedding</strong> 范式），也可以是基于LLM的判断（如 <strong>Conformal-LLM</strong> 范式）。</li>
+</ul></li>
+<li><p><strong>计算过滤阈值 (Calculating the Filtering Threshold)</strong>：</p>
+
+<ul>
+<li>利用校准集 $D_{cal}$，计算其中所有<strong>相关</strong>片段的非一致性分数。</li>
+<li>根据用户设定的误覆盖率 $\alpha$，计算这些分数的<strong>经验 $(1 - \alpha)$ 分位数</strong>。这个分位数即为过滤阈值 $\hat{\tau}_{\alpha}$。这个阈值在统计上代表了保留 $(1-\alpha)$ 比例相关片段所需的分数上限。</li>
+</ul></li>
+<li><p><strong>上下文过滤 (Context Filtering)</strong>：</p>
+
+<ul>
+<li>在实际应用（测试）中，对新查询检索到的每个片段 $s$ 计算其非一致性分数 $A(q, s)$。</li>
+<li>只有当分数满足 $A(q, s) \leq \hat{\tau}<em>{\alpha}$ 时，该片段才会被保留，最终形成过滤后的上下文集合 $K</em>q$。所有分数高于阈值的片段都被视为噪声并被丢弃。</li>
+</ul></li>
+</ol>
+
+<hr />
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>该框架在 <strong>NeuCLIR</strong> 和 <strong>RAGTIME</strong> 数据集上进行了验证，结果表明：</p>
+
+<ul>
+<li><strong>覆盖保证有效</strong>：实验证明，无论是在 Conformal-Embedding 还是 Conformal-LLM 范式下，该方法在不同的 $\alpha$ 值下均能满足或略微超过理论上的覆盖保证，验证了其在有限样本下的统计可靠性。</li>
+<li><strong>显著减少上下文</strong>：通过过滤，保留的上下文大小比原始检索结果减少了<strong>2到3倍</strong>，极大地提高了后续LLM处理的效率。</li>
+<li><strong>提升下游任务质量</strong>：在下游任务的事实准确性评估（如ARGUE F1得分）中，经过严格过滤的上下文生成的答案质量反而有所<strong>提升</strong>。这表明被移除的大部分内容确实是冗余或无关的噪声，它们的剔除有助于LLM更专注于关键信息。</li>
+</ul>
+
+<hr />
+
+<h4><strong>解决方案优势</strong></h4>
+
+<ol>
+<li><strong>统计保证与可靠性</strong>：将上下文过滤从传统的启发式方法（如top-k检索）转变为一个有统计学基础的、可预测的过程，提供了可靠的覆盖控制。</li>
+<li><strong>高效去噪与性能提升</strong>：通过有效去除噪声，不仅降低了计算负担，还通过提高信噪比来提升生成模型的准确性和事实一致性。</li>
+<li><strong>模型无关性与易集成</strong>：该框架是一个轻量级的、与具体模型无关的解决方案，可以轻松集成到现有的RAG系统中，无需对模型进行微调。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整 $\alpha$ 参数，根据具体应用场景的需求，在覆盖率和上下文大小之间进行平滑、可预测的权衡。</li>
+</ol>
+
+<hr />
+
+<h4><strong>结论与未来展望</strong></h4>
+
+<p>总而言之，本文通过引入分裂符合预测，提供了一种强大且原则化的上下文工程解决方案。它不仅通过可靠的覆盖控制优化了RAG系统的性能，还为未来的研究提供了一个可扩展的框架。</p>
+
+<p>未来的研究方向将集中于实现<strong>主题和领域的自适应再校准</strong>，以放宽对数据分布不变的假设（交换性假设），从而在面对分布变化的复杂场景时，依然能够保持其统计保证和高效性能。</p>
+
+<h4>实验设计</h4>
+
+<ul>
+<li>在多个知识密集型任务上评估C-RAG框架的效果。</li>
+<li>与传统RAG方法进行对比，以验证C-RAG在风险控制和生成质量方面的优势。</li>
+<li>使用多种评估指标来量化生成内容的准确性和可信度。</li>
+</ul>
+
+<h4>数据集和代码</h4>
+
+<ul>
+<li>数据集和代码的具体信息尚未提供。</li>
+</ul>
+
+<h4>实验结果</h4>
+
+<p>实验结果表明，C-RAG在生成任务中显著降低了虚假信息的发生率，并提高了生成内容的可信度，支持了其核心假设的有效性。</p>
+
+<h4>论文贡献</h4>
+
+<ul>
+<li>提出了C-RAG框架，为检索增强生成的语言模型提供了新的风险评估方法。</li>
+<li>强调了在生成内容时确保信息准确性的重要性，为后续研究提供了理论基础和实证支持。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 12:00:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

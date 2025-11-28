@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curvature-Aware Safety Restoration In LLMs Fine-Tuning</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.18039v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Curvature-Aware Safety Restoration In LLMs Fine-Tuning</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">曲率感知</span>
+                
+                <span class="tag">安全性对齐</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">微调</span>
+                
+                <span class="tag">二阶优化</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Applied Artificial Intelligence Initiative (A2I2), Deakin University, Department of Data Science, New Jersey Institute of Technology, Pennsylvania State University</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.486</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.18039v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-23/34d59e63a67a52fd7a96f1f10f9e77bbfd098640e04295f707a03f7de94b9f66.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种曲率感知对齐恢复方法，解决了大型语言模型在微调后安全性对齐损失的问题。该方法利用影响函数和二阶优化技术，选择性地增加对有害输入的损失，从而在不损害任务性能的情况下恢复安全性。实验结果显示，该方法显著降低有害响应率，同时保持或提升模型的任务性能和鲁棒性。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在针对下游任务进行微调（fine-tuning）后，其原有的安全性对齐（safety alignment）会受到损害的问题。这是一个日益重要的问题，因为：
+- 随着LLMs的广泛应用，确保其安全性和可靠性至关重要。
+- 微调过程常常会破坏模型内置的安全机制，导致模型可能生成有害或不安全的响应。
+- 现有的解决方案（如机器遗忘、模型编辑或一些安全微调方法）要么计算成本高昂，要么在恢复安全性的同时会损害模型在特定任务上的性能，难以在安全、性能和鲁棒性之间取得平衡。</p>
+
+<h3>Hypothesis</h3>
+
+<p>论文的核心假设是：在微调过程中，模型的安全机制并非被完全“遗忘”或破坏，而是在参数空间的损失景观（loss landscape）中<strong>保持了其原有的几何结构</strong>。这些与安全相关的结构只是被移动或转移到了对模型输出影响较小的区域。因此，通过利用损失景观的二阶信息（即曲率），可以有效地将模型参数“导航”回安全区域，从而在不损害任务性能的前提下恢复其安全对齐。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>安全微调方法</strong>: 如 Vaccine, Safe LoRA, SaLoRA 等。</li>
+<li><strong>机器遗忘/行为去学习</strong>: 研究如何从模型中移除特定信息或行为。</li>
+<li><strong>模型编辑</strong>: 直接修改模型参数以改变其行为。</li>
+<li><strong>优化技术</strong>: 影响函数（Influence Functions）和曲率感知优化方法（如EWC, TRPO）。</li>
+<li><strong>安全对齐框架</strong>: 基于人类反馈的强化学习（RLHF）。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>完整解决方案：曲率感知安全恢复 (Curvature-Aware Alignment Restoration)</strong></h3>
+
+<p>本解决方案旨在解决大型语言模型（LLMs）在经过特定任务微调（Fine-tuning）后，出现的安全性对齐（Safety Alignment）能力下降或“漂移”的问题。论文提出了一种名为<strong>“曲率感知安全恢复”</strong>的新颖方法，它能够在不牺牲模型任务性能的前提下，有效恢复模型的安全行为。</p>
+
+<h4><strong>一、核心问题与理论基础</strong></h4>
+
+<ol>
+<li><p><strong>问题背景</strong>：当一个经过安全对齐的基础LLM（Base Model）针对特定任务进行微gao'tiao时（例如使用LoRA等参数高效微调技术），其优化目标是最小化任务数据的损失。这个过程可能会无意中削弱模型原有的安全机制，导致其更容易生成有害或不当内容，即发生“安全遗忘”现象。</p></li>
+<li><p><strong>核心发现（理论基础）</strong>：通过对模型损失景观（Loss Landscape）进行深入分析和可视化，研究人员发现了一个关键现象：<strong>微调过程并不会完全抹去模型的安全机制，而是将其保留在参数空间的几何结构中</strong>。具体表现为：</p>
+
+<ul>
+<li><strong>结构保持性</strong>：与有害内容相关的损失景观区域，在微调前后保持了高度的结构相似性（Pearson相关系数高于0.77，结构差异仅为12.79%）。相比之下，与一般任务数据相关的区域则发生了显著变化（结构差异达71.98%）。</li>
+<li><strong>功能分离</strong>：这表明安全行为存在于损失景观中一个功能性相对独立的区域，微调主要影响的是任务相关区域，而对安全区域的几何结构影响较小。</li>
+</ul></li>
+</ol>
+
+<p>这一发现构成了本解决方案的理论基石：既然安全机制的几何结构得以保留，我们就可以通过精确的优化手段“导航”回这些区域，从而恢复模型的安全行为，而无需进行代价高昂的完全重新训练。</p>
+
+<h4><strong>二、解决方案的构建与优化过程</strong></h4>
+
+<p>该方法将安全恢复问题形式化为一个<strong>二阶约束优化问题</strong>，其目标是在保持任务性能（保留集）的同时，最大化模型在有害内容（遗忘集）上的损失。</p>
+
+<ol>
+<li><p><strong>问题形式化</strong>：</p>
+
+<ul>
+<li>定义两个数据集：<strong>保留集 (Retain Set)</strong>，包含无害的任务相关数据；<strong>遗忘集 (Forget Set)</strong>，包含有害或不当的示例。</li>
+<li>优化目标可以表示为：
+[ \text{max}<em>{\theta} \; L</em>{\text{forget}}(\theta) \quad \text{s.t.} \quad L<em>{\text{retain}}(\theta) \leq L</em>{\text{retain}}(\theta_{\text{tuned}}) + \epsilon ]
+其中，<code>θ</code>是模型参数，<code>L_forget</code>和<code>L_retain</code>分别是遗忘集和保留集上的损失，<code>θ_tuned</code>是微调后的模型参数，<code>ε</code>是一个小的正容忍度（论文中设为0.1），允许任务性能有微小的下降。</li>
+</ul></li>
+<li><p><strong>曲率感知的优化方法</strong>：
+为了解决上述约束优化问题，该方法利用了<strong>影响函数（Influence Functions）</strong>和<strong>二阶优化技术</strong>。</p>
+
+<ul>
+<li><strong>影响函数</strong>：用于估计在遗忘集（有害内容）上增加损失所需的最优参数更新方向。</li>
+<li><strong>二阶优化（曲率感知）</strong>：传统的一阶优化（如SGD）只考虑梯度方向，而在复杂的损失景观中效率低下。本方法利用二阶信息，即<strong>Hessian矩阵</strong>，来感知损失景观的<strong>曲率</strong>。这使得优化过程能够：
+<ul>
+<li>识别更优的更新路径，避免在低价值区域徘徊。</li>
+<li>在增加<code>L_forget</code>的同时，确保更新方向不会显著增加<code>L_retain</code>，从而维持任务性能。</li>
+</ul></li>
+</ul>
+
+<p>具体的更新方向可以表示为在黎曼几何（Riemannian Geometry）下的最陡下降方向：
+[ \Delta\theta<em>{\text{influence}} = \text{arg max}</em>{\Delta\theta} \; \nabla L<em>{\text{forget}}^{\top} \Delta\theta \quad \text{s.t.} \quad \|\Delta\theta\|</em>{H_{\text{retain}}} \leq \delta ]
+这里的<code>H_retain</code>是保留集损失的Hessian矩阵，它定义了一个信任区域半径<code>δ</code>，确保更新步骤在任务性能的“安全”邻域内进行。</p></li>
+<li><p><strong>解决计算挑战</strong>：
+直接计算和求逆完整LLM的Hessian矩阵在计算上是不可行的。为解决此问题，论文提出了两个关键技术：</p>
+
+<ul>
+<li><strong>参数高效微调（LoRA）</strong>：将该方法应用于LoRA框架内，只对低秩适配器参数进行优化，极大地降低了Hessian矩阵的维度，使曲率估计成为可能。</li>
+<li><strong>近似Hessian求逆（L-BFGS）</strong>：采用<strong>L-BFGS算法</strong>来高效地近似Hessian矩阵的逆。通过构建和维护一个包含历史梯度和参数更新信息的“曲率对”缓冲区，L-BFGS能够以较低的计算成本（<code>O(mp)</code>）提供二阶曲率信息。实验表明，仅需少量高质量的曲率对（约10对）即可有效近似局部曲率。</li>
+</ul></li>
+<li><p><strong>实施细节</strong>：</p>
+
+<ul>
+<li><strong>信任半径动态调整</strong>：通过动态调整信任区域半径<code>δ</code>，并根据实际损失变化来接受或拒绝更新步骤，确保了优化过程的稳定性和鲁棒性。</li>
+<li><strong>安全对齐投影</strong>：在更新LoRA权重时，通过将其投影到一个预先定义的“安全对齐子空间”（通过对比对齐与未对齐模型的权重差异构建），确保更新不会偏离安全方向。</li>
+</ul></li>
+</ol>
+
+<h4><strong>三、实验验证与评估</strong></h4>
+
+<p>为了验证该方法的有效性，论文进行了广泛的实验。</p>
+
+<ol>
+<li><p><strong>安全性评估</strong>：</p>
+
+<ul>
+<li><strong>对抗性攻击</strong>：使用<strong>AdvBench</strong>基准（包含数百个对抗性提示）和<strong>预填充攻击（Prefill Attack）</strong>等方法来评估模型的安全性。预填充攻击通过在有害指令前添加无害文本来绕过模型的表面拒绝机制。</li>
+<li><strong>结果</strong>：该方法显著降低了有害响应率（HRR），例如在Llama-3.1 8B模型上降至<strong>3.0%</strong>，远低于其他基线方法。在对抗性填充攻击下的攻击成功率（ASR）也为同类方法中最低（<strong>63.0%</strong>）。</li>
+</ul></li>
+<li><p><strong>任务性能评估</strong>：</p>
+
+<ul>
+<li>为了证明安全性恢复没有牺牲模型效用，研究人员在原始微调任务（如Dolly）和多个零样本（zero-shot）任务（如GSM8K, TruthfulQA）上评估了模型性能。</li>
+<li><strong>结果</strong>：该方法在恢复安全性的同时，保持了与原始微调模型相当甚至更优的任务性能，实现了安全与性能的良好平衡。</li>
+</ul></li>
+<li><p><strong>鲁棒性评估</strong>：</p>
+
+<ul>
+<li>通过对模型参数进行扰动，并使用<strong>VISAGE得分</strong>来评估其安全边界的宽度。</li>
+<li><strong>结果</strong>：该方法获得了最高的VISAGE得分（<strong>56.1</strong>），表明其恢复的安全对齐在参数变化下具有很强的鲁棒性。</li>
+</ul></li>
+</ol>
+
+<h4><strong>四、优势与结论</strong></h4>
+
+<ul>
+<li><strong>高效平衡</strong>：在不显著影响任务性能的前提下，有效恢复了模型的安全性，解决了微调过程中的核心权衡问题。</li>
+<li><strong>精准优化</strong>：利用损失景观的几何洞察和二阶优化，实现了对模型参数的精准、低影响更新，而非粗暴的回归或启发式约束。</li>
+<li><strong>计算可行性</strong>：通过结合LoRA和L-BFGS，克服了在大型模型上应用二阶优化的计算瓶颈，使其成为一种实用可行的技术。</li>
+<li><strong>鲁棒性强</strong>：恢复的安全对齐对对抗性攻击和参数扰动表现出强大的抵抗力。</li>
+</ul>
+
+<p><strong>结论</strong>：本文提出的“曲率感知安全恢复”框架，通过其创新的几何视角和高效的二阶优化策略，为解决大型语言模型在微调过程中的安全对齐漂移问题提供了一个强大而实用的解决方案。它不仅在理论上具有创新性，并且通过大量实验证明了其在实践中的有效性和广泛适用性。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型</strong>: 实验在多种LLM架构上进行，如 Llama-3.1 8B 和 Qwen 2.5 7B，以验证方法的通用性。</li>
+<li><strong>微调任务</strong>: 使用 Dolly 数据集进行指令微调。</li>
+<li><strong>安全性评估</strong>: 使用对抗性基准数据集 AdvBench 来评估模型的安全性，主要指标是<strong>有害响应率（Harmful Response Rate, HRR）</strong>或<strong>攻击成功率（Attack Success Rate, ASR）</strong>。</li>
+<li><strong>鲁棒性测试</strong>: 评估模型在面对对抗性攻击（如预填充攻击）和参数扰动时的安全稳定性。</li>
+<li><strong>机理验证</strong>: 通过损失景观可视化和分析（如使用PCA和计算Pearson相关系数），验证微调后模型在有害内容上的损失景观结构是否保持完整。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>任务微调数据集</strong>: Dolly（包含约15,000个人类生成的指令-响应对）。</li>
+<li><strong>安全评估数据集</strong>: AdvBench（包含旨在绕过安全机制的对抗性提示），HEx-PHI（包含构造的有害提示）。</li>
+<li><strong>通用数据集</strong>: Alpaca。</li>
+<li><strong>代码</strong>: 论文片段中未提供公开的代码链接。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>结构保持</strong>: 实验证实，微调后的模型在处理有害内容的损失景观上，与基础模型保持了高度的几何结构相似性（例如，Pearson相关系数 &gt; 0.77，结构差异仅为1.46%）。</li>
+<li><strong>安全性恢复</strong>: 所提出的方法显著优于基线方法。例如，在Llama-3.1 8B模型上，该方法的HRR降低至3.0%，而其他方法（如SaLoRA）为8.1%。</li>
+<li><strong>鲁棒性</strong>: 在对抗性攻击下，该方法的攻击成功率（63.0%）远低于标准LoRA微调（78.4%），表现出更强的鲁棒性。</li>
+<li><strong>效率与性能</strong>: 该方法能够在保持甚至提升下游任务性能的同时，高效地恢复安全性（仅需少量恢复迭代）。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>关键见解</strong>: 首次识别并实证验证了LLM在微调后，其处理有害内容的损失景观几何结构得以保持的关键现象。</li>
+<li><strong>提出新框架</strong>: 提出了一种新颖的、基于曲率感知的对齐恢复框架，将安全恢复问题形式化为二阶约束优化问题，为解决该问题提供了新的理论视角。</li>
+<li><strong>卓越性能</strong>: 实验证明，该方法在恢复安全性、保持任务性能以及抵抗对抗性攻击方面均优于现有技术，在多个基准上达到了SOTA水平。</li>
+<li><strong>实践价值</strong>: 为在高风险和敏感场景下安全地微调和部署LLMs提供了有效且高效的解决方案。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 12:00:54</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
