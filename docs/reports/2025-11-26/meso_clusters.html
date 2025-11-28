@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主题聚类分析 - 2025-11-26</title>
+    <style>
+        :root {
+            /* 配色系统：Amber (聚类主题色) + Indigo (系统色) */
+            --primary-color: #4f46e5;
+            --meso-color: #f59e0b;      /* Amber 500 */
+            --meso-dark: #b45309;       /* Amber 700 */
+            --meso-light: #fffbeb;      /* Amber 50 */
+            --meso-border: #fcd34d;     /* Amber 300 */
+            
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* SVG 图标 */
+        .icon {
+            width: 1.1em;
+            height: 1.1em;
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--primary-color); }
+        .back-link .icon { margin-right: 6px; }
+
+        /* 头部 */
+        .header {
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header h1 .icon { color: var(--meso-color); width: 32px; height: 32px; }
+
+        .header .date {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 44px;
+        }
+
+        /* === 1. 宏观趋势卡片 (美化版) === */
+        .macro-section {
+            /* 使用更加现代的渐变背景，而非纯色 */
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08); /* 淡淡的蓝光阴影 */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 装饰性的顶部线条 */
+        .macro-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), #93c5fd);
+        }
+
+        .macro-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        /* 针对 Markdown 内容的深度定制 */
+        .macro-content {
+            color: #334155;
+        }
+
+        /* 模拟 H3 标题样式 (核心研究主题/技术趋势) */
+        .macro-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e40af; /* 深蓝 */
+            margin-top: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            background-color: #dbeafe;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .macro-content h3:first-child { margin-top: 0; }
+
+        /* 列表样式优化 */
+        .macro-content ol {
+            padding-left: 0;
+            list-style: none;
+            counter-reset: macro-counter;
+        }
+
+        .macro-content li {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        /* 自定义数字计数器 */
+        .macro-content li::before {
+            counter-increment: macro-counter;
+            content: counter(macro-counter);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .macro-content strong {
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+
+        /* === 2. 聚类列表 (手风琴样式) === */
+        .section-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cluster-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        
+        /* 悬停效果 */
+        .cluster-card:hover {
+            border-color: var(--meso-border);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 可点击的头部 */
+        .cluster-header {
+            background-color: var(--bg-card);
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .cluster-header:hover {
+            background-color: #fffbeb; /* 极淡的琥珀色 */
+        }
+        
+        /* 激活状态 */
+        .cluster-card.active .cluster-header {
+            background-color: var(--meso-light);
+            border-bottom: 1px solid var(--meso-border);
+        }
+
+        .cluster-info {
+            flex-grow: 1;
+            padding-right: 15px;
+        }
+
+        .cluster-title {
+            color: var(--text-main);
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+        
+        .cluster-card.active .cluster-title {
+            color: var(--meso-dark);
+        }
+
+        .cluster-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 箭头图标 */
+        .toggle-icon {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .cluster-card.active .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--meso-dark);
+        }
+
+        /* 折叠内容区 */
+        .cluster-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #ffffff;
+        }
+
+        .paper-list {
+            padding: 24px;
+            list-style: none;
+            position: relative;
+        }
+        
+        /* 左侧连接线 */
+        .paper-list::before {
+            content: '';
+            position: absolute;
+            left: 31px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background-color: #f1f5f9;
+        }
+
+        .paper-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 24px;
+        }
+
+        .paper-item:last-child { margin-bottom: 0; }
+
+        /* 列表圆点 */
+        .paper-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 14px;
+            height: 14px;
+            background-color: #fff;
+            border: 2px solid var(--meso-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .paper-title {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .paper-title:hover {
+            color: var(--primary-color);
+        }
+
+        .paper-contrib {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .macro-section { padding: 20px; }
+            .cluster-header { padding: 16px; }
+            .paper-list { padding: 16px; }
+            .paper-list::before { left: 23px; } /* 调整线位置 */
+            .paper-item { padding-left: 24px; }
+            .paper-title { font-size: 15px; }
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 手风琴交互逻辑
+            const headers = document.querySelectorAll('.cluster-header');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const card = this.parentElement;
+                    const body = card.querySelector('.cluster-body');
+                    
+                    // 切换当前卡片状态
+                    card.classList.toggle('active');
+                    
+                    // 重新计算高度
+                    if (card.classList.contains('active')) {
+                        body.style.maxHeight = body.scrollHeight + "px";
+                    } else {
+                        body.style.maxHeight = null;
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="back-link">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                返回每日简报
+            </a>
+            <a href="../../index.html" class="back-link">返回汇总页</a>
+        </div>
+
+        <div class="header">
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                主题聚类分析
+            </h1>
+            <div class="date">2025-11-26</div>
+        </div>
+
+        
+        <div class="macro-section">
+            <div class="macro-header">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                宏观研究趋势
+            </div>
+            <div class="macro-content">
+                <h2>核心研究主题</h2>
+
+<ol>
+<li>多模态推理与自我增强正在推动AI系统在处理复杂任务时的表现，尤其是在跨领域知识整合方面。</li>
+<li>图神经网络的应用日益广泛，尤其是在多模态数据处理上，提升了信息提取和关系建模的能力。</li>
+<li>语言模型的提示优化与评估正在成为提升模型性能的关键，帮助研究者更有效地利用预训练模型。</li>
+<li>文本到图像扩散模型的优化技术正在快速发展，促进了生成艺术和内容创作的创新。</li>
+<li>带噪声标签学习的研究正在为模型的鲁棒性和泛化能力提供新的解决方案，尤其在数据稀缺的情况下。</li>
+</ol>
+
+<h2>技术趋势</h2>
+
+<ol>
+<li>自我增强和长效记忆机制的结合正在推动多代理系统的协作能力，提升了智能体在复杂环境中的表现。</li>
+<li>隐私与安全挑战的关注度持续上升，促使研究者在大语言模型中探索更安全的训练和应用方法。</li>
+<li>高效的注意力机制与模型稀疏性相结合，正在推动深度学习模型在计算效率和性能上的双重提升。</li>
+</ol>
+
+            </div>
+        </div>
+        
+
+        <div class="section-label">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            发现 10 个研究热点 (点击展开详情)
+        </div>
+
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 1: 多模态推理与自我增强</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        10 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Agent0-VL: Exploring Self-Evolving Agent for Tool-Integrated Vision-Language Reasoning</span>
+                        <span class="paper-contrib">提出了一种自我进化的多模态代理，旨在克服人类标注监督的限制。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Universe of Thoughts: Enabling Creative Reasoning with Large Language Models</span>
+                        <span class="paper-contrib">引入了链式思维提示技术，促进了大语言模型在复杂逻辑任务中的推理能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Revisiting KRISP: A Lightweight Reproduction and Analysis of Knowledge-Enhanced Vision-Language Models</span>
+                        <span class="paper-contrib">对KRISP模型进行了轻量级复现和分析，探讨了外部知识在视觉语言推理中的应用。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Beyond Generation: Multi-Hop Reasoning for Factual Accuracy in Vision-Language Models</span>
+                        <span class="paper-contrib">提出了多跳推理方法，以提高视觉语言模型的事实准确性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">NNGPT: Rethinking AutoML with Large Language Models</span>
+                        <span class="paper-contrib">开发了NNGPT框架，将大型语言模型转变为自我改进的AutoML引擎。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning from Risk: LLM-Guided Generation of Safety-Critical Scenarios with Prior Knowledge</span>
+                        <span class="paper-contrib">提出了一种高保真场景生成框架，以应对自动驾驶中的安全关键场景。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">"Are We Done Yet?": A Vision-Based Judge for Autonomous Task Completion of Computer Use Agents</span>
+                        <span class="paper-contrib">开发了一种基于视觉的评估框架，以自动判断计算机使用代理的任务完成情况。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">WaymoQA: A Multi-View Visual Question Answering Dataset for Safety-Critical Reasoning in Autonomous Driving</span>
+                        <span class="paper-contrib">创建了WaymoQA数据集，专注于自动驾驶中的安全关键推理任务。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DeeAD: Dynamic Early Exit of Vision-Language Action for Efficient Autonomous Driving</span>
+                        <span class="paper-contrib">提出了一种动态早期退出框架，以提高视觉语言行动模型在自动驾驶中的效率。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">CounterVQA: Evaluating and Improving Counterfactual Reasoning in Vision-Language Models for Video Understanding</span>
+                        <span class="paper-contrib">评估并改进了视觉语言模型在视频理解中的反事实推理能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 2: 图神经网络与多模态数据处理</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        6 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Short-Range Oversquashing</span>
+                        <span class="paper-contrib">提出了针对图神经网络中短程过度压缩现象的分析，并探讨了图变换器作为替代方案的潜力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">E2E-GRec: An End-to-End Joint Training Framework for Graph Neural Networks and Recommender Systems</span>
+                        <span class="paper-contrib">提出了一种端到端的联合训练框架，将图神经网络与推荐系统有效结合，提升了用户-物品关系建模的能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Decoupling and Damping: Structurally-Regularized Gradient Matching for Multimodal Graph Condensation</span>
+                        <span class="paper-contrib">引入了一种结构正则化的梯度匹配方法，以解决多模态图的训练计算负担问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Cross-Contrastive Clustering for Multimodal Attributed Graphs with Dual Graph Filtering</span>
+                        <span class="paper-contrib">提出了一种交叉对比聚类方法，专门针对具有多种属性的图进行有效聚类。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rethinking Message Passing Neural Networks with Diffusion Distance-guided Stress Majorization</span>
+                        <span class="paper-contrib">提出了一种新的信息传递神经网络框架，利用扩散距离引导的应力极小化来解决过平滑和过相关问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rethinking Semi-Supervised Node Classification with Self-Supervised Graph Clustering</span>
+                        <span class="paper-contrib">通过自监督图聚类方法，重新思考了半监督节点分类任务的有效性和改进策略。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 3: 语言模型的提示优化与评估</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        5 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Systematic Analysis of Large Language Models with RAG-enabled Dynamic Prompting for Medical Error Detection and Correction</span>
+                        <span class="paper-contrib">本研究评估了不同提示策略下大型语言模型在医疗错误检测和纠正中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Structured Prompting Enables More Robust, Holistic Evaluation of Language Models</span>
+                        <span class="paper-contrib">提出了一种结构化提示方法，以增强语言模型的全面评估框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">On Evaluating LLM Alignment by Evaluating LLMs as Judges</span>
+                        <span class="paper-contrib">探讨了通过评估大型语言模型作为评判者来衡量其与人类偏好的对齐程度。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">A Unified Evaluation-Instructed Framework for Query-Dependent Prompt Optimization</span>
+                        <span class="paper-contrib">提出了一种统一的框架，优化查询依赖的提示，以适应复杂的用户场景。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Prompt Fairness: Sub-group Disparities in LLMs</span>
+                        <span class="paper-contrib">研究了大型语言模型在不同用户风格下的提示公平性及其对响应质量的影响。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 4: 文本到图像扩散模型优化</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        5 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Test-Time Alignment of Text-to-Image Diffusion Models via Null-Text Embedding Optimisation</span>
+                        <span class="paper-contrib">提出了一种通过优化空文本嵌入实现文本到图像扩散模型的测试时对齐的方法，解决了现有方法的优化不足和过度优化问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Training-Free Diffusion Priors for Text-to-Image Generation via Optimization-based Visual Inversion</span>
+                        <span class="paper-contrib">提出了一种无训练的扩散先验生成方法，通过基于优化的视觉反演来简化文本嵌入到视觉流形的转换。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Flash-DMD: Towards High-Fidelity Few-Step Image Generation with Efficient Distillation and Joint Reinforcement Learning</span>
+                        <span class="paper-contrib">提出了一种高保真、少步骤图像生成的方法，通过高效蒸馏和联合强化学习来加速扩散模型的生成过程。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Latent Diffusion Inversion Requires Understanding the Latent Space</span>
+                        <span class="paper-contrib">强调了理解潜在空间对于扩散模型中的潜在反演的重要性，提出了对编码器/解码器对及其潜在代码的关注。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Training-Free Generation of Diverse and High-Fidelity Images via Prompt Semantic Space Optimization</span>
+                        <span class="paper-contrib">提出了一种通过优化提示语义空间实现多样性和高保真图像生成的方法，解决了文本到图像扩散模型中图像多样性不足的问题。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 5: 带噪声标签学习与模型优化</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        5 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Pre-train to Gain: Robust Learning Without Clean Labels</span>
+                        <span class="paper-contrib">提出了一种无标签预训练特征提取器的方法，以提高在带噪声标签数据上的学习鲁棒性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Foundry: Distilling 3D Foundation Models for the Edge</span>
+                        <span class="paper-contrib">介绍了一种将大型3D基础模型蒸馏为适合边缘设备的轻量级模型的方法。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Learning to Clean: Reinforcement Learning for Noisy Label Correction</span>
+                        <span class="paper-contrib">将带噪声标签的校正问题建模为强化学习问题，提出了一种新的校正框架。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Unleashing the Power of Vision-Language Models for Long-Tailed Multi-Label Visual Recognition</span>
+                        <span class="paper-contrib">利用预训练的视觉-语言模型，解决长尾多标签视觉识别中的类不平衡问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DiCaP: Distribution-Calibrated Pseudo-labeling for Semi-Supervised Multi-Label Learning</span>
+                        <span class="paper-contrib">提出了一种分布校准的伪标签方法，以提升半监督多标签学习的性能。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 6: 大语言模型中的隐私与安全挑战</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        5 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Memories Retrieved from Many Paths: A Multi-Prefix Framework for Robust Detection of Training Data Leakage in Large Language Models</span>
+                        <span class="paper-contrib">提出了一种多前缀框架，以更稳健地检测大语言模型中的训练数据泄漏问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Copyright Detection in Large Language Models: An Ethical Approach to Generative AI Development</span>
+                        <span class="paper-contrib">探讨了版权检测的伦理方法，并提出了改进现有检测框架的必要性，以便更好地保护创作者的权益。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Towards Benign Memory Forgetting for Selective Multimodal Large Language Model Unlearning</span>
+                        <span class="paper-contrib">提出了一种选择性遗忘的方法，旨在在不损害模型整体性能的情况下去除隐私敏感信息。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">On the Feasibility of Hijacking MLLMs' Decision Chain via One Perturbation</span>
+                        <span class="paper-contrib">揭示了一种新的威胁，即通过单一扰动劫持多模态大语言模型的决策链，导致级联错误。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adversarial Confusion Attack: Disrupting Multimodal Large Language Models</span>
+                        <span class="paper-contrib">引入了一种新的攻击方式，旨在系统性地干扰多模态大语言模型的输出，使其生成不连贯或错误的结果。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 7: 多代理系统中的长效记忆与协作</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Evo-Memory: Benchmarking LLM Agent Test-time Learning with Self-Evolving Memory</span>
+                        <span class="paper-contrib">提出了一种自我演化的记忆机制，以支持大型语言模型在长时间规划和问题解决中的状态保持能力。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Latent Collaboration in Multi-Agent Systems</span>
+                        <span class="paper-contrib">通过直接协作的方式，推动多代理系统中大型语言模型的智能化，超越了传统的文本中介推理和交流。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">DRAFT-RL: Multi-Agent Chain-of-Draft Reasoning for Reinforcement Learning-Enhanced LLMs</span>
+                        <span class="paper-contrib">引入了多代理反思框架，利用强化学习提升大型语言模型在多步骤推理中的表现。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Improving Language Agents through BREW</span>
+                        <span class="paper-contrib">提出了一种新的训练范式，增强了基于大型语言模型的代理在结构化推理和环境适应中的能力。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 8: 高效的注意力机制与模型稀疏性</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Length-MAX Tokenizer for Language Models</span>
+                        <span class="paper-contrib">提出了一种新的Length-MAX分词器，通过最小化每个字符的平均token数量来减少训练和推理过程中所需的token数量。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Rectified SpaAttn: Revisiting Attention Sparsity for Efficient Video Generation</span>
+                        <span class="paper-contrib">提出了一种新的稀疏注意力机制，旨在降低视频生成中的计算成本，同时提高性能。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Mosaic Pruning: A Hierarchical Framework for Generalizable Pruning of Mixture-of-Experts Models</span>
+                        <span class="paper-contrib">提出了一种层次化框架Mosaic Pruning，以实现混合专家模型的可泛化稀疏性修剪。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">SSA: Sparse Sparse Attention by Aligning Full and Sparse Attention Outputs in Feature Space</span>
+                        <span class="paper-contrib">通过对齐全注意力和稀疏注意力的输出，提出了一种新的稀疏注意力方法，以提高长上下文处理的效率。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 9: 医疗影像中的深度学习与多任务学习</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adversarial Multi-Task Learning for Liver Tumor Segmentation, Dynamic Enhancement Regression, and Classification</span>
+                        <span class="paper-contrib">提出了一种对肝肿瘤进行分割、动态增强回归和分类的对抗多任务学习框架，首次实现了这些任务的端到端联合处理。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">MedROV: Towards Real-Time Open-Vocabulary Detection Across Diverse Medical Imaging Modalities</span>
+                        <span class="paper-contrib">开发了一种实时开放词汇检测模型，能够在多种医学影像模态中识别新标签的对象，克服了传统闭集检测的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Prompting Lipschitz-constrained network for multiple-in-one sparse-view CT reconstruction</span>
+                        <span class="paper-contrib">提出了一种满足Lipschitz约束的多任务稀疏视图CT重建网络，解决了深度展开算法在稀疏视图重建中的局限性。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">LungEvaty: A Scalable, Open-Source Transformer-based Deep Learning Model for Lung Cancer Risk Prediction in LDCT Screening</span>
+                        <span class="paper-contrib">构建了一种可扩展的基于Transformer的深度学习模型，用于低剂量CT筛查中的肺癌风险预测，支持处理大规模影像数据。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cluster-card">
+            <div class="cluster-header">
+                <div class="cluster-info">
+                    <div class="cluster-title">主题 10: 深度学习优化算法</div>
+                    <div class="cluster-meta">
+                        <svg class="icon" style="width: 10px; height: 10px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        4 篇相关论文
+                    </div>
+                </div>
+                <svg class="icon toggle-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="cluster-body">
+                <ul class="paper-list">
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">ROOT: Robust Orthogonalized Optimizer for Neural Network Training</span>
+                        <span class="paper-contrib">提出了一种鲁棒的正交化优化器，以应对大规模语言模型训练中的算法不精确性和不稳定性问题。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">HVAdam: A Full-Dimension Adaptive Optimizer</span>
+                        <span class="paper-contrib">识别并解决了自适应优化器在经典架构上表现不佳的关键原因，提出了全维自适应优化器HVAdam。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Gradient Descent Algorithm Survey</span>
+                        <span class="paper-contrib">系统分析了五种主要优化算法的优缺点，并提供了实际配置的关键建议。</span>
+                    </li>
+                    
+                    <li class="paper-item">
+                        <span class="paper-title">Adam Simplified: Bias Correction Debunked</span>
+                        <span class="paper-contrib">对Adam优化器中的偏差校正功能进行了深入调查，质疑其在实际应用中的必要性。</span>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+
+        <div class="footer">
+            <p>生成时间: 2025-11-28 15:17:18</p>
+            <p>访问地址: <a href="https://jycarlos1019.pp.ua">https://jycarlos1019.pp.ua</a></p>
+        </div>
+    </div>
+</body>
+</html>

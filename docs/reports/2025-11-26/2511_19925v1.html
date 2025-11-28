@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic-KG: Using Knowledge Graphs to Construct Benchmarks for Measuring Semantic Similarity</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.19925v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Semantic-KG: Using Knowledge Graphs to Construct Benchmarks for Measuring Semantic Similarity</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">语义相似性</span>
+                
+                <span class="tag">知识图谱</span>
+                
+                <span class="tag">评估基准</span>
+                
+                <span class="tag">自动生成</span>
+                
+                <span class="tag">文本对</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">University of Cambridge, GSK.ai</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.420</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.19925v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-26/9ce15698b85dfdc9cfa5ce6e09f0801de7759934afd5e7200078fc4b92e36d09.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一个名为**Semantic-KG**的框架，通过知识图谱生成语义相似性评估基准，解决了现有方法依赖人工标注和表面相似性的问题。该框架自动生成不同领域的文本对，评估多种语义相似性方法的性能，揭示了方法在不同语义变化和领域下的表现差异。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决现有语义相似性评估方法的局限性。当前方法，特别是用于评估大型语言模型（LLM）输出的方法，往往依赖于昂贵、主观且难以扩展的人工标注，或者只关注表面文本相似性而非深层语义内容。这在生物医学、金融等高风险领域尤为关键，因为错误的语义理解可能导致严重后果。此外，现有基准数据集在覆盖范围、数据偏见和质量控制方面存在不足。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过系统性地对知识图谱（KG）进行扰动，可以自动、可扩展地生成高质量、客观的语义相似性基-准数据集。该框架能够更准确地评估各种语义相似性方法（包括传统NLP指标和LLM作为评估者）的性能。研究还假设，不同方法的性能会因领域（如金融、生物）和语义变化的具体类型（如实体替换 vs. 关系替换）而异，不存在一种在所有情况下都最优的方法。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>传统语义相似性指标</strong>：如ROUGE、BLEU等基于词汇重叠的方法。</li>
+<li><strong>现有语义等价性基准</strong>：如STS、Winograd、MRPC等。</li>
+<li><strong>LLM作为评估者（LLM-as-a-judge）</strong>：利用大型语言模型来评判文本质量或相似性的新兴方法。</li>
+<li><strong>知识图谱的应用</strong>：利用知识图谱进行语义编码、数据生成和LLM输出验证的相关工作。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<p>本文提出了一种名为 <strong>Semantic-KG</strong> 的创新框架，旨在自动化、可扩展地生成高质量的基准数据集，用于评估各种语义相似性方法。该解决方案的核心是利用知识图谱（Knowledge Graphs, KGs）的结构化信息，通过引入受控的语义变化（扰动），来创建语义上相似或相异的文本对。这种方法解决了传统基准构建中依赖昂贵、耗时且主观的人工标注的根本问题，尤其适用于生物医学、金融等数据稀缺或标注成本高昂的高风险领域。</p>
+
+<hr />
+
+<h4><strong>一、 框架目标与核心思想</strong></h4>
+
+<p>Semantic-KG框架的主要目标是：
+1.  <strong>自动化生成基准</strong>：无需人工干预，自动生成用于评估语义相似性模型的基准数据集。
+2.  <strong>控制语义变化</strong>：通过对知识图谱进行精确的修改，可以精细地控制生成文本对之间的语义差异，从而能够针对性地测试模型的特定能力。
+3.  <strong>领域通用性与可扩展性</strong>：该框架是领域无关的，只要存在相应的知识图谱，就可以应用于一般知识、生物医学、金融、生态学等多个领域。</p>
+
+<p>其核心思想是，知识图谱中的一个子图代表了一组事实和关系。通过对这个子图进行微小的、可控的修改（扰动），就可以创造出一个语义上略有不同的新子图。将原始子图和扰动后的子图分别转换为自然语言文本，就能得到一对语义上不相似但可能在词汇上高度重叠的文本，这对于评估模型的深层语义理解能力至关重要。</p>
+
+<hr />
+
+<h4><strong>二、 核心方法论：四步生成流程</strong></h4>
+
+<p>Semantic-KG框架通过一个四阶段的管道来生成和验证基准数据：</p>
+
+<h5><strong>步骤 1：子图采样 (Subgraph Sampling)</strong></h5>
+
+<p>为了确保生成数据的多样性和代表性，框架首先从大型知识图谱中采样小子图。
+-   <strong>过程</strong>：随机选择一个“种子节点”，然后通过广度优先搜索（BFS）遍历其邻居，随机选择5到20个邻居节点及其关系，构成一个子图。
+-   <strong>目的</strong>：这种方法既保证了子图内部节点的多样性，又避免了过度集中于某一类型的节点，从而生成结构丰富的语义单元。</p>
+
+<h5><strong>步骤 2：子图扰动 (Subgraph Perturbation)</strong></h5>
+
+<p>这是控制语义变化的关键步骤。框架对采样到的子图应用四种类型的扰动，以生成一个语义上被修改过的新版本。
+-   <strong>扰动类型</strong>：
+    1.  <strong>节点删除 (Node Deletion)</strong>：随机移除子图中的一个节点及其所有相关联的边。
+    2.  <strong>节点替换 (Node Replacement)</strong>：将一个节点替换为知识图谱中另一个同类型的节点，以保持图的逻辑一致性。
+    3.  <strong>边删除 (Edge Deletion)</strong>：随机移除连接两个节点的一条边（关系）。
+    4.  <strong>边替换 (Edge Replacement)</strong>：将一条边替换为另一条语义不同但逻辑上可能的边。</p>
+
+<p>这些扰动直接改变了子图所承载的语义信息，为生成语义不相似的文本对奠定了基础。</p>
+
+<h5><strong>步骤 3：响应生成 (Response Generation)</strong></h5>
+
+<p>此步骤利用大型语言模型（LLM）将结构化的子图（原始和扰动后的）转换为流畅的自然语言文本。
+-   <strong>生成正样本（语义相似对）</strong>：从<strong>同一个原始子图</strong>出发，利用LLM生成至少两个不同措辞但表达相同语义的陈述。这对陈述被标记为“相似”（标签为1）。
+-   <strong>生成负样本（语义不相似对）</strong>：分别从<strong>原始子图</strong>和<strong>扰动后的子图</strong>各生成一个陈述。由于扰动引入了语义变化，这对陈述被标记为“不相似”（标签为0）。
+-   <strong>实现方式</strong>：通过精心设计的<strong>提示模板（Prompt Templates）</strong>来指导LLM。模板会提供子图的三元组信息（如 <code>源节点: 挪威, 关系: 外交关系, 目标节点: 哥伦比亚</code>），并要求LLM将其转换为连贯的句子（如 <code>“挪威与哥伦比亚有外交关系。”</code>）。通过提供少量示例（few-shot prompting），可以鼓励模型生成更自然、更准确的文本。</p>
+
+<h5><strong>步骤 4：响应验证 (Response Validation)</strong></h5>
+
+<p>为确保LLM生成的文本忠实于原始知识图谱的信息，框架引入了一个严格的验证环节。
+-   <strong>过程</strong>：采用“重构”的方式。使用LLM从生成的自然语言陈述中<strong>反向提取</strong>出实体和关系，形成三元组。
+-   <strong>验证标准</strong>：只有当反向提取出的三元组与原始子图中的三元组<strong>完全匹配</strong>时，该生成的文本才被视为有效并通过验证。
+-   <strong>目的</strong>：这一步骤过滤掉了LLM可能产生的“幻觉”或不准确的陈述，保证了最终基准数据集的高质量和可靠性。</p>
+
+<hr />
+
+<h4><strong>三、 应用与评估</strong></h4>
+
+<p>生成的基准数据集可用于全面评估各种语义相似性方法的性能。
+-   <strong>评估对象</strong>：
+    -   <strong>LLM作为评判者 (LLM-as-a-judge)</strong>：将文本对输入LLM，并使用特定提示（例如：“这两个陈述在语义上是否相似？请回答‘是’或‘否’。”）来判断其相似性。
+    -   <strong>嵌入模型 (Embedding Models)</strong>：将文本对转换为向量嵌入，并计算它们之间的余弦相似度。
+    -   <strong>传统NLP方法</strong>：使用如ROUGE、BLEU等基于词汇重叠的指标进行评估。</p>
+
+<ul>
+<li><strong>实验发现</strong>：实验结果表明，不同方法的性能因扰动类型和领域的不同而异。例如，LLM在检测由<strong>边扰动</strong>（关系变化）引起的细微语义差异方面表现出显著优势，而传统方法在处理<strong>节点扰动</strong>（实体变化）时表现可能更优越。这证明了Semantic-KG在识别不同模型“失效模式”方面的价值。</li>
+</ul>
+
+<hr />
+
+<h4><strong>四、 优势、局限性与未来方向</strong></h4>
+
+<p><strong>优势</strong>：
+-   <strong>高效且低成本</strong>：完全自动化，消除了对昂贵且主观的人类标注的依赖。
+-   <strong>高度可控</strong>：能够生成具有特定类型语义变化的样本，便于对模型进行细粒度的能力分析。
+-   <strong>广泛适用</strong>：可轻松扩展到任何拥有知识图谱的新领域，促进跨领域模型评估。</p>
+
+<p><strong>局限性与未来工作</strong>：
+-   <strong>生成文本的分布</strong>：由LLM生成的文本可能与真实世界的人类语言在分布上存在差异，可能引入微妙偏见。
+-   <strong>知识图谱的封闭世界假设</strong>：KG假设未明确说明的信息为假，这可能无法完全捕捉现实世界知识的不完整性。
+-   <strong>任务复杂性</strong>：当前框架主要生成二元（相似/不相似）标签，未来可探索生成分级的相似度得分。
+-   <strong>子图大小限制</strong>：随着子图规模增大，生成和验证的成功率会下降。未来随着LLM能力的提升，有望处理更复杂的子图。</p>
+
+<p><strong>总结</strong>：
+Semantic-KG框架通过一种新颖的、基于知识图谱扰动的方法，为语义相似性评估领域提供了一个强大、高效且可扩展的工具。它不仅解决了现有基准构建方法的诸多痛点，还为深入理解和比较不同AI模型在语义理解方面的优缺点开辟了新的途径。</p>
+
+<h3>实验设计</h3>
+
+<p>实验在多个领域（通用知识、生物医学、金融、生物学等）的知识图谱上进行。
+1.  使用Semantic-KG框架生成包含语义相似和不相似文本对的基准数据集。
+2.  利用生成的基准来评估多种语义相似性方法的性能，包括：
+    *   传统的NLP指标（ROUGE、BLEU）。
+    *   基于嵌入的模型。
+    *   LLM作为评估者（LLM-as-a-judge），使用了GPT-4o、Gemini-1.5 Pro等模型。
+3.  使用F1分数等指标来衡量各种方法区分语义相似与不相似文本对的准确性。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>代码</strong>: <a href="https://github.com/QiyaoWei/semantic-kg">https://github.com/QiyaoWei/semantic-kg</a></li>
+<li><strong>数据集</strong>: <a href="https://huggingface.co/datasets/QiyaoWei/Semantic-KG">https://huggingface.co/datasets/QiyaoWei/Semantic-KG</a></li>
+<li><strong>使用的知识图谱</strong>: 实验涵盖了多个领域的知识图谱，包括Codex、WikiData、FinDKG、Globi和Oregano等。</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>没有万能方法</strong>：实验结果证实，没有一种语义相似性方法在所有情况下都表现最佳。其性能严重依赖于领域和语义扰动的类型。</li>
+<li><strong>LLM vs. 传统方法</strong>：LLM作为评估者在检测关系变化（边扰动）方面表现出色，而传统NLP方法有时在检测实体变化（节点扰动）方面更具优势。</li>
+<li><strong>框架局限性</strong>：框架在处理较大（如超过12个三元组）的复杂子图时，生成的文本质量和验证效果会有所下降。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出Semantic-KG框架</strong>：创建了一个新颖、自动化且可扩展的框架，用于从知识图谱生成语义相似性评估基准，解决了对人工标注的依赖。</li>
+<li><strong>发布多领域基准数据集</strong>：公开发布了涵盖四个不同领域的基准数据集，丰富了社区资源，推动了相关研究。</li>
+<li><strong>全面的方法评估</strong>：对多种主流语义相似性方法的性能进行了系统性评估，揭示了它们在不同场景下的优势和局限性，为从业者选择合适的工具提供了指导。</li>
+<li><strong>关注偏见与影响</strong>：探讨了基准构建中的数据偏见、质量控制以及环境影响等问题，为构建更负责任的评估体系提供了重要见解。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 15:17:19</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
