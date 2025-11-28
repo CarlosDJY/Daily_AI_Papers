@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deterministic Inference across Tensor Parallel Sizes That Eliminates Training-Inference Mismatch</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.17826v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">Deterministic Inference across Tensor Parallel Sizes That Eliminates Training-Inference Mismatch</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">树基不变内核</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">张量并行</span>
+                
+                <span class="tag">推理非确定性</span>
+                
+                <span class="tag">强化学习训练</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Independent Researcher, University of Minnesota, Minneapolis, Minnesota, USA, Rice University, Houston, Texas, USA, NVIDIA Corp., Santa Clara, California, USA</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.497</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.17826v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-22/8c5ea5a4b093e73ac0027e175ffeb1f5f87655d76f932067faeff5b03343159e.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种树基不变内核（TBIK），解决了大型语言模型（LLM）在不同张量并行（TP）大小下的推理非确定性问题。通过统一计算和归约顺序，TBIK确保在各种系统配置下实现逐位一致的输出，从而提高了强化学习训练的稳定性和结果的可复现性。实验结果表明，该方法有效消除了训练与推理之间的匹配问题。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）在不同系统配置（特别是不同的张量并行 TP 大小和批量大小）下存在的推理结果非确定性问题。这种不一致性，即“训练与推理不匹配”，会导致相同输入产生不同输出，严重影响了结果的可复现性、基准测试的公平性，尤其是在强化学习（RL）环境中，可能导致训练不稳定甚至崩溃。</p>
+
+<h3>Hypothesis</h3>
+
+<p>论文的核心假设是：通过设计一种能统一计算和归约顺序的新内核，可以实现与TP大小无关的、逐位一致的确定性LLM推理。该方法通过对齐GPU内部（intra-GPU）和GPU之间（inter-GPU）的计算路径，消除由浮点运算非结合性及不同并行策略导致的数值差异，从而解决训练与推理不匹配的问题。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>批量不变操作 (Batch Invariant Operations, BIO)</strong>：如Flex-Attention和RMSNorm，旨在解决因批量大小变化导致的非确定性，但无法保证在不同TP大小下的一致性。</li>
+<li><strong>并行计算策略</strong>：如张量并行（TP）及其在vLLM、FSDP等框架中的实现。</li>
+<li><strong>GPU内核实现</strong>：如cuBLAS，其内部实现可能因硬件和配置不同而导致归约顺序变化。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h4><strong>1. 问题背景：大语言模型推理中的不确定性</strong></h4>
+
+<p>当前，大语言模型（LLM）在训练和推理过程中广泛采用并行计算策略，如张量并行（Tensor Parallelism, TP），以处理庞大的模型和计算负载。然而，这种并行化引入了一个严重的问题：<strong>不确定性（Non-determinism）</strong>。</p>
+
+<p>其根源在于浮点运算（如BF16）不满足结合律（即 <code>(a+b)+c ≠ a+(b+c)</code>）。当模型的TP大小（即参与计算的GPU数量）或批量大小（Batch Size）发生变化时，底层计算（尤其是矩阵乘法中的归约/求和操作）的顺序会随之改变，导致即使输入完全相同，模型在不同运行或不同系统配置下的输出结果也可能出现逐位（bit-level）的差异。</p>
+
+<p>这种不确定性在以下场景中尤为致命：
+*   <strong>强化学习（RL）</strong>：在RL训练中，通常使用一个TP配置（如FSDP）进行模型训练，而在推理（或作为评估者）时为了优化性能，会采用另一个TP配置（如vLLM）。这种配置上的不匹配会导致训练和推理结果不一致，严重影响模型的学习效率和最终性能。
+*   <strong>多代理系统与LLM评估者</strong>：在这些需要高度一致性和可复现性的系统中，不确定的输出会破坏系统的稳定性和可靠性。
+*   <strong>调试与开发</strong>：不确定的输出使得追踪和修复模型中的错误变得异常困难。</p>
+
+<h4><strong>2. 核心解决方案：树基不变核（Tree-Based Invariant Kernels, TBIK）</strong></h4>
+
+<p>为了从根本上解决上述问题，论文提出了一种名为<strong>树基不变核（Tree-Based Invariant Kernels, TBIK）</strong>的创新方法。TBIK的核心思想是设计一组<strong>不变的（invariant）</strong>矩阵乘法和归约原语，确保无论TP大小或批量大小如何，计算的归约顺序始终保持一致，从而保证相同输入下输出结果的逐位一致性。</p>
+
+<p>TBIK通过引入一个<strong>统一的、固定的层次化二叉树结构</strong>来对齐GPU内部和跨GPU的归约操作，实现了全确定性的LLM推理。</p>
+
+<h4><strong>3. TBIK的实现机制与过程</strong></h4>
+
+<p>TBIK的实现分为两个主要阶段：<strong>GPU内部归约</strong>和<strong>跨GPU归约</strong>，并结合<strong>批量不变操作（BIO）</strong>来确保端到端的确定性。</p>
+
+<h5><strong>3.1 统一的二叉树归约结构</strong></h5>
+
+<p>TBIK的关键是定义一个与GPU数量无关的固定归约树。
+*   <strong>结构设计</strong>：该结构类似于树形全归约（Tree All-Reduce）。计算任务（如矩阵乘法中的块）被视为树的叶节点，而中间节点则代表了固定的累加顺序。
+*   <strong>工作原理</strong>：通过强制所有计算都遵循这个固定的二叉树拓扑结构进行成对求和，TBIK确保了无论有多少GPU参与计算，累加路径都是完全相同的。</p>
+
+<h5><strong>3.2 GPU内部归约（Intra-GPU Reduction）</strong></h5>
+
+<p>在单个GPU内部，TBIK使用定制的<strong>树状矩阵乘法内核（Tree-Reduce MatMul Kernels）</strong>，通常在Triton等框架中实现。
+*   <strong>过程</strong>：矩阵乘法被分解为对K维度的分块计算。每个块的部分乘积结果被存入一个与二叉树深度对应的累加器缓冲区。当缓冲区中某一层的两个部分和准备就绪时，就会触发一次“进位”操作，将它们归约到树的上一层。这个过程递归进行，直到所有块处理完毕，最终结果存储在树的根节点。
+*   <strong>自适应设计</strong>：为了处理块数量不是2的幂次方的通用情况，引入了自适应变量，确保在首次归约前累积适量的块，从而维持整体结构的不变性。</p>
+
+<h5><strong>3.3 跨GPU归约（Inter-GPU Reduction）</strong></h5>
+
+<p>对于行并行（Row Parallel）线性层，其输出需要在多个GPU之间进行All-Reduce操作。TBIK同样将固定的树形结构应用于此。
+*   <strong>过程</strong>：首先，每个GPU完成其内部的树状归约，得到一个部分结果。然后，通过一个全收集（All-Gather）操作同步所有GPU的部分结果。最后，这些来自不同GPU的结果再次按照预定义的二叉树结构进行成对求和，最终得到全局一致的最终结果。
+*   <strong>协同设计</strong>：通过协同设计矩阵乘法与All-Reduce操作，TBIK确保了从局部到全局的整个计算链条都遵循相同的归约顺序。</p>
+
+<h5><strong>3.4 批量不变操作（Batch-Invariant Operations, BIO）</strong></h5>
+
+<p>为了应对批量大小变化带来的不确定性，论文还引入了<strong>批量不变操作（BIO）</strong>。
+*   <strong>目的</strong>：确保在RMSNorm、Attention等操作中，不同批量大小下的计算顺序保持不变。
+*   <strong>实现</strong>：通过并行化批量维度，让每个批量元素在单个计算核心上独立完成归约，避免了跨核心或跨线程的通信，从而保证了固定的归约顺序。</p>
+
+<h5><strong>3.5 框架集成与一致性保障</strong></h5>
+
+<p>为了实现端到端的确定性，TBIK和BIO被集成到vLLM和FSDP等主流框架中，并进行了以下对齐：
+1.  <strong>线性层替换</strong>：将标准的列并行层替换为BIO内核，行并行层替换为TBIK内核。
+2.  <strong>注意力机制统一</strong>：固定TritonAttention中的块大小，并强制预填充（prefill）和解码（decode）阶段使用相同的注意力内核。
+3.  <strong>其他内核对齐</strong>：确保如RMSNorm、RoPE嵌入和激活函数（如SiLU）等其他内核在不同框架中使用相同的实现。</p>
+
+<h4><strong>4. 实验验证与优势</strong></h4>
+
+<h5><strong>4.1 实验评估</strong></h5>
+
+<p>论文通过广泛的实验验证了TBIK的有效性，主要评估指标包括：
+*   <strong>唯一输出计数</strong>：在相同输入下，生成不同输出序列的数量。理想值为1。
+*   <strong>最大概率偏差</strong>：不同配置下，模型在每个生成位置的输出概率分布的最大差异。理想值为0。</p>
+
+<p>实验结果表明，传统的BF16推理在不同TP配置下表现出高度不一致性。而集成了TBIK和BIO的方案，则在所有测试配置下均实现了<strong>零概率偏差</strong>和<strong>逐位一致（bit-wise identical）</strong>的输出，完全消除了训练（FSDP）和推理（vLLM）之间的精度不匹配问题。</p>
+
+<h5><strong>4.2 核心优势</strong></h5>
+
+<ul>
+<li><strong>完全确定性</strong>：保证了在不同TP大小、批量大小和系统配置下，模型的可重复性和结果一致性。</li>
+<li><strong>解决训练-推理不匹配</strong>：为强化学习等对一致性要求极高的场景提供了稳定可靠的基础。</li>
+<li><strong>简化调试</strong>：消除了由系统随机性带来的“幽灵”bug，使调试过程更加直接高效。</li>
+<li><strong>广泛适用性</strong>：可集成到多种主流LLM框架中，增强其在复杂任务中的稳定性和可预测性。</li>
+</ul>
+
+<h5><strong>4.3 性能与未来工作</strong></h5>
+
+<ul>
+<li><strong>性能开销</strong>：当前TBIK的实现，尤其是在小批量下，由于固定的树结构和块大小约束，会引入一定的计算开销（相较于高度优化的cuBLAS，性能约为其63%）。但随着批量大小增加，性能差距会缩小。未来的工作将通过块大小调整、warp特化等高级优化手段进一步提升其性能。</li>
+<li><strong>未来方向</strong>：研究将扩展到处理量化（Quantization）模型中引入的额外不确定性因素（如舍入、缩放等），使TBIK在低比特推理中同样能保证确定性。</li>
+</ul>
+
+<h4><strong>5. 结论</strong></h4>
+
+<p>论文提出的<strong>树基不变核（TBIK）</strong>框架，通过创新的统一二叉树拓扑结构，从根本上解决了大语言模型并行计算中的不确定性问题。它确保了在不同硬件和软件配置下的推理结果一致性，成功弥合了训练与推理之间的精度鸿沟，为构建更加稳定、可靠和可复现的AI系统奠定了坚实的基础。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>对比实验</strong>：在多种LLM（如Qwen3, Mistral, Llama-3.1）上，比较了三种推理方法：标准BF16、仅BIO、以及提出的BIO+TBIK。</li>
+<li><strong>多变配置</strong>：实验在不同的系统配置下进行，包括多种TP大小（1, 2, 4, 8）、不同的批量大小以及不同的GPU硬件（如NVIDIA L40s）。</li>
+<li><strong>评估指标</strong>：主要评估指标是输出的确定性，包括唯一输出数量和最大概率偏差。同时，也评估了该方法带来的端到端延迟开销。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验中使用了AIME24和AMC23等数据集进行验证。</li>
+<li><strong>代码</strong>：代码已在GitHub上开源：<a href="https://github.com/nanomaoli/llm_reproducibility">https://github.com/nanomaoli/llm_reproducibility</a></li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>确定性</strong>：实验表明，标准BF16和仅BIO的方法在TP大小变化时仍会产生不一致的输出（准确率波动可超4%）。而<strong>BIO+TBIK</strong>方法在所有测试配置下均实现了<strong>零概率偏差</strong>和<strong>逐位一致</strong>的输出，证明了其完全的确定性。</li>
+<li><strong>性能</strong>：TBIK内核会引入一定的计算开销。在大批量大小的情况下，其性能约为cuBLAS的63%。尽管存在性能权衡，但它成功解决了确定性的核心问题。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出TBIK框架</strong>：首次提出并实现了树基不变内核（TBIK），从根本上解决了因TP大小变化导致的LLM推理非确定性问题。</li>
+<li><strong>实现完全确定性推理</strong>：通过将TBIK与BIO结合，实现了在不同批量大小、TP大小和硬件配置下的逐位可复现的推理结果。</li>
+<li><strong>提升RL训练稳定性</strong>：该方案有效消除了RL等敏感应用中的训练与推理不匹配问题，为模型的可靠性、调试和公平评估提供了坚实基础。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 11:31:29</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

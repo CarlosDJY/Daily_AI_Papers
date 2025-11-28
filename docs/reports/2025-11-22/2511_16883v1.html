@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PersonalizedRouter: Personalized LLM Routing via Graph-based User Preference Modeling</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.16883v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">PersonalizedRouter: Personalized LLM Routing via Graph-based User Preference Modeling</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">个性化大型语言模型</span>
+                
+                <span class="tag">图神经网络</span>
+                
+                <span class="tag">用户偏好建模</span>
+                
+                <span class="tag">异构图</span>
+                
+                <span class="tag">选择框架</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">University of Illinois at Urbana-Champaign</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.470</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.16883v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-22/8d798ad6c798ef02e410bb1487b83fba9c895a0a07c59781879d104e4ce4278b.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了**PersonalizedRouter**，一个基于图神经网络的个性化大型语言模型（LLM）选择框架。该方法通过构建异构图，利用用户交互数据学习个性化偏好，解决了现有选择方法无法适应多样化用户需求的问题。实验结果显示，PersonalizedRouter在性能和适应性上显著优于现有方法，且具备强大的泛化能力。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决在多用户场景下，如何根据个体用户的多样化偏好（如性能、成本、响应风格）来选择最合适的大型语言模型（LLM）的问题。随着LLM数量的激增，用户面临选择困难，而现有方法通常优化单一固定目标，未能有效从交互数据中学习和适应不同用户的个性化需求，尤其在面对新用户和新LLM时表现不佳。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过将用户、查询、任务和LLM之间的交互数据构建成一个异构图，并利用图神经网络（GNN）来学习和传播信息，可以有效捕捉用户的潜在偏好，从而实现精准、个性化的LLM路由选择，其性能将显著优于现有方法。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>LLM选择策略</strong>: HybridLLM, FrugalGPT, RouterDC, RouterLLM, C2MAB-V。</li>
+<li><strong>图神经网络 (GNN) 应用</strong>: GraphRouter, 以及通用的GNN模型如GCN, GraphSAGE, HeterGNNs，尤其是在推荐系统和链接预测中的应用。</li>
+<li><strong>用户偏好研究</strong>: 涉及用户情感和偏好建模的相关工作。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h3><strong>论文核心解决方案：PersonalizedRouter——基于图的个性化大语言模型（LLM）路由框架</strong></h3>
+
+<p>本文提出的核心解决方案是<strong>PersonalizedRouter</strong>，一个创新的基于图的框架，旨在解决在多用户场景下如何为每个用户选择最合适的大语言模型（LLM）的复杂问题。该框架的核心思想是通过对用户的历史交互数据进行建模，捕捉其多样化和潜在的偏好，从而实现个性化、高效且经济的LLM路由选择。</p>
+
+<hr />
+
+<h4><strong>一、 问题背景与目标</strong></h4>
+
+<p>在现实世界中，不同的用户在使用LLM时有截然不同的偏好。例如，有的用户追求最高质量和最详细的回答（性能优先），有的用户则希望获得快速且成本低廉的响应（成本优先），还有的用户可能对回答的风格（如幽默、严谨）有特定要求。现有的LLM路由方法通常采用固定的优化目标（如只追求最高准确率），难以适应这种用户需求的多样性。</p>
+
+<p><strong>PersonalizedRouter的核心目标</strong>：
+1.  <strong>实现个性化LLM选择</strong>：克服“一刀切”方法的局限，为不同偏好的用户推荐最合适的LLM。
+2.  <strong>捕捉多样化用户偏好</strong>：通过分析用户的交互行为，学习并理解其在性能、成本和风格等方面的隐式偏好。
+3.  <strong>提升泛化能力</strong>：使模型能够有效适应从未见过的新用户和新加入的LLM，确保在动态环境中的实用性。</p>
+
+<hr />
+
+<h4><strong>二、 PersonalizedRouter框架详解</strong></h4>
+
+<p>PersonalizedRouter通过一个精巧的多步骤流程来实现其目标，该流程将用户交互数据转化为可供机器学习模型利用的结构化信息。</p>
+
+<h5><strong>步骤1：用户交互数据建模与用户图构建</strong></h5>
+
+<p>框架的第一步是将分散的用户交互数据进行结构化。这些数据包括：<strong>用户（User）</strong>、<strong>任务类型（Task）</strong>、<strong>具体查询（Query）</strong>、<strong>候选LLM（LLM）</strong>以及用户的<strong>最终选择（Decision）</strong>。</p>
+
+<ul>
+<li><strong>构建异构图（Heterogeneous Graph）</strong>：PersonalizedRouter将这些实体作为不同类型的<strong>节点</strong>（Node）构建一个异构图。
+<ul>
+<li><strong>节点类型</strong>：用户节点、任务节点、查询节点、LLM节点。</li>
+<li><strong>边（Edge）</strong>：节点之间的连接代表它们之间的关系。例如，<code>用户-任务</code>边表示某用户执行了某类任务，<code>查询-LLM</code>边表示某个LLM被用于回答特定查询。</li>
+</ul></li>
+</ul>
+
+<p>通过这种方式，用户的完整交互历史被整合到一个统一的图结构中，为后续的偏好学习奠定了基础。</p>
+
+<h5><strong>步骤2：利用图神经网络（GNN）学习用户偏好</strong></h5>
+
+<p>构建好用户图后，PersonalizedRouter采用<strong>异构图神经网络（Heterogeneous GNN）</strong>来学习图中节点的嵌入表示（Embeddings）。</p>
+
+<ul>
+<li><strong>节点特征初始化</strong>：
+<ul>
+<li>任务、查询、LLM等节点的初始特征通过预训练语言模型（如BERT）对其文本描述进行编码生成。</li>
+<li>用户节点的初始特征则基于其交互历史生成。</li>
+</ul></li>
+<li><strong>信息聚合与传播</strong>：GNN通过在图上进行多轮“消息传递”，聚合邻居节点的信息。例如，一个用户节点的嵌入会通过其连接的任务、查询和LLM节点不断更新。这个过程使得模型能够<strong>在没有明确用户画像的情况下，通过其行为推断出其潜在偏好</strong>，并生成一个能够代表该偏好的高维向量（即用户嵌入）。</li>
+</ul>
+
+<h5><strong>步骤3：将LLM选择形式化为链接预测问题</strong></h5>
+
+<p>框架将“为用户选择最佳LLM”这一任务巧妙地转化为图中的<strong>链接预测（Link Prediction）</strong>问题。</p>
+
+<ul>
+<li><strong>预测过程</strong>：对于一个给定的用户、任务和查询，模型会计算该查询与所有候选LLM之间存在“最佳选择”链接的概率分数。</li>
+<li><strong>最终选择</strong>：得分最高的<code>查询-LLM</code>链接所对应的LLM，即被认为是该用户的最佳选择。</li>
+</ul>
+
+<hr />
+
+<h4><strong>三、 评估策略与基准构建</strong></h4>
+
+<p>为了验证PersonalizedRouter的有效性和适应性，论文设计了两种创新的模拟策略和一个大规模基准。</p>
+
+<h5><strong>1. 模拟策略</strong></h5>
+
+<ul>
+<li><strong>多成本效率模拟策略 (Multi-Cost-Efficiency Simulation Strategy)</strong>：
+<ul>
+<li>该策略通过一个奖励函数 <code>Reward = α · Performance − β · Cost</code> 来量化LLM选择的优劣。</li>
+<li>通过调整权重因子 <code>α</code> 和 <code>β</code>，可以模拟不同类型的用户偏好，例如高度重视性能的用户（高<code>α</code>）或对成本敏感的用户（高<code>β</code>）。</li>
+</ul></li>
+<li><strong>LLM作为评判者策略 (LLM-as-a-Judge Strategy)</strong>：
+<ul>
+<li>利用一个强大的第三方LLM（如GPT-4o）作为“评判者”，根据预设的、多样化的用户角色档案（如“好奇的年轻人”、“严谨的工程师”），来评估候选LLM的回答是否符合该角色的偏好。这使得评估不仅限于准确性，还涵盖了风格和相关性。</li>
+</ul></li>
+</ul>
+
+<h5><strong>2. PersonaRoute-Bench基准</strong></h5>
+
+<p>为了进行大规模、可复现的评估，论文构建了一个名为<strong>PersonaRoute-Bench</strong>的基准数据集。该基准包含<strong>1000个模拟用户</strong>和<strong>10个候选LLM</strong>的交互数据，为测试模型在处理用户多样性和可扩展性方面的能力提供了一个真实的实验环境。</p>
+
+<hr />
+
+<h4><strong>四、 实验结果与核心优势</strong></h4>
+
+<p>实验结果充分证明了PersonalizedRouter的优越性。</p>
+
+<ul>
+<li><strong>性能卓越</strong>：在两个模拟策略下，PersonalizedRouter的性能分别比现有基线方法<strong>提高了9.83%至16.19%</strong>。</li>
+<li><strong>强大的泛化能力</strong>：在面对<strong>新用户</strong>和<strong>新LLM</strong>的场景下，模型依然能达到完全训练时性能的<strong>64.81%</strong>和<strong>85.90%</strong>，展现了出色的少样本适应能力。</li>
+<li><strong>真实场景验证</strong>：为了减少模拟偏见的风险，研究者还收集了小规模的真实人类交互数据进行验证，结果表明PersonalizedRouter的表现依然优于最佳基线<strong>6.05%</strong>。</li>
+</ul>
+
+<p><strong>核心优势总结</strong>：
+1.  <strong>个性化与精准性</strong>：通过GNN深度挖掘用户交互数据，精准捕捉并满足用户的个性化偏好。
+2.  <strong>高效性与经济性</strong>：在保证响应质量的同时，能够根据用户偏好平衡性能与推理成本。
+3.  <strong>适应性与可扩展性</strong>：对新用户和新LLM具有强大的泛化能力，适用于动态变化的真实世界应用。</p>
+
+<hr />
+
+<h4><strong>五、 结论</strong></h4>
+
+<p><strong>PersonalizedRouter</strong>为多用户环境下的LLM选择问题提供了一个创新且高效的解决方案。它通过将该问题转化为基于图的链接预测任务，并利用GNN强大的表示学习能力，成功地从用户行为中推断出其多样化的偏好。该框架不仅在性能上超越了现有方法，更重要的是，其强大的泛化能力使其能够适应动态和复杂的真实应用场景，为个性化AI服务的发展开辟了新的道路。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>基准构建</strong>: 创建了一个名为 <strong>PersonaRoute-Bench</strong> 的大规模基准，包含1000个模拟用户和10个候选LLM，用于评估模型的可扩展性和对用户多样性的处理能力。</li>
+<li><strong>模拟策略</strong>: 设计了两种创新的模拟策略来评估模型的适应性和泛化能力：
+<ol>
+<li><strong>多成本效率模拟策略</strong>: 评估模型在不同成本效益权衡下的适应性。</li>
+<li><strong>LLM作为评判者 (LLM-as-a-Judge) 策略</strong>: 使用一个独立的LLM来模拟不同用户的偏好，评估模型的泛化能力。</li>
+</ol></li>
+<li><strong>评估场景</strong>: 实验覆盖了标准设置、新用户设置和新LLM设置，以全面测试模型的泛化和鲁棒性。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>:
+<ul>
+<li><strong>PersonaRoute-Bench</strong>: 本文构建的主要基准数据集。</li>
+<li><strong>任务数据集</strong>: 实验中还使用了Alpaca, GSM8K, SQuAD, Multi-News等公共数据集。</li>
+</ul></li>
+<li><strong>代码</strong>: 代码可在以下地址获取：https://github.com/ulab-uiuc/PersonalizedRouter Hugging Face Collection</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>性能优越</strong>: PersonalizedRouter在两种模拟策略下均显著优于所有基线方法，在PersonaRoute-Bench上比最强基线提升了16.19%。</li>
+<li><strong>适应性强</strong>: 在多成本效率模拟中，奖励分数提升了9.83%；在LLM作为评判者策略中，奖励提升了59.69%。</li>
+<li><strong>泛化能力好</strong>: 在面对新用户和新LLM的场景中，模型分别达到了完全训练模型性能的64.81%和85.90%，表现出强大的泛化能力。</li>
+<li><strong>效率高</strong>: 相比其他方法，PersonalizedRouter在计算时间上也有显著优势。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出PersonalizedRouter框架</strong>: 首次提出一个基于图神经网络的个性化LLM路由框架，能有效从交互数据中学习用户偏好。</li>
+<li><strong>构建PersonaRoute-Bench基准</strong>: 设计并发布了一个大规模基准，用于评估和推动多用户LLM选择领域的研究。</li>
+<li><strong>设计创新评估策略</strong>: 提出了两种新的模拟策略（多成本效率和LLM作为评判者），为评估个性化路由系统的泛化性和鲁棒性提供了新方法。</li>
+<li><strong>验证有效性</strong>: 通过大量实验证明了该框架在性能、适应性和泛化能力上的优越性，推动了以用户为中心的LLM路由研究。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 11:31:29</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

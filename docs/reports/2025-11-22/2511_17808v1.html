@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoETa v2: Toward More Robust Evaluation of Large Language Models in Portuguese</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.17808v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">PoETa v2: Toward More Robust Evaluation of Large Language Models in Portuguese</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">葡萄牙语</span>
+                
+                <span class="tag">性能评估</span>
+                
+                <span class="tag">基准测试</span>
+                
+                <span class="tag">低资源语言</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Institute of Computing, University of Campinas (UNICAMP), School of Electrical and Computer Engineering, University of Campinas (UNICAMP), Maritaca AI</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.468</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.17808v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-22/fa2ffd7d590b255006aaf61b66e1f80d827cc32f3c70e8716647443b55236399.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了PoETa v2基准，系统评估葡萄牙语大型语言模型（LLMs）的性能。通过涵盖44个任务，分析了模型规模、计算投资和语言适应性对性能的影响，揭示了与英语任务的性能差距。研究为葡萄牙语LLMs的发展提供了重要的基准和方法论，推动了低资源语言的研究。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLMs）在处理非英语语言，特别是葡萄牙语时表现不均和评估标准缺乏的问题。随着LLMs的全球化应用，它们在低资源语言和不同文化背景下的性能差异日益显著。这一问题至关重要，因为：
+-   现有模型大多以英语为中心，训练数据中葡萄牙语等低资源语言的代表性不足，导致性能较差。
+-   缺乏一个系统、全面且文化相关的基准来准确评估和比较不同LLM在葡萄牙语上的真实能力。
+-   现有评估任务（如翻译任务）无法充分反映模型对特定区域知识、文化细微差别和语言现象的理解能力。</p>
+
+<h3>Hypothesis</h3>
+
+<p>本文的核心假设是：通过构建一个全面的、包含原生葡萄牙语任务的基准（PoETa v2），并对模型进行针对性的语言适应性预训练，可以系统地评估并显著提升LLMs在葡萄牙语任务上的性能。
+-   <strong>关键发现</strong>: 模型规模、计算投资和语言特定的预训练对葡萄牙语模型的性能有重大影响。使用专门的葡萄牙语数据进行额外预训练的模型（如Sabiá）相比其基础模型（如Llama 1）性能有显著提升。
+-   <strong>初步结论</strong>: 葡萄牙语LLMs的性能与计算成本呈强线性相关，但预训练数据的语言特性和组成也起着关键作用。尽管有所改进，但与英语相比，性能差距依然存在，尤其是在小模型上。
+-   <strong>实验验证</strong>: 通过在PoETa v2基准上对超过20种开源和专有模型的系统评估，验证了增加模型规模、计算量以及进行特定语言预训练能有效提升模型在葡萄牙语任务上的表现。
+-   <strong>核心假设</strong>: 一个标准化的、包含原生任务的基准（PoETa v2）是有效评估和指导葡萄牙语LLMs发展的关键。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>多语言/通用模型</strong>: Qwen系列、Llama系列等。</li>
+<li><strong>葡萄牙语专用模型</strong>: Sabiá、Cabrita、Curió等。</li>
+<li><strong>评估基准与任务</strong>:
+<ul>
+<li>通用基准: BIG-Bench, Blend, WorldBench, GSM8K, ETHICS。</li>
+<li>葡萄牙语相关基准/任务: ENEM Challenge, FaQuAD, InferBR, TweetSentBR, HateBR, POSCOMP, BLUEX。</li>
+<li>其他任务: BoolQ, AG News, IMDB, MASSIVE, WSC285等，涵盖文本分类、问答、情感分析、逻辑推理、常识理解等多个方面。</li>
+</ul></li>
+</ul>
+
+<h3><strong>完整的详细解决方案：PoETa v2 - 葡萄牙语大型语言模型综合评估基准</strong></h3>
+
+<p>论文中提出的核心解决方案是 <strong>PoETa v2</strong>，这是一个专门为葡萄牙语设计的大型语言模型（LLM）综合评估基准。该方案旨在系统性地评估不同规模、架构和训练策略的LLM在葡萄牙语环境中的真实能力，从而填补该语言领域评估工具的空白，并为未来的模型开发提供指导。</p>
+
+<p>以下是对该解决方案的完整、分层解释：</p>
+
+<hr />
+
+<h4><strong>第一部分：PoETa v2 框架的设计与构成</strong></h4>
+
+<p>PoETa v2 的核心在于其全面且具有针对性的任务集合，旨在系统地衡量LLM的各项能力。</p>
+
+<p><strong>1. 核心目标与设计原则</strong>
+*   <strong>全面评估</strong>: 提供一个标准化的平台，用于评估和比较各种开源及商业LLM在葡萄牙语上的表现。
+*   <strong>语言适应性</strong>: 重点评估模型对葡萄牙语特有的知识、文化和语言细微差别的理解能力。
+*   <strong>指导开发</strong>: 通过评估结果揭示模型的优势与不足，为后续的预训练、微调和架构优化提供方向。</p>
+
+<p><strong>2. 任务收集与分类</strong>
+PoETa v2基准精心构建了44个任务，这些任务被分为两大类，以确保评估的广度和深度：</p>
+
+<ul>
+<li><p><strong>本土葡萄牙语任务 (12个)</strong>: 这些任务在葡萄牙语中原生开发，旨在捕捉特定于葡萄牙语的文化和地区知识。这确保了评估不仅限于语言的字面理解，还包括文化背景的适应性。</p>
+
+<ul>
+<li><strong>示例</strong>: 巴西大学入学考试（ENEM Challenge）、涉及当地谚语和习语的任务（BRoverbs）、以及针对巴西社交媒体的仇恨言论检测（HateBR）。</li>
+</ul></li>
+<li><p><strong>翻译任务 (32个)</strong>: 这些任务从成熟的英语基准（如BIG-Bench, GLUE）翻译而来，用以覆盖本土任务未能完全涵盖的通用语言技能和领域。</p>
+
+<ul>
+<li><strong>示例</strong>: 常识推理（BoolQ, Story Cloze）、情感分析（IMDB, SST2）、事实验证（VitaminC）、数学推理（MATH, GSM8K）和伦理偏见测试（BBQ）。</li>
+</ul></li>
+</ul>
+
+<p><strong>3. 任务类型与具体示例</strong>
+为了进行系统性评估，所有任务都被手动标注了主要类型，涵盖了从基础理解到复杂推理的多个维度：
+*   <strong>多项选择题</strong>: 如ENEM Challenge（高中考试题）、ARC（科学推理挑战）。
+*   <strong>抽取式问答</strong>: 如FaQuAD（从上下文中提取答案）。
+*   <strong>二元问答</strong>: 如BoolQ（回答“是/否”问题）。
+*   <strong>分类任务</strong>: 如AG News（新闻分类）、PT Hate Speech（仇恨言论分类）。
+*   <strong>情感分析</strong>: 如IMDB（电影评论情感）、TweetSentBR（推文情感）。
+*   <strong>文本蕴涵/相似性</strong>: 如ASSIN 2（判断句子逻辑关系或相似度）。
+*   <strong>共指消解</strong>: 如WSC（解析复杂句子中的代词指向）。</p>
+
+<hr />
+
+<h4><strong>第二部分：评估方法论</strong></h4>
+
+<p>为了确保评估的科学性和可比性，PoETa v2采用了一套标准化的模型选择和评估指标。</p>
+
+<p><strong>1. 模型选择</strong>
+研究选取了超过20个LLM进行评估，确保了多样性，以便分析不同因素对性能的影响：
+*   <strong>通用开源模型</strong>: 如Llama系列、Qwen系列、Falcon等，用于评估通用模型在葡萄牙语上的表现。
+*   <strong>专门针对葡萄牙语的模型</strong>:
+    *   <strong>继续预训练模型</strong>: 如Sabiá（基于Llama 2）和Curió（基于TinyLlama/Llama 2），它们在通用模型的基础上增加了大量的葡萄牙语数据进行训练。
+    *   <strong>从头训练模型</strong>: 如Tucano家族，完全使用葡萄牙语数据从零开始训练。</p>
+
+<p>这种多样化的选择使得研究能够深入分析计算投资、训练策略（从头训练 vs. 继续预训练）和模型架构对葡萄牙语能力的影响。</p>
+
+<p><strong>2. 评估指标</strong>
+为了量化和比较模型性能，研究采用了两个关键指标：</p>
+
+<ul>
+<li><p><strong>计算成本 (Computational Cost)</strong>: 使用非嵌入FLOPs（浮点运算次数）来估算训练每个模型所需的计算资源。这使得性能可以与训练投入进行关联分析。</p>
+
+<ul>
+<li>公式: <code>C = (72 * n_layer * d_model^2 + 12 * n_layer * d_model) * D</code></li>
+<li>其中 <code>D</code> 是训练token数，<code>n_layer</code> 是层数，<code>d_model</code> 是模型宽度。</li>
+</ul></li>
+<li><p><strong>标准化优选指标 (Normalized Preferred Metric, NPM)</strong>: 为了在不同类型和分值的任务之间进行公平比较，研究引入了NPM。它将每个任务的得分标准化到0到1的区间，其中0代表随机猜测的性能，1代表完美性能。</p>
+
+<ul>
+<li>公式: <code>NPM = ([preferred metric] - [random score]) / ([max score] - [random score])</code></li>
+<li>这增强了结果的可解释性，并允许对所有任务的性能进行有意义的聚合。</li>
+</ul></li>
+</ul>
+
+<hr />
+
+<h4><strong>第三部分：核心发现与性能提升策略</strong></h4>
+
+<p>通过在PoETa v2上进行大规模评估，论文得出了一系列重要发现，并揭示了提升模型性能的有效策略。</p>
+
+<p><strong>1. 计算投资与性能的正相关关系</strong>
+研究发现，模型的计算成本（训练投入）与其在葡萄牙语任务上的平均NPM得分之间存在明显的正相关关系。更大的模型和更多的数据通常会带来更好的性能。</p>
+
+<p><strong>2. 语言特定预训练的重要性</strong>
+*   <strong>“继续预训练”效果显著</strong>: 像Sabiá和Curió这样的模型，通过在现有通用模型的基础上增加葡萄牙语数据进行继续预训练，其性能得到了显著提升。例如，Sabiá仅用10亿个葡萄牙语token进行额外训练，就大幅提高了其葡萄牙语能力。
+*   <strong>结论</strong>: 这一发现证明，针对特定语言的适应性训练是提升LLM在非英语语言中表现的高效策略。</p>
+
+<p><strong>3. 模型架构与数据组成的影响</strong>
+即使在计算成本相似的情况下，不同的模型架构也会导致性能差异。例如，Qwen系列模型在某些规模上表现优于计算成本相近的Llama模型，这表明架构设计和预训练数据的语言分布是影响性能的关键因素。</p>
+
+<p><strong>4. 模型性能瓶颈分析</strong>
+评估还揭示了一些模型的具体弱点。例如，Tucano模型在某些few-shot任务中表现不佳，会出现输出无效答案（如选择不存在的选项）的情况。这表明模型在遵循提示和处理特定任务格式方面存在稳定性问题，为未来的模型微调和提示工程提供了改进方向。</p>
+
+<hr />
+
+<h4><strong>第四部分：未来展望：构建开放且可扩展的基准</strong></h4>
+
+<p>PoETa v2不仅是一个静态的评估工具，更是一个旨在促进社区发展的开放且可扩展的平台。</p>
+
+<ul>
+<li><strong>扩展本土化任务</strong>: 鼓励社区开发更多覆盖伦理、常识和高级推理等领域的原生葡萄牙语任务。</li>
+<li><strong>增强数据透明度</strong>: 推动模型开发者更详细地报告预训练数据的组成，以便更好地理解数据分布对模型性能和偏见的影响。</li>
+<li><strong>关注公平性与鲁棒性</strong>: 未来的工作将更侧重于评估和减少模型在不同地区方言、人群中的偏见和性能差异。</li>
+<li><strong>评估微调模型</strong>: 计划将基准扩展到评估经过指令微调的模型，覆盖如长文本生成等更高级的应用场景。</li>
+</ul>
+
+<h3><strong>总结</strong></h3>
+
+<p>综上所述，PoETa v2是一个全面而系统的解决方案。它通过<strong>精心设计的任务框架</strong>、<strong>科学的评估方法论</strong>以及<strong>深入的结果分析</strong>，不仅为葡萄牙语LLM的性能提供了一个可靠的衡量标准，还揭示了计算投资、语言特定数据和模型架构对性能的关键影响。最终，该方案为研究人员和开发者提供了一个宝贵的工具，以推动葡萄牙语乃至其他资源相对较少语言的AI技术发展，使其更加公平、健壮和具有文化意识。</p>
+
+<h3>实验设计</h3>
+
+<ul>
+<li><strong>模型选择</strong>: 评估了超过20种开源和专有LLM，涵盖了广泛的模型大小和训练预算。</li>
+<li><strong>任务设计</strong>: 实验任务覆盖了多种类型，包括选择题、回归、问答、文本分类、语义相似度、推理等。任务分为原生葡萄牙语任务和翻译任务两大类，以同时评估通用语言能力和文化特异性知识。</li>
+<li><strong>评估指标</strong>: 主要采用标准化优选指标（NPM）和准确率等指标，并结合计算成本分析模型效率。</li>
+<li><strong>对比分析</strong>: 比较了不同模型（如Qwen, Llama, Sabiá）之间，以及同一模型在英语和葡萄牙语任务上的性能差异。</li>
+</ul>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li>PoETa v2基准及其相关任务、代码和实验结果均已公开，可在以下地址获取：
+<strong>https://github.com/PoETaV2/PoETaV2</strong></li>
+</ul>
+
+<h3>实验结果</h3>
+
+<p>实验结果有力地支持了核心假设：
+-   PoETa v2基准成功揭示了不同LLM在葡萄牙语上的性能差异。Qwen系列模型表现突出，证明了其预训练数据中语言多样性的优势。
+-   针对性预训练效果显著：Sabiá模型仅用10亿葡萄牙语tokens进行预训练，其性能就比基础模型Llama 1 7B提升了12.5 NPM点。
+-   模型性能与计算成本（模型规模和训练数据量）呈强正相关关系。
+-   实验也暴露出一些模型的弱点，例如Tucano模型在某些任务（如IMDB）上表现不佳，甚至无法遵循指令。</p>
+
+<h3>论文贡献</h3>
+
+<ul>
+<li><strong>提出PoETa v2基准</strong>: 创建并发布了首个针对葡萄牙语LLMs的系统性、大规模评估基准，为该领域的研究和发展奠定了坚实基础。</li>
+<li><strong>量化分析与洞见</strong>: 首次对葡萄牙语LLMs进行了大规模的比较分析，揭示了模型规模、计算成本和预训练数据对性能的关键影响，并量化了英语与葡萄牙语之间的性能差距。</li>
+<li><strong>推动低资源语言研究</strong>: 强调了区域知识、文化适应性和原生任务在LLM评估中的重要性，为提升模型在低资源语言上的公平性和性能提供了清晰的研究路径和方法论。</li>
+<li><strong>促进开放与可复现性</strong>: 公开了所有数据集、代码和结果，促进了研究的透明度和可重复性。</li>
+</ul>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 11:31:29</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
