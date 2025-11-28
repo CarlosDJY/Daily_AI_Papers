@@ -334,15 +334,15 @@
             
             <div class="tags-wrapper">
                 
-                <span class="tag">大语言模型</span>
+                <span class="tag">SDA框架</span>
                 
-                <span class="tag">对齐框架</span>
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">人类意图对齐</span>
                 
                 <span class="tag">动态调整</span>
                 
                 <span class="tag">无微调</span>
-                
-                <span class="tag">开源LLMs</span>
                 
             </div>
             
@@ -381,7 +381,7 @@
             <h2>快速简介</h2>
         </div>
         <div class="content-body">
-            <p>本文提出了一种名为SDA（Steering-Driven Distribution Alignment）的轻量级对齐框架，旨在解决大语言模型（LLMs）在推理阶段与人类意图对齐的问题。SDA通过动态调整模型输出概率分布，无需微调或再训练，显著提升了模型在有用性、诚实性和无害性等维度的表现，实验结果显示平均提升分别为64.4%、30%和11.5%。该方法适用于多种开源LLMs，具有广泛的适用性和高效性。</p>
+            <p>本文提出了SDA（Steering-Driven Distribution Alignment）框架，旨在高效对齐大型语言模型（LLMs）与人类意图，解决了传统方法成本高、复杂性大的问题。SDA通过动态调整模型输出概率，无需微调或重训练，显著提升了模型在有用性、无害性和诚实性方面的表现，平均提升分别为64.4%、30%和11.5%。该方法轻量、资源高效，适用于多种开源LLMs。</p>
         </div>
 
         <div class="section-header">
@@ -391,174 +391,162 @@
             
                 <h3>现有问题</h3>
 
-<p>本文旨在解决大语言模型（LLMs）在实际应用中，如何在<strong>推理阶段</strong>有效且高效地使其输出与人类意图（即有用性、安全性和诚实性，简称3H标准）对齐的问题。尽管现有的对齐方法（如监督微调SFT或基于人类反馈的强化学习RLHF）有效，但它们通常需要昂贵的再训练、大量的人类标注和复杂的训练过程，这使得它们在需要实时响应和动态调整的场景中不够灵活和高效。因此，开发一种轻量级、无需训练的对齐方法至关重要。</p>
+<p>本文旨在解决大型语言模型（LLMs）在实际应用中与人类意图（如有用性、无害性和诚实性）对齐的挑战。传统对齐方法如监督微调（SFT）和基于人类反馈的强化学习（RLHF）成本高昂、流程复杂，难以适应个性化或特定领域的需求。因此，迫切需要一种高效、灵活且无需重新训练即可在推理（inference）阶段动态对齐模型行为的方法，以确保模型输出的安全性、可靠性和质量。</p>
 
 <h3>Hypothesis</h3>
 
-<p>本文的核心假设是：通过一个名为<strong>SDA（Steering-Driven Distribution Alignment）</strong>的框架，可以在<strong>不进行微调或修改模型参数</strong>的情况下，于推理过程中动态调整模型的输出概率分布，从而有效地将LLM的行为与人类意图对齐。
-- <strong>关键发现</strong>: SDA通过引导（Steering）和动态温度缩放（Scaling）机制，显著提升了模型在有用性、无害性和诚实性等维度的表现。
-- <strong>初步结论</strong>: SDA在8个不同的开源LLM上均展现出一致的性能提升，证明了其方法的普适性和有效性。
-- <strong>实验验证</strong>: 实验结果表明，SDA在有用性上平均提升64.4%，诚实性上提升30%，安全性上提升11.5%，优于基线模型和现有的推理时对齐方法。</p>
+<p>核心假设是，<strong>SDA（Steering-Driven Distribution Alignment）</strong> 框架能够在不进行微调或修改模型权重的情况下，通过在推理时动态调整模型的输出概率分布，有效且高效地增强开放源代码LLMs与人类意图的对齐。该方法通过细粒度的干预，可以引导模型生成更符合用户期望的响应。</p>
 
 <h3>相关研究</h3>
 
+<p>论文将自身工作与以下相关研究领域进行了对比：
+- <strong>训练时间对齐方法</strong>：包括监督微调（SFT）、基于人类反馈的强化学习（RLHF）和直接偏好优化（DPO）等。
+- <strong>推理时间对齐方法</strong>：包括提示工程、轻量级适配器（Adapters）、以及其他输出分布引导技术，如 Aligner 和 CoS。SDA 被定位为一种先进的推理时间对齐方法。</p>
+
+<h3>解决方案</h3>
+
+<h4><strong>1. 引言与核心思想</strong></h4>
+
+<p>本文提出的解决方案是一个名为 <strong>SDA (Steering-Driven Distribution Alignment)</strong> 的框架。它是一种<strong>轻量级、无需训练、模型无关</strong>的对齐方法，旨在推理（inference）阶段提升大型语言模型（LLM）的输出与人类意图（如有用性、无害性、诚实性）的一致性。</p>
+
+<p>SDA的核心思想是：<strong>在不修改模型权重或进行额外微调的情况下，通过动态调整模型在生成每个词元（token）时的输出概率分布，来“引导”模型的行为，使其更符合预设的对齐指令。</strong> 这种方法极大地降低了对齐工作的计算和数据成本，并为用户提供了灵活、个性化的控制能力。</p>
+
+<p>该框架主要由两大核心支柱构成：<strong>引导（Steering）</strong> 和 <strong>缩放（Scaling）</strong>。</p>
+
+<h4><strong>2. SDA框架的详细工作流程</strong></h4>
+
+<p>SDA的操作流程在模型生成响应的每一步（每个token）都会执行，具体可以分解为以下几个关键步骤：</p>
+
+<h5><strong>步骤一：生成初步响应并获取对齐评分</strong></h5>
+
+<p>当用户输入一个查询（Query）时，SDA首先让基础LLM生成一个初步的响应。然后，它会利用一个外部的、更强大的评估器（如GPT-4.1）来为这个初步响应打分。这个<strong>对齐评分（Score, S）</strong>的范围通常在0到100之间，量化了该响应与人类意图的符合程度。</p>
+
+<h5><strong>步骤二：将评分转化为引导放大因子 (Score-Guided Amplification Factor)</strong></h5>
+
+<p>为了让评分能够有效地指导后续调整，SDA使用一个平滑的Sigmoid函数将评分<code>S</code>转换为一个<strong>放大因子（Amplification Factor, a）</strong>。</p>
+
+<p>其公式为：
+$$ a = F(S) = 2 \cdot \left( \frac{1}{1 + e^{1 - \frac{100}{S}}} - 0.5 \right) $$</p>
+
+<p>这个函数的设计非常巧妙：
+*   当响应质量很高时（<code>S</code>接近100），放大因子<code>a</code>接近0，意味着后续的调整会非常微弱。
+*   当响应质量较差时（<code>S</code>较低），放大因子<code>a</code>会增大（趋近于1），意味着需要施加更强的对齐干预。</p>
+
+<h5><strong>步骤三：引导式对数重校正 (Steering-Based Logit Realignment)</strong></h5>
+
+<p>这是SDA的<strong>“引导（Steering）”</strong>核心。在生成下一个token时，SDA会计算两种情况下的对数概率（logits）：
+1.  <strong>基础分布 <code>log P1</code></strong>: 基础LLM在没有明确对齐指令下的输出。
+2.  <strong>指令分布 <code>log P2</code></strong>: 基础LLM在接收了对齐指令（如“请提供一个有用且无害的回答”）后的输出。</p>
+
+<p>SDA将这两者之差定义为<strong>“引导向量（Steering Vector）”</strong>，它代表了对齐指令所期望的调整方向：
+$$ \text{Steering Vector} = \log P2 - \log P1 $$</p>
+
+<p>然后，SDA将这个引导向量与上一步计算出的放大因子<code>a</code>结合，对指令分布<code>log P2</code>进行加强，得到最终调整后的对数概率<code>log P</code>：
+$$ \log P = \log P2 + k \cdot a \cdot (\log P2 - \log P1) $$</p>
+
+<p>其中，<code>k</code>是一个超参数，称为<strong>引导强度（Steering Strength）</strong>，用于控制引导效果的整体力度。</p>
+
+<h5><strong>步骤四：散度感知的动态温度缩放 (Divergence-Aware Dynamic Temperature Scaling)</strong></h5>
+
+<p>这是SDA的<strong>“缩放（Scaling）”</strong>核心。为了进一步优化生成质量，避免调整过猛导致输出僵化或多样性丧失，SDA引入了动态温度调节机制。</p>
+
+<p>该机制通过计算基础分布<code>P1</code>和指令分布<code>P2</code>之间的<strong>Jensen-Shannon (JS) 散度</strong>来工作。JS散度可以衡量两个概率分布的差异性。
+$$ JS(P1, P2) = \frac{1}{2} KL(P1 \parallel M) + \frac{1}{2} KL(P2 \parallel M) $$
+其中 <code>M</code> 是 <code>P1</code> 和 <code>P2</code> 的平均分布。</p>
+
+<p>SDA根据JS散度的值来动态调整采样温度<code>T</code>：
+$$ T = T_0 \cdot f\left(\frac{JS(P1, P2)}{\sigma}\right) $$
+其中，<code>T₀</code>是基础温度，<code>σ</code>是<strong>发散敏感性（Divergence Sensitivity）</strong>超参数。其逻辑是：
+*   如果JS散度<strong>高</strong>，说明对齐指令对原始分布的改变很大，此时应<strong>降低温度<code>T</code></strong>，使模型输出更确定、更倾向于对齐方向。
+*   如果JS散度<strong>低</strong>，说明两个分布很接近，此时可以适当<strong>提高温度<code>T</code></strong>，以保持生成内容的多样性。</p>
+
+<h5><strong>步骤五：最终词元采样</strong></h5>
+
+<p>最后，将经过引导调整后的对数概率<code>log P</code>除以动态计算出的温度<code>T</code>，再通过Softmax函数得到最终的概率分布<code>P'</code>，并从中采样下一个token。
+$$ P' = \text{softmax}\left(\frac{\log P}{T}\right) $$
+这个过程会自回归地重复进行，直到生成完整的响应。</p>
+
+<h4><strong>3. 实施与评估</strong></h4>
+
+<p>为了验证SDA框架的有效性，论文进行了一系列严谨的实验。</p>
+
 <ul>
-<li><strong>训练时对齐方法</strong>: 监督微调 (SFT) 和基于人类反馈的强化学习 (RLHF) 及其变体 (DPO, RLAIF)。</li>
-<li><strong>推理时对齐方法</strong>: 提示工程（Prompt Engineering）、适配器方法（Adapter methods）以及一个被用作主要对比对象的最先进方法 <strong>Aligner-7B</strong>。</li>
-<li><strong>其他相关技术</strong>: 上下文分布变化计算（CoS）、自我纠正和自我反馈机制。</li>
+<li><strong>数据集</strong>：使用了多个标准数据集，如<code>DialogSum</code>（有用性）、<code>BeaverTails</code>和<code>HarmfulQA</code>（无害性）、<code>TruthfulQA</code>（诚实性），覆盖了对齐的三个关键维度。</li>
+<li><strong>评估框架</strong>：采用<strong>成对比较</strong>的方法。对于同一个查询，同时生成基础模型、SDA增强模型以及其他对齐方法（如Aligner-7B）的响应。然后，使用GPT-4.1作为裁判，对响应对进行评分（0-100），评估其清晰度、相关性和全面性。</li>
+<li><strong>评估指标</strong>：使用<strong>胜率（Win Rate）</strong>来量化SDA的性能提升。胜率公式为：
+$$ \omega = \frac{N<em>{win} - N</em>{lose}}{N<em>{win} + N</em>{lose} + N_{even}} $$</li>
+<li><strong>消融研究与敏感性分析</strong>：通过移除Steering或Scaling组件来验证各自的贡献。同时，对关键超参数<code>k</code>（引导强度）和<code>σ</code>（发散敏感性）进行了敏感性分析，以找到最佳配置（实验发现 <code>k=2</code> 和 <code>σ=0.01</code> 时效果较好）。</li>
 </ul>
 
-<h3>论文解决方案的完整详细解释：SDA (Steering-Driven Distribution Alignment)</h3>
+<h4><strong>4. 关键优势与实证结果</strong></h4>
 
-<h4>一、 方案概述</h4>
-
-<p>论文提出的核心解决方案是一个名为 <strong>SDA (Steering-Driven Distribution Alignment)</strong> 的框架。这是一个<strong>轻量级、无需训练、模型无关</strong>的对齐框架，旨在推理（inference）过程中，动态调整开源大型语言模型（LLM）的输出，使其行为更好地与人类的意图和偏好对齐。</p>
-
-<p>SDA的核心理念是，通过用户定义的对齐指令，在生成每一个词元（token）时动态地引导和重塑模型的输出概率分布，从而在不进行昂贵的模型微调或再训练的情况下，显著提升模型在<strong>有用性（Helpful）、诚实性（Honest）和无害性（Harmless）</strong>这三个关键维度（简称3H）上的表现。</p>
-
-<h4>二、 SDA框架的核心机制与步骤</h4>
-
-<p>SDA的实现基于三大支柱设计理念：<strong>方向性差距识别</strong>、<strong>意图的动态强化</strong>和<strong>输出概率分布的精细化调整</strong>。这三大理念通过一个包含三个主要组件的流程来实现：</p>
-
-<h5><strong>组件1：得分引导的放大因子 (Score-Guided Amplification Factor)</strong></h5>
-
-<p>此阶段旨在量化初始响应与人类意图的差距，并将其转化为一个可用于调整的信号。</p>
-
-<ol>
-<li><strong>初始响应生成与评估</strong>：当接收到用户查询 <code>Q</code> 后，SDA首先让基础LLM生成一个初步的响应。然后，使用一个外部评估器（如更强大的GPT-4.1）对该响应进行评分，得到一个对齐分数 <code>S</code>（范围在0到100之间）。</li>
-<li><strong>放大因子计算</strong>：将分数 <code>S</code> 通过一个平滑的Sigmoid函数转换为一个<strong>放大因子 <code>a</code></strong>。这个因子的作用是：当初始响应的对齐分数 <code>S</code> 很高时，<code>a</code> 接近于0，后续调整很弱；当分数 <code>S</code> 较低时，<code>a</code> 增大，后续调整的力度也随之增强。
 <ul>
-<li><strong>公式</strong>:
-[ a = F(S) = 2 \cdot \frac{1}{1 + e^{(1 - 100/S) - 0.5}} ]</li>
+<li><p><strong>关键优势</strong>:</p>
+
+<ul>
+<li><strong>无需训练</strong>：完全在推理时工作，避免了高昂的微调成本。</li>
+<li><strong>资源高效</strong>：仅需两次前向传播计算，资源消耗低。</li>
+<li><strong>模型无关</strong>：适用于任何能输出对数概率的开源LLM。</li>
+<li><strong>灵活可控</strong>：用户可以通过调整对齐指令和超参数实现个性化对齐。</li>
+<li><strong>可解释性强</strong>：每一步的调整都有明确的数学依据，过程透明。</li>
 </ul></li>
-</ol>
-
-<h5><strong>组件2：基于引导的Logit重新对齐 (Steering-Based Logit Realignment)</strong></h5>
-
-<p>这是SDA的核心引导步骤，它直接在模型的输出层（logits）上进行操作，将模型的生成方向“推向”更符合对齐指令的一侧。</p>
-
-<ol>
-<li><p><strong>构建引导向量 (Steering Vector)</strong>：SDA计算两种条件下的模型输出概率分布：</p>
+<li><p><strong>实证结果</strong>:
+SDA在8个不同规模和架构的开源LLM上均表现出卓越的性能。与基础模型相比，SDA在三个关键对齐维度上实现了显著提升：</p>
 
 <ul>
-<li><code>P1</code>：仅基于用户查询 <code>Q</code> 的原始输出分布。</li>
-<li><code>P2</code>：同时基于用户查询 <code>Q</code> 和一个对齐指令 <code>I</code> 的输出分布。</li>
-<li><strong>引导向量 <code>S</code></strong> 被定义为这两个分布在logit空间中的差异：
-[ S(\log P<em>1, \log P</em>2) = \log P<em>2 - \log P</em>1 ]
-这个向量直观地代表了对齐指令对模型输出的“影响方向”。</li>
-</ul></li>
-<li><p><strong>Logit调整</strong>：利用引导向量和第一步计算出的放大因子 <code>a</code>，对原始的logit进行调整，生成新的对齐后的logit <code>log P</code>。</p>
-
-<ul>
-<li><strong>公式</strong>:
-[ \log P = \log P<em>2 + k \cdot a \cdot S(\log P</em>2, \log P_1) ]
-其中 <code>k</code> 是一个控制引导强度的超参数。</li>
-</ul></li>
-</ol>
-
-<h5><strong>组件3：基于散度的动态温度缩放 (Divergence-Aware Dynamic Temperature Scaling)</strong></h5>
-
-<p>在调整了logit之后，SDA进一步通过动态调整采样温度 <code>T</code> 来精细化最终的输出概率分布，以平衡生成内容的多样性与确定性。</p>
-
-<ol>
-<li><p><strong>计算分布差异</strong>：使用<strong>Jensen-Shannon (JS) 散度</strong>来衡量原始分布 <code>P1</code> 和对齐分布 <code>P2</code> 之间的差异。选择JS散度是因为其对称性和有界性（值域为[0, log2]），这使得控制过程更稳定和可解释。</p>
-
-<ul>
-<li><strong>JS散度公式</strong>:
-[ JS(P<em>1, P</em>2) = \frac{1}{2} KL(P<em>1 || M) + \frac{1}{2} KL(P</em>2 || M), \quad \text{其中 } M = \frac{1}{2}(P<em>1 + P</em>2) ]</li>
-</ul></li>
-<li><p><strong>动态温度调整</strong>：根据JS散度的大小动态计算采样温度 <code>T</code>。</p>
-
-<ul>
-<li>当JS散度较高时（表示原始分布与对齐分布差异大），降低温度，使模型输出更确定，以强制对齐。</li>
-<li>当JS散度较低时（表示两者已很接近），可以适当提高温度，以保持生成内容的多样性。</li>
-<li><strong>温度计算公式</strong>:
-[ T = T<em>0 \cdot \exp\left( \frac{0.5 \cdot JS(P</em>1, P_2)}{\sigma} \right) ]
-其中 <code>T0</code> 是基础温度，<code>σ</code> 是控制敏感度的超参数。同时设置一个温度下限 <code>T_min</code> 以防止数值不稳定。</li>
-</ul></li>
-<li><p><strong>最终概率分布</strong>：使用调整后的温度 <code>T</code> 对调整后的logit <code>log P</code> 进行softmax操作，得到最终用于采样的概率分布 <code>P'</code>。
-[ P' = \text{softmax}\left( \frac{\log P}{T} \right) ]</p></li>
-</ol>
-
-<h4>三、 优势与应用场景</h4>
-
-<ul>
-<li><strong>无需训练与资源高效</strong>：SDA完全在推理时操作，无需访问模型权重或进行额外训练，计算开销低，易于部署。</li>
-<li><strong>模型无关与广泛兼容</strong>：适用于任何支持输出log概率的开源LLM，并能与现有的对齐方法（如基于训练的对齐）协同工作。</li>
-<li><strong>灵活可控与个性化</strong>：用户可以通过修改对齐指令 <code>I</code> 来灵活控制模型的行为，满足个性化和特定场景的对齐需求，例如在情感支持对话中增强共情能力。</li>
-<li><strong>可解释性</strong>：通过引导向量和JS散度，SDA的每一步调整都有明确的数学和信息论基础，使其过程相对透明。</li>
+<li><strong>有用性（Helpfulness）平均提升 64.4%</strong></li>
+<li><strong>诚实性（Honesty）平均提升 30%</strong></li>
+<li><strong>无害性（Harmlessness）平均提升 11.5%</strong></li>
 </ul>
 
-<h4>四、 实证结果与验证</h4>
-
-<p>论文通过广泛的实验验证了SDA的有效性。</p>
-
-<ul>
-<li><strong>实验设置</strong>：在8个不同规模和来源的开源LLM上，使用了包括 <strong>BeaverTails</strong>（无害性）、<strong>HarmfulQA</strong>（无害性）、<strong>TruthfulQA</strong>（诚实性）和 <strong>HelpSteer</strong>（有用性）在内的多个标准数据集进行评估。</li>
-<li><strong>评估方法</strong>：使用GPT-4.1作为独立的评估器，通过计算SDA增强后的模型相对于基础模型和其他对齐方法（如Aligner-7B）的<strong>胜率</strong>来进行比较。</li>
-<li><strong>主要成果</strong>：
-<ul>
-<li>SDA在3H对齐维度上取得了显著且一致的提升，平均提高了<strong>64.4%的有用性、30%的诚实性和11.5%的无害性</strong>。</li>
-<li><strong>参数敏感性分析</strong>表明，引导强度 <code>k=2</code> 和发散敏感性 <code>σ=0.01</code> 是在多数情况下取得最佳性能的超参数设置。</li>
-<li><strong>消融研究</strong>证实了Steering和Scaling两个组件都对整体性能有积极贡献。</li>
-</ul></li>
-<li><strong>具体示例</strong>：论文展示了具体案例，如在回答关于“黑猫迷信”的问题时，SDA能将原始充满文化偏见的回答，改进为提供客观历史背景和科学事实的、更诚实的回答。</li>
+<p>通过具体案例分析（如“黑猫”在不同文化中的象征意义），可以看出SDA生成的响应不仅更客观、信息更丰富，还减少了文化偏见和模糊不清的个人信念。</p></li>
 </ul>
 
-<h4>五、 局限性与未来方向</h4>
+<h4><strong>5. 结论</strong></h4>
 
-<ul>
-<li><strong>依赖外部评估器</strong>：当前SDA依赖外部模型进行评分，这可能引入延迟和依赖性。未来可以探索自监督的评分机制。</li>
-<li><strong>适用范围</strong>：主要针对支持log概率输出的开源模型，在闭源或API-only模型上应用受限。</li>
-<li><strong>扩展潜力</strong>：SDA的分布引导范式可以扩展到更多对齐目标（如逻辑一致性、风格遵循）和多模态应用（如调整生成图像的风格或安全性）。</li>
-</ul>
-
-<p>综上所述，SDA框架为大型语言模型的对齐问题提供了一个创新、高效且实用的解决方案，尤其是在资源受限或需要快速部署个性化对齐能力的场景下，展现了巨大的应用潜力。</p>
+<p>SDA框架通过巧妙地结合<strong>引导式对数重校正</strong>和<strong>散度感知的动态温度缩放</strong>，提供了一种高效、灵活且无需训练的LLM对齐解决方案。它在推理阶段动态干预模型的生成过程，成功地提升了模型输出与人类意图的一致性，同时保持了较低的资源开销。其出色的实证结果和广泛的兼容性，证明了其在现实世界应用中的巨大潜力和价值。</p>
 
 <h3>实验设计</h3>
 
-<ul>
-<li><strong>模型</strong>: 在8个不同的开源LLM（如Llama和Vicuna系列）上进行了评估。</li>
-<li><strong>评估方法</strong>: 采用成对比较的方式，使用 <strong>GPT-4.1</strong> 作为客观的外部评估器，对SDA增强后的模型响应与基线模型或Aligner-7B的响应进行评分。</li>
-<li><strong>评估维度</strong>: 聚焦于3H标准（有用性、无害性、诚实性）。</li>
-<li><strong>对比基线</strong>: 将SDA的表现与（1）原始的基础模型和（2）当前最先进的推理时对齐方法 <strong>Aligner-7B</strong> 进行了比较。</li>
-<li><strong>其他实验</strong>: 进行了消融研究以验证SDA各组件的贡献，并进行了超参数敏感性分析（如引导强度<code>k</code>和发散敏感度<code>σ</code>）。</li>
-</ul>
+<p>实验设计旨在全面验证SDA的有效性和泛化能力：
+- <strong>模型</strong>：在8个不同大小和架构的开源LLMs（如 Llama-2 系列、Vicuna 系列）上进行了测试。
+- <strong>评估维度</strong>：主要评估模型在有用性（Helpfulness）、无害性（Harmlessness）和诚实性（Honesty）三个方面的表现。
+- <strong>对比方法</strong>：将应用SDA的模型与原始基础模型以及其他先进的推理时对齐方法（如 Aligner）进行性能比较。
+- <strong>评估方式</strong>：使用 GPT-4 作为裁判，对不同模型生成的响应进行成对比较和打分。
+- <strong>分析</strong>：进行了参数敏感性分析，以确定最佳的引导强度（k）和发散敏感度（σ）等超参数。</p>
 
 <h3>数据集和代码</h3>
 
 <ul>
-<li><strong>代码</strong>: 代码已在GitHub上公开：<a href="https://github.com/adventurexw/SDA">https://github.com/adventurexw/SDA</a></li>
-<li><strong>数据集</strong>: 实验使用了多个标准数据集来评估不同维度的对齐效果，包括：
+<li><strong>数据集</strong>：实验使用了多个公开数据集，分别针对不同的对齐维度：
 <ul>
-<li><strong>有用性</strong>: E-Dialogue, DialogSum, HelpSteer</li>
-<li><strong>无害性</strong>: BeaverTails, HarmfulQA</li>
-<li><strong>诚实性</strong>: TruthfulQA</li>
+<li><strong>有用性/帮助性</strong>：DialogSum, E-Dialogue, HelpSteer</li>
+<li><strong>无害性/安全性</strong>：BeaverTails, HarmfulQA</li>
+<li><strong>诚实性</strong>：TruthfulQA</li>
 </ul></li>
+<li><strong>代码</strong>：代码已在 GitHub 上开源：https://github.com/adventurexw/SDA</li>
 </ul>
 
 <h3>实验结果</h3>
 
-<ul>
-<li><strong>性能提升</strong>: 实验结果一致表明，SDA在所有测试模型和数据集上都显著提升了3H指标，平均将有用性提高了<strong>64.4%</strong>，诚实性提高了<strong>30%</strong>，无害性提高了<strong>11.5%</strong>。</li>
-<li><strong>优于SOTA</strong>: SDA在多个指标上的表现显著优于基线模型和现有的SOTA推理时对齐方法Aligner-7B。</li>
-<li><strong>超参数敏感性</strong>: 实验发现，适中的超参数设置（如引导强度 k=2，发散敏感度 σ=0.01）能够最好地平衡对齐效果和输出质量。</li>
-<li><strong>消融研究</strong>: 结果证实，SDA的Steering和Scaling两个核心组件都对最终的性能提升有重要贡献。</li>
-</ul>
+<p>实验结果有力地支持了论文的假设：
+- <strong>显著性能提升</strong>：SDA 在8个开源LLMs上取得了稳定且显著的性能提升，平均在有用性方面提升64.4%，诚实性方面提升30%，无害性方面提升11.5%。
+- <strong>优于基线</strong>：在所有评估指标上，SDA 的表现均显著优于原始基础模型和其他对比方法（如 Aligner）。
+- <strong>超参数影响</strong>：敏感性分析表明，中等的引导强度（k=2）和发散敏感度（σ=0.01）能够在对齐效果和输出质量之间达到最佳平衡。</p>
 
 <h3>论文贡献</h3>
 
 <ol>
-<li><strong>提出了SDA框架</strong>: 提出了一种新颖的、轻量级的、无需训练且模型无关的框架，用于在推理时对齐大语言模型，解决了传统对齐方法资源消耗大的问题。</li>
-<li><strong>创新的技术组合</strong>: 详细阐述了如何结合评分引导的Logit重校准和基于JS散度的动态温度缩放机制，来有效引导模型的输出分布。</li>
-<li><strong>广泛的实验验证</strong>: 通过在8个开源LLM和多个标准数据集上的大量实验，全面验证了SDA框架的有效性、普适性和优越性，为LLM在实际应用中的安全可靠部署提供了新的思路和高效的解决方案。</li>
+<li><strong>提出了SDA框架</strong>：提出了一种新颖、轻量级、无需训练且模型无关的SDA框架，用于在推理时高效地对齐LLM。</li>
+<li><strong>验证了方法的有效性</strong>：通过在多个模型和数据集上的大量实验，证明了SDA在提升LLM的有用性、无害性和诚实性方面的有效性和普适性。</li>
+<li><strong>提供了新的对齐思路</strong>：引入了结合 logits 引导和基于JS散度的动态温度调整机制，为在资源受限或需要动态调整的场景下实现模型对齐提供了新的解决方案。</li>
 </ol>
 
             
         </div>
 
         <div class="footer">
-            <p>Generated by AI Paper Review System at 2025-11-21 20:14:55</p>
+            <p>Generated by AI Paper Review System at 2025-11-28 10:47:21</p>
             <p style="margin-top: 10px;">
                 <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
                 <a href="../../search.html">搜索归档</a>

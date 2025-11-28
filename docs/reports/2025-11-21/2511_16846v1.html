@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConCISE: A Reference-Free Conciseness Evaluation Metric for LLM-Generated Answers</title>
+    <style>
+        :root {
+            /* 配色方案：Slate + Indigo */
+            --primary-color: #4f46e5;
+            --bg-body: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-body: #334155;      /* Slate 700 - 正文颜色略浅，减少视觉疲劳 */
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            
+            /* 警告色 */
+            --warn-bg: #fff7ed;
+            --warn-text: #9a3412;
+            --warn-border: #fdba74;
+
+            --font-stack: '圆体-简', 'Yuanti SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+            line-height: 1.8; /* 增加行高，适合阅读 */
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        /* 阅读容器：限制宽度以提升阅读体验 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-paper);
+            border-radius: 16px; /* 更圆润的角 */
+            padding: 40px 60px; /* 宽敞的内边距 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 顶部导航 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--primary-color); }
+        .nav-link::before { content: "←"; margin-right: 5px; }
+        
+        .arxiv-link {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .arxiv-link:hover {
+            background-color: #e2e8f0;
+            color: var(--primary-color);
+        }
+
+        /* 论文头部信息 */
+        .paper-header {
+            margin-bottom: 40px;
+        }
+
+        .paper-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* 标签组 */
+        .tags-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4338ca;            /* Indigo 700 */
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+
+        /* 元数据栏 */
+        .metadata-box {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .score-badge {
+            color: var(--primary-color);
+        }
+
+        /* 核心图片展示 */
+        .core-image-container {
+            margin: 40px 0;
+            text-align: center;
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .core-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 警告框 */
+        .warning-box {
+            background-color: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* 章节标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            position: relative;
+        }
+        
+        /* 章节前的装饰点 */
+        .section-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        /* Markdown 内容样式重置 - 极简学术风 */
+        .content-body {
+            font-size: 17px; /* 略大的字号适合阅读 */
+            color: var(--text-body);
+        }
+
+        .content-body p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .content-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .content-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .content-body ul, .content-body ol {
+            margin-bottom: 1.5em;
+            padding-left: 1.5em;
+        }
+
+        .content-body li {
+            margin-bottom: 0.5em;
+        }
+
+        .content-body strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        
+        /* 引用块 - 学术风 */
+        .content-body blockquote {
+            border-left: 4px solid var(--primary-color);
+            background-color: #f8fafc;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码块 */
+        .content-body pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .content-body code {
+            font-family: var(--font-mono);
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63384; /* 类似 GitHub 的代码红 */
+        }
+        
+        .content-body pre code {
+            color: inherit;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            
+            .container {
+                border-radius: 0;
+                padding: 30px 20px;
+                box-shadow: none;
+            }
+
+            .paper-title { font-size: 26px; }
+            
+            .metadata-box {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .content-body { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link">返回今日简报</a>
+            <a href="http://arxiv.org/abs/2511.16846v1" target="_blank" class="arxiv-link">PDF / arXiv ↗</a>
+        </div>
+
+        <div class="paper-header">
+            <h1 class="paper-title">ConCISE: A Reference-Free Conciseness Evaluation Metric for LLM-Generated Answers</h1>
+            
+            
+            <div class="tags-wrapper">
+                
+                <span class="tag">无参考评估指标</span>
+                
+                <span class="tag">大型语言模型</span>
+                
+                <span class="tag">冗长问题</span>
+                
+                <span class="tag">简洁性判断</span>
+                
+                <span class="tag">自动化评估工具</span>
+                
+            </div>
+            
+
+            <div class="metadata-box">
+                
+                <div class="meta-item" style="flex: 2; min-width: 200px;">
+                    <span class="meta-label">作者单位</span>
+                    <span class="meta-value">Commonwealth Bank of Australia, Sydney, Australia</span>
+                </div>
+                
+                
+                <div class="meta-item">
+                    <span class="meta-label">推荐指数</span>
+                    <span class="meta-value score-badge">0.468</span>
+                </div>
+                
+                <div class="meta-item">
+                    <span class="meta-label">arXiv ID</span>
+                    <span class="meta-value">2511.16846v1</span>
+                </div>
+            </div>
+
+            
+        </div>
+
+        
+        <div class="core-image-container">
+            
+            <img src="../../images/2025-11-21/67ac8861f8f13400095520a371963716828754ec671f56e93693a154f0d4e61c.jpg" alt="核心思路示意图" />
+            <div class="image-caption">图 1：论文核心方法/架构示意图</div>
+        </div>
+        
+
+        <div class="section-header">
+            <h2>快速简介</h2>
+        </div>
+        <div class="content-body">
+            <p>本文提出了一种名为**ConCISE**的无参考评估指标，旨在解决大型语言模型（LLM）生成回答时的冗长和啰嗦问题。该方法通过计算原始回答与LLM生成的摘要及词语移除的压缩比，量化非必要内容。实验结果表明，ConCISE能够有效识别冗余信息，与人类对简洁性的判断高度一致，提供了一种实用的自动化评估工具。</p>
+        </div>
+
+        <div class="section-header">
+            <h2>深度解读</h2>
+        </div>
+        <div class="content-body">
+            
+                <h3>现有问题</h3>
+
+<p>本文旨在解决大型语言模型（LLM）生成的回答普遍存在冗长和啰嗦的问题。这一问题降低了用户满意度，增加了沟通成本，但现有的评估指标（如GPT评分）往往存在长度偏见或无法在没有“黄金标准”参考文本的情况下有效衡量简洁性，也未能很好地与人类对简洁性的主观判断对齐。</p>
+
+<h3>Hypothesis</h3>
+
+<p>核心假设是，可以利用LLM自身的总结和信息压缩能力，设计一个名为<strong>ConCISE</strong>的、无需参考文本的自动化评估指标。该指标能够有效量化LLM回答中的非必要内容，其评估结果能与人类对简洁性的判断高度一致。</p>
+
+<h3>相关研究</h3>
+
+<ul>
+<li><strong>传统评估指标</strong>：如BLEU和ROUGE，依赖于参考文本，主要关注内容覆盖而非简洁性。</li>
+<li><strong>基于LLM的评估方法</strong>：如GPT Score和RAGAS，虽然是无参考的，但在评估简洁性方面存在局限性，例如容易受到长度偏见的影响。</li>
+<li><strong>特定领域研究</strong>：已有研究将简洁性作为文本总结任务的一个评估维度。</li>
+</ul>
+
+<h3>解决方案</h3>
+
+<h4><strong>引言：问题与目的</strong></h4>
+
+<p>大型语言模型（LLM）在生成回答时，常常会产生冗长、包含不必要信息的内容。这种现象不仅降低了用户的阅读体验和满意度，也给模型开发者带来了额外的计算和运营成本。为了解决这一问题，论文提出了一种名为<strong>ConCISE</strong>（<strong>Con</strong>ciseness through <strong>C</strong>ompression-<strong>I</strong>nformed <strong>S</strong>elf-<strong>E</strong>valuation）的新型评估指标。</p>
+
+<p>ConCISE是一个<strong>参考无关（reference-free）</strong>的评估指标，其核心目的在于：</p>
+
+<ol>
+<li><strong>量化简洁性</strong>：通过识别和量化LLM生成回答中的冗余信息，为回答的简洁程度提供一个具体的数值评分。</li>
+<li><strong>简化评估过程</strong>：提供一种无需人工标注“标准答案”的自动化评估工具，从而显著降低评估的时间和成本。</li>
+</ol>
+
+<h4><strong>ConCISE的核心机制与计算过程</strong></h4>
+
+<p>ConCISE的核心思想是利用LLM自身的能力，通过不同的压缩技术来评估原始回答的可压缩程度。一个回答越容易被压缩而又不损失核心信息，就说明它原本越冗长，简洁性得分就越低。该过程主要包含以下三种压缩技术：</p>
+
+<ol>
+<li><p><strong>抽象摘要压缩 (Abstractive Summarization)</strong>：</p>
+
+<ul>
+<li><strong>描述</strong>：利用LLM生成原始回答的<strong>抽象性摘要（Sa）</strong>。这种摘要会用全新的措辞来概括回答的核心思想，旨在评估内容是否可以在更高层次上被精炼。</li>
+<li><strong>目的</strong>：衡量信息的核心密度。</li>
+</ul></li>
+<li><p><strong>提取摘要压缩 (Extractive Summarization)</strong>：</p>
+
+<ul>
+<li><strong>描述</strong>：利用LLM从原始回答中选择并拼接出最关键、最相关的句子，形成<strong>提取性摘要（Se）</strong>。</li>
+<li><strong>目的</strong>：识别并保留文本中最具信息量的部分。</li>
+</ul></li>
+<li><p><strong>词语去除压缩 (Word Removal / De-redundancy)</strong>：</p>
+
+<ul>
+<li><strong>描述</strong>：利用LLM分析原始回答，在保持核心意义和命名实体不变的前提下，移除尽可能多的非必要词汇（如填充词、重复短语等），生成一个<strong>精简版文本（Wr）</strong>。</li>
+<li><strong>目的</strong>：直接量化文本中的词汇级冗余。</li>
+</ul></li>
+</ol>
+
+<h4><strong>实施步骤与评分公式</strong></h4>
+
+<p>ConCISE的完整评估流程如下：</p>
+
+<ol>
+<li><strong>输入响应</strong>：系统接收一个由LLM生成的原始回答文本 <code>A</code>。</li>
+<li><strong>生成压缩文本</strong>：使用一个评估者LLM（如GPT-4o），根据特定提示，为原始回答 <code>A</code> 生成上述三种压缩版本：抽象摘要 <code>Sa</code>、提取摘要 <code>Se</code> 和精简文本 <code>Wr</code>。</li>
+<li><p><strong>计算评分</strong>：通过计算这三种压缩版本与原始回答之间的长度差异来得出最终的简洁性评分。其计算公式为：</p>
+
+<p>[ \text{ConCISE}(A) = \frac{1}{3} \left( \frac{|S<em>a|}{|A|} + \frac{|S</em>e|}{|A|} + \frac{|W_r|}{|A|} \right) ]</p>
+
+<ul>
+<li><code>|A|</code> 是原始回答 <code>A</code> 的词数。</li>
+<li><code>|Sa|</code>, <code>|Se|</code>, <code>|Wr|</code> 分别是抽象摘要、提取摘要和精简文本的词数。</li>
+<li><strong>注意</strong>：如果任何一个压缩版本的长度超过了原始回答，其比率将被视为0，以避免对冗长输出的奖励。最终得分介于0和1之间，分数越高表示简洁性越好。</li>
+</ul></li>
+</ol>
+
+<h4><strong>实验验证与结果</strong></h4>
+
+<p>为了验证ConCISE的有效性，研究团队在<strong>WikiEval数据集</strong>上进行了实验，并将该指标与人类的判断以及其他基线方法进行了比较。</p>
+
+<ul>
+<li><p><strong>与人类判断的相关性</strong>：</p>
+
+<ul>
+<li>实验结果表明，ConCISE得分与人类对简洁性的Likert评分表现出很强的正相关性，其<strong>Spearman等级相关系数 (𝑟𝑠) 为 0.628</strong>，<strong>Kendall's Tau (𝜏) 为 0.523</strong>，且结果具有统计显著性。</li>
+<li>相比之下，一个简单的基线方法“GPT评分”（直接让LLM给简洁性打分）与人类判断的相关性很弱甚至为负相关。</li>
+</ul></li>
+<li><p><strong>配对比较准确性</strong>：</p>
+
+<ul>
+<li>在“二选一”的任务中，即判断两个回答中哪一个更简洁，ConCISE的选择与人类决策的<strong>吻合率高达94%</strong>。</li>
+<li>这一表现优于另一个基线方法“GPT排名”（让LLM直接选择更简洁的答案），后者的准确率为90%。</li>
+</ul></li>
+</ul>
+
+<p>这些结果充分证明了ConCISE能够有效捕捉并量化人类对文本简洁性的感知。</p>
+
+<h4><strong>核心优势</strong></h4>
+
+<ol>
+<li><strong>无参考标准</strong>：作为一种参考无关的指标，ConCISE摆脱了对昂贵且耗时的人工标注“黄金标准”答案的依赖。</li>
+<li><strong>与人类判断高度一致</strong>：实验数据证明，其评估结果与人类专家的判断高度对齐，确保了指标的可靠性。</li>
+<li><strong>直接量化冗余性</strong>：通过压缩机制，该方法能够精准地识别并量化回答中的冗余内容。</li>
+<li><strong>高效且低成本</strong>：整个评估过程仅需一次LLM调用即可生成三种压缩文本，计算效率高，成本可控。</li>
+</ol>
+
+<h4><strong>局限性与未来方向</strong></h4>
+
+<ul>
+<li><strong>上下文依赖性</strong>：简洁性的定义在不同领域和场景下可能存在差异。ConCISE在特定专业领域可能需要进行微调。</li>
+<li><strong>潜在提示偏见</strong>：使用单一的统一提示来生成三种不同类型的压缩文本，可能会导致技术间的交叉偏见。未来的工作可以探索为每种压缩技术设计独立的、更优化的提示。</li>
+</ul>
+
+<h4><strong>总结</strong></h4>
+
+<p>ConCISE通过其创新的、基于LLM自身压缩能力的参考无关框架，为评估生成文本的简洁性提供了一种强大、可靠且自动化的解决方案。它不仅有效解决了现有评估方法中的不足，其与人类判断的高度一致性也使其成为一个在实际应用中提升LLM输出质量、优化用户体验的重要工具。</p>
+
+<h3>实验设计</h3>
+
+<p>实验在<strong>WikiEval</strong>数据集上进行，旨在验证ConCISE的有效性。实验流程包括：
+1.  使用ConCISE方法为LLM生成的回答打分。
+2.  采用多种LLM（如GPT-4o, Claude-4-Sonnet）作为评估器，以确保结果的鲁棒性。
+3.  将ConCISE的评分与人类标注的简洁性评分（Likert量表）进行比较，计算<strong>Spearman</strong>和<strong>Kendall</strong>相关系数，以衡量其与人类判断的一致性。</p>
+
+<h3>数据集和代码</h3>
+
+<ul>
+<li><strong>数据集</strong>：实验主要使用了<strong>WikiEval</strong>数据集，这是一个经过人类标注的数据集，专门用于评估LLM生成答案的质量。</li>
+<li><strong>链接</strong>：https://huggingface.co/datasets/explodinggradients/WikiEval</li>
+</ul>
+
+<h3>实验结果</h3>
+
+<ul>
+<li><strong>与人类判断高度一致</strong>：ConCISE的评分与人类评分显示出强大且统计上显著的正相关性（Spearman相关系数为0.628，Kendall相关系数为0.523）。在94%的情况下，ConCISE的选择与人类认为更简洁的答案一致。</li>
+<li><strong>优于基线方法</strong>：ConCISE在评估简洁性方面的表现远超GPT评分等现有基线方法。</li>
+<li><strong>有效性</strong>：实验证明，该方法能有效识别并量化LLM输出中的冗余信息。</li>
+</ul>
+
+<h3>论文贡献</h3>
+
+<ol>
+<li><strong>提出新指标</strong>：提出了一个创新的、无参考的自动化评估指标<strong>ConCISE</strong>，专门用于衡量LLM生成回答的简洁性。</li>
+<li><strong>填补研究空白</strong>：通过实证研究证明了ConCISE的有效性，解决了现有评估方法在简洁性评估方面的不足，并揭示了传统评分方法的局限性。</li>
+<li><strong>提供实用工具</strong>：为开发者提供了一个简单、高效的工具，有助于优化LLM，使其生成更简洁、用户体验更好的回答。</li>
+</ol>
+
+            
+        </div>
+
+        <div class="footer">
+            <p>Generated by AI Paper Review System at 2025-11-28 10:47:21</p>
+            <p style="margin-top: 10px;">
+                <a href="https://jycarlos1019.pp.ua">系统首页</a> • 
+                <a href="../../search.html">搜索归档</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
